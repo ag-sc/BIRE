@@ -6,7 +6,9 @@ public class RelationAnnotation extends Annotation {
 
 	RelationType relation;
 	
-	List<EntityAnnotation> arguments;
+	EntityAnnotation arg1;
+	EntityAnnotation arg2;
+	
 	
 	
 }

@@ -1,6 +1,6 @@
 package Variables;
 
-public class RelationType {
+public class EntityType {
 	String type;
 
 }

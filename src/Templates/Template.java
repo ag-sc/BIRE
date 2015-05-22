@@ -7,7 +7,7 @@ import Learning.Vector;
 
 public interface Template {
 
-	void recompute(Annotation annotation, StateChange change, Vector features);
+	void recompute(Annotation annotation, Vector features);
 	
 	Vector getWeightVector();
 

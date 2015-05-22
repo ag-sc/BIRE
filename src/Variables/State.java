@@ -1,5 +1,6 @@
 package Variables;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -8,28 +9,41 @@ import Factors.Factor;
 import Factors.FactorGraph;
 
 public class State {
-	
-	List<Annotation> annotations;
-		
-	public State applyChange(int i, StateChange change) throws CloneNotSupportedException
-	{
-		// overwrite clone
-		
-		State state = (State) this.clone();
-		
-		annotations.get(i).applyChange(change);
-		
-		// do somethings
-		return state;
+
+	List<EntityAnnotation> entities;
+	List<RelationAnnotation> relations;
+	double score;
+
+	public State(State state) {
+		entities = new ArrayList<EntityAnnotation>();
+		relations = new ArrayList<RelationAnnotation>();
+
+		// TODO clone lists
 	}
 
-	public List<Annotation> getAnnotations() {
-		return annotations;
+	public List<EntityAnnotation> getEntities() {
+		return entities;
 	}
-	
-	public double score()
-	{
-		return 0.0;
+
+	public List<RelationAnnotation> getRelations() {
+		return relations;
 	}
-	
+
+	public double getScore() {
+		return score;
+	}
+
+	public void setScore(double score) {
+		this.score = score;
+	}
+
+	public void propagateChange() {
+		for (EntityAnnotation entityAnnotation : entities) {
+			entityAnnotation.propagateChange();
+		}
+		for (RelationAnnotation relationAnnotation : relations) {
+			relationAnnotation.propagateChange();
+		}
+	}
+
 }

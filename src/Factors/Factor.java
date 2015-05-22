@@ -16,9 +16,9 @@ public class Factor {
 		return features.multiply(template.getWeightVector());
 	}
 
-	public void propagateChange(Annotation annotation, StateChange change) {
+	public void propagateChange(Annotation annotation) {
 		
-		template.recompute(annotation, change, features);
+		template.recompute(annotation, features);
 		
 	}
 	

@@ -47,10 +47,9 @@ public class DefaultLearner implements Learner {
 			for (int j=0; j < steps; j++)
 			{	
 				State next_state = sampler.getNextState(state, scorer);
-				
 					if (objective.score(next_state, goldState) > objective.score(state, goldState))
 					{
-						if (next_state.score() < state.score())
+						if (next_state.getScore() < state.getScore())
 						{
 							// model.update(featuresState, alpha);
 						}
@@ -60,7 +59,7 @@ public class DefaultLearner implements Learner {
 					{
 						if (objective.score(next_state, goldState) < objective.score(state, goldState))
 						{
-							if (next_state.score() > state.score())
+							if (next_state.getScore() > state.getScore())
 							{
 								// model.update(featuresState), alpha);
 							}
