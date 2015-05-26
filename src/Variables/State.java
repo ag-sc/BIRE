@@ -2,11 +2,6 @@ package Variables;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-
-import Changes.StateChange;
-import Factors.Factor;
-import Factors.FactorGraph;
 
 public class State {
 
