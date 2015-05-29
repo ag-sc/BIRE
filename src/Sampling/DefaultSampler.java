@@ -1,12 +1,9 @@
 package Sampling;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import Learning.Scorer;
-import Variables.Annotation;
 import Variables.State;
 
 public class DefaultSampler implements Sampler {
@@ -34,12 +31,14 @@ public class DefaultSampler implements Sampler {
 	}
 
 	private boolean accept(State next_state, State state) {
-		// TODO Auto-generated method stub
-		return false;
+		/*-
+		 * A(x->x') min(1, )
+		 */
+		return true;
 	}
 
 	private State drawRandomlyFrom(Map<State, Double> next_states) {
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 
@@ -49,22 +48,23 @@ public class DefaultSampler implements Sampler {
 		for (int i = 0; i < numberStates; i++) {
 			State generatedState = new State(state);
 			
-			//change relations or entities
-				// relation Change
-					// sample new relation or modify existing relation
-					// if new relation:
-						// get existing Entities, sample and create relation
-					// if modify relation
-						// get existing relations, sample and modify
-						// modify type or arguments
-				
-				// entity change
-					// sample entity
-					// change boundaries or type
-					// if change boundaries
-						// expand/contract left/right
+			 
+			// sample token
+			// get annotation for token
+				// if no annotation
+					// add annotation with random type
+				// if annotation
+					// if delete
+						// ...
 					// if change type
 						// ...
+					// if add argument
+						// ...
+					// if remove argument
+						// ...
+					// if change boundaries
+						// ...
+
 			double score= scorer.score(generatedState);
 			generatedState.setScore(score);
 			generatedStates.put(state, score);

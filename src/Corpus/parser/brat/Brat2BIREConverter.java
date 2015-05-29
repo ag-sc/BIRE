@@ -17,6 +17,7 @@ import Variables.RelationAnnotation;
 import Variables.RelationType;
 
 public class Brat2BIREConverter {
+	private static final String TRIGGER = "Trigger";
 	/**
 	 * Collects all existing EntityAnnotations by there ID. This Map is needed
 	 * to handle references to Entities that are not yet parsed.
@@ -75,33 +76,54 @@ public class Brat2BIREConverter {
 	 * @param e
 	 */
 	private void convertEventAnnotation(BratEventAnnotation e) {
-		EntityAnnotation arg1 = getOrCreateEntityByID(e.getTrigger().getID());
+		/*-
+		 * TODO
+		 * 
+		 * E3 positive_regulation:T3 Theme:T1 Cause:T2
+		 * E5 positive_regulation:T5 Theme:T2 Cause:E3 Site:T3
+		 * 
+		 * What is the Type, what are the arguments of the resulting relation?
+		 * What about other events that reference this event. Will they
+		 * reference the resulting relation or its trigger entity?
+		 * 
+		 * The events above are currently converted to:
+		 * 
+		 * Relation
+		 *   Type: positive_regulation
+		 *   Arguments:	(Trigger, 	T3)
+		 *   			(Theme,		T1)
+		 *   			(Cause,		T2)
+		 *   
+		 * Relation
+		 *   Type: positive_regulation
+		 *   Arguments:	(Trigger, 	T5)
+		 *   			(Theme,		T2)
+		 *   			(Cause,		T3)		<--- This is different to the Brat annotation, since the reference to the Event E3 is changed to the trigger of event E3
+		 *   			(Site, 		T3)
+		 */
+		Map<String, EntityAnnotation> arguments = new HashMap<String, EntityAnnotation>();
+		// Treat the trigger entity as an argument to the relation.
+		arguments.put(TRIGGER, resolveReference(e.getTrigger()));
 		for (Entry<String, BratAnnotation> entry : e.getArguments().entrySet()) {
-			String type = entry.getKey();
 			BratAnnotation ann = entry.getValue();
-			EntityAnnotation arg2 = resolveReference(ann);
-			RelationAnnotation relation = new RelationAnnotation(
-					new RelationType(type), arg1, arg2);
-			relations.add(relation);
+			EntityAnnotation arg = resolveReference(ann);
+			arguments.put(entry.getKey(), arg);
 		}
+		RelationAnnotation relation = new RelationAnnotation(new RelationType(
+				e.getRole()), arguments);
+		relations.add(relation);
 	}
 
 	private void convertRelationAnnotation(BratRelationAnnotation t) {
-		if (t.getArguments().size() == 2) {
-			String type = t.getRole();
-			BratAnnotation ann1 = t.getArguments().get("Arg1");
-			BratAnnotation ann2 = t.getArguments().get("Arg2");
-
-			EntityAnnotation arg1 = resolveReference(ann1);
-			EntityAnnotation arg2 = resolveReference(ann2);
-			RelationAnnotation relation = new RelationAnnotation(
-					new RelationType(type), arg1, arg2);
-			relations.add(relation);
-
-		} else {
-			// TODO how to encode Brat-Relations with multiple arguments in
-			// BIRE-Relations which are binary relations?
+		Map<String, EntityAnnotation> arguments = new HashMap<String, EntityAnnotation>();
+		for (Entry<String, BratAnnotation> entry : t.getArguments().entrySet()) {
+			BratAnnotation ann = entry.getValue();
+			EntityAnnotation arg = resolveReference(ann);
+			arguments.put(entry.getKey(), arg);
 		}
+		RelationAnnotation relation = new RelationAnnotation(new RelationType(
+				t.getRole()), arguments);
+		relations.add(relation);
 	}
 
 	private void convertAttributeAnnotation(BratAttributeAnnotation t) {

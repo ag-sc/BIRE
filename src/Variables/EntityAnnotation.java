@@ -1,5 +1,9 @@
 package Variables;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import Changes.StateChange;
 
 public class EntityAnnotation extends Annotation {
@@ -11,6 +15,8 @@ public class EntityAnnotation extends Annotation {
 	String text;
 
 	EntityType type;
+
+	Map<String, EntityAnnotation> arguments = new HashMap<String, EntityAnnotation>();
 
 	public EntityAnnotation(String id) {
 		this.id = id;
@@ -51,4 +57,19 @@ public class EntityAnnotation extends Annotation {
 				+ begin + ", end=" + end + ", text=" + text + "]";
 	}
 
+	public EntityType getType() {
+		return type;
+	}
+
+	public int getBegin() {
+		return begin;
+	}
+
+	public int getEnd() {
+		return end;
+	}
+
+	public Map<String, EntityAnnotation> getArguments() {
+		return arguments;
+	}
 }

@@ -21,6 +21,9 @@ import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 public class BratAnnotationParser {
 
 	private static final String COMMENT_INDICATOR = "#";
+	private static final String UNKNOWN_ANNOTATION_TYPE = "Line %s was not recognized as a supported annotation:\n"
+			+ "\t%s";
+
 	BratAnnotationManager manager = new BratAnnotationManager();
 
 	/*
@@ -33,12 +36,14 @@ public class BratAnnotationParser {
 			BufferedReader reader = new BufferedReader(new FileReader(filepath));
 
 			String line;
+			int lineNumber = 0;
 			while ((line = reader.readLine()) != null) {
 				if (line.startsWith(COMMENT_INDICATOR)) {
 					System.out.println("Skip comment: \"" + line + "\"");
 				} else {
-					parseLine(line);
+					parseLine(line, lineNumber);
 				}
+				lineNumber++;
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
@@ -58,7 +63,7 @@ public class BratAnnotationParser {
 	 * 
 	 * @param line
 	 */
-	private void parseLine(String line) {
+	private void parseLine(String line, int lineNumber) {
 		Matcher textMatcher = BratTextBoundAnnotation.pattern.matcher(line);
 
 		if (textMatcher.matches()) {
@@ -81,6 +86,8 @@ public class BratAnnotationParser {
 			parseAttributeAnnotation(line);
 			return;
 		}
+		System.out.println(String.format(UNKNOWN_ANNOTATION_TYPE, lineNumber,
+				line));
 	}
 
 	private BratTextBoundAnnotation parseTextBoundAnnotation(String line) {

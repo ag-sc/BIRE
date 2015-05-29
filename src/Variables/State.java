@@ -3,25 +3,22 @@ package Variables;
 import java.util.ArrayList;
 import java.util.List;
 
+import Corpus.Document;
+
 public class State {
 
+	Document document;
 	List<EntityAnnotation> entities;
-	List<RelationAnnotation> relations;
 	double score;
 
 	public State(State state) {
 		entities = new ArrayList<EntityAnnotation>();
-		relations = new ArrayList<RelationAnnotation>();
 
 		// TODO clone lists
 	}
 
 	public List<EntityAnnotation> getEntities() {
 		return entities;
-	}
-
-	public List<RelationAnnotation> getRelations() {
-		return relations;
 	}
 
 	public double getScore() {
@@ -36,9 +33,10 @@ public class State {
 		for (EntityAnnotation entityAnnotation : entities) {
 			entityAnnotation.propagateChange();
 		}
-		for (RelationAnnotation relationAnnotation : relations) {
-			relationAnnotation.propagateChange();
-		}
 	}
 
+	public String toString() {
+		// TODO document text + annotations
+		return null;
+	}
 }
