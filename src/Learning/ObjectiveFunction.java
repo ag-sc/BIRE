@@ -56,10 +56,10 @@ public class ObjectiveFunction {
 
 	private double overlap(EntityAnnotation entity, EntityAnnotation goldEntity) {
 		int overlap = 0;
-		int b1 = entity.getBegin();
-		int e1 = entity.getEnd();
-		int b2 = goldEntity.getBegin();
-		int e2 = goldEntity.getEnd();
+		int b1 = entity.getBeginTokenIndex();
+		int e1 = entity.getEndTokenIndex();
+		int b2 = goldEntity.getBeginTokenIndex();
+		int e2 = goldEntity.getEndTokenIndex();
 		for (int i = b1; i <= e1; i++) {
 			if (b2 <= i && i <= e2) {
 				overlap++;

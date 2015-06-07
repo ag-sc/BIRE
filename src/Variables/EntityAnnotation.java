@@ -5,18 +5,24 @@ import java.util.Map;
 import java.util.UUID;
 
 import Changes.StateChange;
-import Corpus.Token;
 
 public class EntityAnnotation extends Annotation {
 
 	EntityManager manager;
 
 	String id;
-	int begin;
-	int end;
+	/**
+	 * This number specifies the token index (!! not character offset) of the
+	 * first token that this annotation references.
+	 */
+	int beginTokenIndex;
+	/**
+	 * This number specifies the token index (!! not character offset) of the
+	 * last token that this annotation references.
+	 */
+	int endTokenIndex;
 
 	String text;
-	Token token;
 	EntityType type;
 
 	/**
@@ -48,8 +54,8 @@ public class EntityAnnotation extends Annotation {
 			EntityAnnotation entityAnnotation) {
 		this.manager = manager;
 		this.id = entityAnnotation.id;
-		this.begin = entityAnnotation.begin;
-		this.end = entityAnnotation.end;
+		this.beginTokenIndex = entityAnnotation.beginTokenIndex;
+		this.endTokenIndex = entityAnnotation.endTokenIndex;
 		this.text = entityAnnotation.text;
 		this.type = entityAnnotation.type;
 		this.arguments = new HashMap<String, String>(arguments);
@@ -83,19 +89,9 @@ public class EntityAnnotation extends Annotation {
 			int start, int end, String text) {
 		this.type = entityType;
 		this.arguments = arguments;
-		this.begin = start;
-		this.end = end;
+		this.beginTokenIndex = start;
+		this.endTokenIndex = end;
 		this.text = text;
-	}
-
-	public void setBegin(int begin) {
-		this.begin = begin;
-		change = StateChange.BOUNDARIES_CHANGED;
-	}
-
-	public void setEnd(int end) {
-		this.end = end;
-		change = StateChange.BOUNDARIES_CHANGED;
 	}
 
 	public String getID() {
@@ -110,12 +106,30 @@ public class EntityAnnotation extends Annotation {
 		return type;
 	}
 
-	public int getBegin() {
-		return begin;
+	public int getBeginTokenIndex() {
+		return beginTokenIndex;
 	}
 
-	public int getEnd() {
-		return end;
+	public void setBeginTokenIndex(int beginTokenIndex) {
+		// TODO this handling of changes is not perfectly efficient and allows
+		// errors and inconsistencies if applied wrongly
+		manager.removeFromTokenToEntityMapping(this);
+		this.beginTokenIndex = beginTokenIndex;
+		change = StateChange.BOUNDARIES_CHANGED;
+		manager.addToTokenToEntityMapping(this);
+	}
+
+	public int getEndTokenIndex() {
+		return endTokenIndex;
+	}
+
+	public void setEndTokenIndex(int endTokenIndex) {
+		// TODO this handling of changes is not perfectly efficient and allows
+		// errors and inconsistencies if applied wrongly
+		manager.removeFromTokenToEntityMapping(this);
+		this.endTokenIndex = endTokenIndex;
+		change = StateChange.BOUNDARIES_CHANGED;
+		manager.addToTokenToEntityMapping(this);
 	}
 
 	public Map<String, String> getArguments() {
@@ -132,9 +146,9 @@ public class EntityAnnotation extends Annotation {
 
 	@Override
 	public String toString() {
-		return "EntityAnnotation [id=" + id + ", begin=" + begin + ", end="
-				+ end + ", text=" + text + ", type=" + type.getType()
-				+ ", arguments=" + arguments + "]";
+		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
+				+ ", end=" + endTokenIndex + ", text=" + text + ", type="
+				+ type.getType() + ", arguments=" + arguments + "]";
 	}
 
 	/**

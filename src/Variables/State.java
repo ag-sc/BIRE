@@ -2,6 +2,7 @@ package Variables;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,8 +13,7 @@ public class State {
 
 	EntityManager manager;
 	Document document;
-	Map<Long, Set<String>> tokenToEntities = new HashMap<Long, Set<String>>();
-	
+
 	double score;
 
 	/**
@@ -50,13 +50,11 @@ public class State {
 	}
 
 	public void addEntityAnnotation(EntityAnnotation tokenAnnotation) {
-		// TODO handle token-to-entity mapping
 		manager.addEntityAnnotation(tokenAnnotation);
 	}
 
 	public void removeEntityAnnotation(EntityAnnotation tokenAnnotation) {
-		// TODO handle token-to-entity mapping
-		manager.removeEntityAnnotation(tokenAnnotation.id);
+		manager.removeEntityAnnotation(tokenAnnotation);
 	}
 
 	public EntityAnnotation getNewEntityInstance() {
@@ -64,20 +62,22 @@ public class State {
 		return e;
 	}
 
-	public boolean tokenHasAnnotation(Token sampledToken) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean tokenHasAnnotation(Token token) {
+		return manager.tokenHasAnnotation(token);
 	}
 
-	public EntityAnnotation getAnnotationForToken(Token sampledToken) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<String> getAnnotationForToken(Token token) {
+		return manager.getAnnotationForToken(token);
 	}
 
 	public String toString() {
 		StringBuilder builder = new StringBuilder(document.getContent());
 		// TODO insert annotations into content
 		return builder.toString();
+	}
+
+	public EntityAnnotation getEntity(String entityID) {
+		return manager.getEntity(entityID);
 	}
 
 }

@@ -3,7 +3,7 @@ package Corpus;
 
 public class Token {
 
-	long index;
+	int index;
 	int start, stop;
 	String text;
 
@@ -19,7 +19,7 @@ public class Token {
 		return text;
 	}
 
-	public long getIndex() {
+	public int getIndex() {
 		return index;
 	}
 	

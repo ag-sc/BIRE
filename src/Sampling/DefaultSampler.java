@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 
 import Changes.StateChange;
 import Corpus.Token;
@@ -97,7 +98,12 @@ public class DefaultSampler implements Sampler {
 				// add annotation with random type
 				addRandomAnnotation(sampledToken, generatedState);
 			} else {
-				EntityAnnotation tokenAnnotation = state.getAnnotationForToken(sampledToken);
+				// Tokens may be referenced/annotated by different entities
+				List<String> linkedEntities = new ArrayList<String>(
+						state.getAnnotationForToken(sampledToken));
+				// pick one at random
+				EntityAnnotation tokenAnnotation = state
+						.getEntity(getRandomElement(linkedEntities));
 				// if annotation exists
 				// choose a way to alter the state
 				StateChange stateChange = sampleStateChange();
@@ -135,11 +141,9 @@ public class DefaultSampler implements Sampler {
 
 		EntityType sampledType = sampleEntityType(state);
 
-		tokenAnnotation.setBegin(sampledToken.getBegin());
-		tokenAnnotation.setEnd(sampledToken.getEnd());
+		tokenAnnotation.setBeginTokenIndex(sampledToken.getIndex());
+		tokenAnnotation.setEndTokenIndex(sampledToken.getIndex());
 		tokenAnnotation.setType(sampledType);
-		// TODO let state handle bidirectional mapping between tokens
-		// and states to improve consistency
 		state.addEntityAnnotation(tokenAnnotation);
 	}
 
@@ -177,37 +181,35 @@ public class DefaultSampler implements Sampler {
 	 * @param tokenAnnotation
 	 */
 	private void removeRandomArgument(EntityAnnotation tokenAnnotation) {
-		Map<String, String> arguments = tokenAnnotation
-				.getArguments();
+		Map<String, String> arguments = tokenAnnotation.getArguments();
 		List<String> roles = new ArrayList<String>(arguments.keySet());
 		String sampledRole = getRandomElement(roles);
 		tokenAnnotation.removeArgument(sampledRole);
 	}
 
 	private void changeBoundaries(EntityAnnotation tokenAnnotation, State state) {
-		// TODO are the boundaries of Annotation on character or token level?
+		// the boundaries of Annotation are on token level!
 		int direction = (int) (Math.random() * 4);
 		switch (direction) {
 		case 0:
 			// expand left
-			tokenAnnotation.setBegin(tokenAnnotation.getBegin() - 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() - 1);
 			break;
 		case 1:
 			// contract left
-			tokenAnnotation.setBegin(tokenAnnotation.getBegin() + 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() + 1);
 			break;
 		case 2:
 			// expand right
-			tokenAnnotation.setEnd(tokenAnnotation.getEnd() + 1);
+			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
 			break;
 		case 3:
 			// contract right
-			tokenAnnotation.setEnd(tokenAnnotation.getEnd() - 1);
+			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
 			break;
 		default:
 			break;
 		}
-		// TODO mapping between tokens/annotations need to be update
 	}
 
 	/**
