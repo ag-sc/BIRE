@@ -4,74 +4,65 @@ import java.util.List;
 
 import Corpus.Document;
 import Sampling.DefaultSampler;
-import Variables.Annotation;
 import Variables.State;
 
 public class DefaultLearner implements Learner {
 
 	Model model;
-	
+
 	int k;
-	
+
 	int steps;
-	
+
 	Scorer scorer;
-	
+
 	double alpha;
-	
+
 	ObjectiveFunction objective;
-	
+
 	public void train(List<Document> documents, List<State> states) {
-		
+
 		scorer = new Scorer();
-		
+
 		model = new Model();
-		
+
 		scorer.setModel(model);
 
 		Document document;
 		State goldState;
-		
+
 		DefaultSampler sampler = new DefaultSampler();
-		
-		for (int i =0; i < documents.size(); i++)
-		{
+
+		for (int i = 0; i < documents.size(); i++) {
 			document = documents.get(i);
-			
+
 			goldState = states.get(i);
-			
+
 			State state = generateInitialAnnotations(document);
-			
+
 			List<Vector> featuresState = null;
-			
-			for (int j=0; j < steps; j++)
-			{	
+
+			for (int j = 0; j < steps; j++) {
 				State next_state = sampler.getNextState(state, scorer);
-					if (objective.score(next_state, goldState) > objective.score(state, goldState))
-					{
-						if (next_state.getScore() < state.getScore())
-						{
-							// model.update(featuresState, alpha);
-						}
-						
+				if (objective.score(next_state, goldState) > objective.score(
+						state, goldState)) {
+					if (next_state.getScore() < state.getScore()) {
+						// model.update(featuresState, alpha);
 					}
-					else
-					{
-						if (objective.score(next_state, goldState) < objective.score(state, goldState))
-						{
-							if (next_state.getScore() > state.getScore())
-							{
-								// model.update(featuresState), alpha);
-							}
-							
+
+				} else {
+					if (objective.score(next_state, goldState) < objective
+							.score(state, goldState)) {
+						if (next_state.getScore() > state.getScore()) {
+							// model.update(featuresState), alpha);
 						}
+
 					}
+				}
 			}
-			
+
 		}
-		
-		
-		
+
 	}
 
 	public Model getModel() {
@@ -103,6 +94,4 @@ public class DefaultLearner implements Learner {
 		return null;
 	}
 
-	
-	
 }

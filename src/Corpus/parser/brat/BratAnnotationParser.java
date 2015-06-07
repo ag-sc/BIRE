@@ -30,11 +30,11 @@ public class BratAnnotationParser {
 	 * Collect all entity/relation types and their frequencies save to separate
 	 * file
 	 */
-	public BratAnnotationManager parseFile(String filepath) {
+	public BratAnnotatedDocument parseFile(String filepath) {
 		try {
-
 			BufferedReader reader = new BufferedReader(new FileReader(filepath));
 
+			StringBuilder contentBuilder = new StringBuilder();
 			String line;
 			int lineNumber = 0;
 			while ((line = reader.readLine()) != null) {
@@ -44,15 +44,21 @@ public class BratAnnotationParser {
 					parseLine(line, lineNumber);
 				}
 				lineNumber++;
+				contentBuilder.append(line);
+				contentBuilder.append("\n");
 			}
+			// remove last \n occurrence
+			contentBuilder.deleteCharAt(contentBuilder.length() - 1);
 			reader.close();
+			BratAnnotatedDocument doc = new BratAnnotatedDocument(
+					contentBuilder.toString(), manager.getAnnotations());
+			return doc;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return manager;
+		return null;
 	}
 
 	/**
