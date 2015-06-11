@@ -1,12 +1,15 @@
 package Sampling;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
+
+import javax.swing.text.NumberFormatter;
 
 import Changes.StateChange;
 import Corpus.Token;
@@ -17,29 +20,39 @@ import Variables.State;
 
 public class DefaultSampler implements Sampler {
 
-	int numberStates;
+	private int numberOfStates;
 	/**
 	 * This variable is used to determine if a state with a lower score should
-	 * be accepted nonetheless. This value should start with a value < 1 and
+	 * be accepted nonetheless. This variable should start with a value < 1 and
 	 * decrease during the training. This allows to accept worse states more
 	 * often at the beginning of the training than at the end.
 	 */
-	double acceptanceFactor = 1;
+	private double acceptanceFactor = 0.5;
+
+	/**
+	 * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
+	 * generated States in each sampling step.
+	 * 
+	 * @param numberOfStates
+	 */
+	public DefaultSampler(int numberOfStates) {
+		this.numberOfStates = numberOfStates;
+	}
 
 	public State getNextState(State state, Scorer scorer) {
-		// a set of k next states (List of Annotations)
 
-		Map<State, Double> next_states;
+		Map<State, Double> nextStates = generateNextStates(state,
+				numberOfStates, scorer);
+		System.out.println("generated states:");
+		for (State s : nextStates.keySet()) {
+			System.out.println("["
+					+ String.valueOf(s.getScore()).substring(0, 5) + "]: " + s);
+		}
+		State nextState = drawRandomlyFrom(nextStates);
 
-		State next_state;
-
-		next_states = generateNextStates(state, numberStates, scorer);
-
-		next_state = drawRandomlyFrom(next_states);
-
-		if (accept(next_state, state)) {
-			next_state.propagateChange();
-			return next_state;
+		if (accept(nextState, state)) {
+			nextState.propagateChange();
+			return nextState;
 		} else {
 			return state;
 		}
@@ -47,22 +60,26 @@ public class DefaultSampler implements Sampler {
 	}
 
 	private boolean accept(State nextState, State state) {
-		if (nextState.getScore() > state.getScore()) {
-			// if new state is better, always accept
-			return true;
-		} else {
-			/*-
-			 * if new state is worse, accept with probability p(accept).
-			 * p(accept) = exp(-(scoreNew - scoreOld)/acceptanceFactor)
-			 */
-			double pNext = Math.exp(-(nextState.getScore() - state.getScore()
-					/ acceptanceFactor));
-			if (Math.random() < pNext)
-				return true;
-			else
-				return false;
-		}
+		return true;
 	}
+
+	// private boolean accept(State nextState, State state) {
+	// if (nextState.getScore() > state.getScore()) {
+	// // if new state is better, always accept
+	// return true;
+	// } else {
+	// /*-
+	// * if new state is worse, accept with probability p(accept).
+	// * p(accept) = exp(-(scoreNew - scoreOld)/acceptanceFactor)
+	// */
+	// double pNext = Math.exp(-(nextState.getScore() - state.getScore()
+	// / acceptanceFactor));
+	// if (Math.random() < pNext)
+	// return true;
+	// else
+	// return false;
+	// }
+	// }
 
 	private State drawRandomlyFrom(Map<State, Double> nextStates) {
 		Random rand = new Random();
@@ -84,66 +101,77 @@ public class DefaultSampler implements Sampler {
 		return listOfStates.get(Math.max(0, i - 1)).getKey();
 	}
 
-	private Map<State, Double> generateNextStates(State state,
-			int numberStates, Scorer scorer) {
+	private Map<State, Double> generateNextStates(State previousState,
+			int numberOfStates, Scorer scorer) {
 		Map<State, Double> generatedStates = new HashMap<State, Double>();
-		for (int i = 0; i < numberStates; i++) {
-			State generatedState = new State(state);
+		for (int i = 0; i < numberOfStates; i++) {
+			State generatedState = new State(previousState);
 			List<Token> tokens = generatedState.getDocument().getTokens();
 			// sample token
 			Token sampledToken = getRandomElement(tokens);
 			// get annotation for token
 			// if no annotation
-			if (!state.tokenHasAnnotation(sampledToken)) {
+			if (!generatedState.tokenHasAnnotation(sampledToken)) {
 				// add annotation with random type
+				System.out.println(generatedState.id + ": add annotation.");
 				addRandomAnnotation(sampledToken, generatedState);
 			} else {
 				// Tokens may be referenced/annotated by different entities
 				List<String> linkedEntities = new ArrayList<String>(
-						state.getAnnotationForToken(sampledToken));
+						generatedState.getAnnotationForToken(sampledToken));
 				// pick one at random
-				EntityAnnotation tokenAnnotation = state
+				EntityAnnotation tokenAnnotation = generatedState
 						.getEntity(getRandomElement(linkedEntities));
 				// if annotation exists
 				// choose a way to alter the state
 				StateChange stateChange = sampleStateChange();
 				switch (stateChange) {
 				case ANNOTATION_DELETED:
-					// TODO state as handler of Token/entity mapping for
-					// consistency
+					// TODO delete annotation completely or only from this token
+					// (this might require to split an annotation in to separate
+					// annotations)
+					System.out.println(generatedState.id
+							+ ": delete annotation.");
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;
 				case TYPE_CHANGED:
+					System.out.println(generatedState.id
+							+ ": change annotation type.");
 					EntityType sampledType = sampleEntityType(generatedState);
 					tokenAnnotation.setType(sampledType);
 					break;
 				case ARGUMENT_ADDED:
+					System.out.println(generatedState.id
+							+ ": add annotation argument.");
 					addRandomArgument(tokenAnnotation, generatedState);
 					break;
 				case ARGUMENT_REMOVED:
+					System.out.println(generatedState.id
+							+ ": remove annotation argument.");
 					removeRandomArgument(tokenAnnotation);
 					break;
 				case BOUNDARIES_CHANGED:
+					System.out.println(generatedState.id
+							+ ": change annotation boundaries.");
 					changeBoundaries(tokenAnnotation, generatedState);
 					break;
 				}
 			}
 
 			double score = scorer.score(generatedState);
-			generatedState.setScore(score);
-			generatedStates.put(state, score);
+			// generatedState.setScore(score); // this is already done in
+			// scorer.score(...)
+			generatedStates.put(generatedState, score);
 		}
 		return generatedStates;
 	}
 
 	private void addRandomAnnotation(Token sampledToken, State state) {
-		EntityAnnotation tokenAnnotation = state.getNewEntityInstance();
+		EntityAnnotation tokenAnnotation = state.getNewEntityInstanceForState();
 
 		EntityType sampledType = sampleEntityType(state);
-
-		tokenAnnotation.setBeginTokenIndex(sampledToken.getIndex());
-		tokenAnnotation.setEndTokenIndex(sampledToken.getIndex());
-		tokenAnnotation.setType(sampledType);
+		tokenAnnotation.init(sampledType, sampledToken.getIndex(),
+				sampledToken.getIndex());
 		state.addEntityAnnotation(tokenAnnotation);
 	}
 
@@ -165,12 +193,16 @@ public class DefaultSampler implements Sampler {
 		// remove already assigned roles
 		assignedRoles.removeAll(tokenAnnotation.getArguments().keySet());
 
-		String sampledRole = getRandomElement(assignedRoles);
-
-		List<EntityAnnotation> entities = new ArrayList<EntityAnnotation>(
-				state.getEntities());
-		EntityAnnotation sampledEntity = getRandomElement(entities);
-		tokenAnnotation.addArgument(sampledRole, sampledEntity.getID());
+		if (!assignedRoles.isEmpty()) {
+			String sampledRole = getRandomElement(assignedRoles);
+			List<EntityAnnotation> entities = new ArrayList<EntityAnnotation>(
+					state.getEntities());
+			entities.remove(tokenAnnotation);
+			if (!entities.isEmpty()) {
+				EntityAnnotation sampledEntity = getRandomElement(entities);
+				tokenAnnotation.addArgument(sampledRole, sampledEntity.getID());
+			}
+		}
 	}
 
 	/**
@@ -181,31 +213,39 @@ public class DefaultSampler implements Sampler {
 	 * @param tokenAnnotation
 	 */
 	private void removeRandomArgument(EntityAnnotation tokenAnnotation) {
-		Map<String, String> arguments = tokenAnnotation.getArguments();
-		List<String> roles = new ArrayList<String>(arguments.keySet());
-		String sampledRole = getRandomElement(roles);
-		tokenAnnotation.removeArgument(sampledRole);
+		if (!tokenAnnotation.getArguments().isEmpty()) {
+			Map<String, String> arguments = tokenAnnotation.getArguments();
+			List<String> roles = new ArrayList<String>(arguments.keySet());
+			if (!roles.isEmpty()) {
+				String sampledRole = getRandomElement(roles);
+				tokenAnnotation.removeArgument(sampledRole);
+			}
+		}
 	}
 
 	private void changeBoundaries(EntityAnnotation tokenAnnotation, State state) {
-		// the boundaries of Annotation are on token level!
+		// the boundaries of annotations are on token level!
 		int direction = (int) (Math.random() * 4);
 		switch (direction) {
 		case 0:
 			// expand left
-			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() - 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
+					.getBeginTokenIndex() - 1);
 			break;
 		case 1:
 			// contract left
-			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() + 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
+					.getBeginTokenIndex() + 1);
 			break;
 		case 2:
 			// expand right
-			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
+			tokenAnnotation
+					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
 			break;
 		case 3:
 			// contract right
-			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
+			tokenAnnotation
+					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
 			break;
 		default:
 			break;
@@ -248,6 +288,8 @@ public class DefaultSampler implements Sampler {
 	 * @return
 	 */
 	private <T> T getRandomElement(List<T> list) {
+		if (list.isEmpty())
+			return null;
 		return list.get((int) (Math.random() * list.size()));
 	}
 }

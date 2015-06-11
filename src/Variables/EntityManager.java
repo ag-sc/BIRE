@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import Corpus.Token;
 
@@ -18,8 +19,16 @@ public class EntityManager {
 	private Map<String, EntityAnnotation> entities = new HashMap<String, EntityAnnotation>();;
 	private Map<Integer, Set<String>> tokenToEntities = new HashMap<Integer, Set<String>>();
 
+	private static final String GENERATED_ID_PREFIX = "G";
+	private int idIndex = 0;
+
+	public EntityManager() {
+	}
+
 	public EntityManager(EntityManager manager) {
-		for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
+		this();
+		this.idIndex = manager.idIndex;
+		for (EntityAnnotation entityAnnotation : manager.entities.values()) {
 			entities.put(entityAnnotation.id, new EntityAnnotation(this,
 					entityAnnotation));
 		}
@@ -28,7 +37,11 @@ public class EntityManager {
 		}
 	}
 
-	public EntityManager() {
+	public EntityManager(Collection<EntityAnnotation> initialEntities) {
+		this();
+		for (EntityAnnotation e : initialEntities) {
+			addEntityAnnotation(e);
+		}
 	}
 
 	public void addEntityAnnotation(EntityAnnotation entity) {
@@ -90,6 +103,17 @@ public class EntityManager {
 			}
 			entities.add(entityAnnotation.getID());
 		}
+	}
+
+	public String generateID() {
+		String id = GENERATED_ID_PREFIX + idIndex;
+		assert !entities.containsKey(id);
+		idIndex++;
+		return id;
+	}
+
+	public Map<Integer, Set<String>> getTokenToEntityMapping() {
+		return tokenToEntities;
 	}
 
 }

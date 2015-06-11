@@ -1,5 +1,6 @@
 package Variables;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import Changes.StateChange;
@@ -7,7 +8,7 @@ import Factors.Factor;
 
 public abstract class Annotation {
 
-	Set<Factor> Factors;
+	Set<Factor> Factors = new HashSet<Factor>();
 
 	StateChange change;
 

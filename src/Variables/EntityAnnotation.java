@@ -2,14 +2,12 @@ package Variables;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import Changes.StateChange;
 
 public class EntityAnnotation extends Annotation {
 
 	EntityManager manager;
-
 	String id;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
@@ -22,7 +20,7 @@ public class EntityAnnotation extends Annotation {
 	 */
 	int endTokenIndex;
 
-	String text;
+//	String text;
 	EntityType type;
 
 	/**
@@ -34,7 +32,7 @@ public class EntityAnnotation extends Annotation {
 	Map<String, String> arguments;
 
 	public EntityAnnotation(EntityManager manager) {
-		this(manager, UUID.randomUUID().toString());
+		this(manager, manager.generateID());
 	}
 
 	public EntityAnnotation(EntityManager manager, String id) {
@@ -56,9 +54,9 @@ public class EntityAnnotation extends Annotation {
 		this.id = entityAnnotation.id;
 		this.beginTokenIndex = entityAnnotation.beginTokenIndex;
 		this.endTokenIndex = entityAnnotation.endTokenIndex;
-		this.text = entityAnnotation.text;
+//		this.text = entityAnnotation.text;
 		this.type = entityAnnotation.type;
-		this.arguments = new HashMap<String, String>(arguments);
+		this.arguments = new HashMap<String, String>(entityAnnotation.arguments);
 	}
 
 	public void setManager(EntityManager manager) {
@@ -73,8 +71,8 @@ public class EntityAnnotation extends Annotation {
 	 * @param end
 	 * @param text
 	 */
-	public void init(EntityType entityType, int start, int end, String text) {
-		init(entityType, new HashMap<String, String>(), start, end, text);
+	public void init(EntityType entityType, int start, int end) {
+		init(entityType, new HashMap<String, String>(), start, end);
 	}
 
 	/**
@@ -86,12 +84,12 @@ public class EntityAnnotation extends Annotation {
 	 * @param text
 	 */
 	public void init(EntityType entityType, Map<String, String> arguments,
-			int start, int end, String text) {
+			int start, int end) {
 		this.type = entityType;
 		this.arguments = arguments;
 		this.beginTokenIndex = start;
 		this.endTokenIndex = end;
-		this.text = text;
+//		this.text = text;
 	}
 
 	public String getID() {
@@ -115,8 +113,8 @@ public class EntityAnnotation extends Annotation {
 		// errors and inconsistencies if applied wrongly
 		manager.removeFromTokenToEntityMapping(this);
 		this.beginTokenIndex = beginTokenIndex;
-		change = StateChange.BOUNDARIES_CHANGED;
 		manager.addToTokenToEntityMapping(this);
+		change = StateChange.BOUNDARIES_CHANGED;
 	}
 
 	public int getEndTokenIndex() {
@@ -126,10 +124,11 @@ public class EntityAnnotation extends Annotation {
 	public void setEndTokenIndex(int endTokenIndex) {
 		// TODO this handling of changes is not perfectly efficient and allows
 		// errors and inconsistencies if applied wrongly
+		
 		manager.removeFromTokenToEntityMapping(this);
 		this.endTokenIndex = endTokenIndex;
-		change = StateChange.BOUNDARIES_CHANGED;
 		manager.addToTokenToEntityMapping(this);
+		change = StateChange.BOUNDARIES_CHANGED;
 	}
 
 	public Map<String, String> getArguments() {
@@ -147,7 +146,7 @@ public class EntityAnnotation extends Annotation {
 	@Override
 	public String toString() {
 		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
-				+ ", end=" + endTokenIndex + ", text=" + text + ", type="
+				+ ", end=" + endTokenIndex + ", type="
 				+ type.getType() + ", arguments=" + arguments + "]";
 	}
 

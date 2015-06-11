@@ -1,7 +1,7 @@
 package Corpus;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import Variables.EntityAnnotation;
 import Variables.EntityManager;
@@ -36,6 +36,10 @@ public class Document {
 
 	public Corpus getCorpus() {
 		return corpus;
+	}
+
+	public Collection<EntityAnnotation> getGoldEntities() {
+		return goldEntityManager.getAllEntities();
 	}
 
 }

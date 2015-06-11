@@ -4,15 +4,23 @@ package Corpus;
 public class Token {
 
 	int index;
-	int start, stop;
+	int from, to;
 	String text;
 
-	public int getBegin() {
-		return start;
+	public Token(int index, int start, int stop, String text) {
+		super();
+		this.index = index;
+		this.from = start;
+		this.to = stop;
+		this.text = text;
 	}
 
-	public int getEnd() {
-		return stop;
+	public int getFrom() {
+		return from;
+	}
+
+	public int getTo() {
+		return to;
 	}
 
 	public String getText() {
@@ -21,6 +29,12 @@ public class Token {
 
 	public int getIndex() {
 		return index;
+	}
+
+	@Override
+	public String toString() {
+		return "Token [" + index + ": " + text + " (" + from
+				+ "-" + to + ")]";
 	}
 	
 	// public EntityAnnotation getAnnotation() {

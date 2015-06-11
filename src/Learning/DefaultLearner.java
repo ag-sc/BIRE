@@ -8,6 +8,8 @@ import Variables.State;
 
 public class DefaultLearner implements Learner {
 
+	private static final int NUMBER_OF_GENERATED_STATES_PER_STEP = 10;
+
 	Model model;
 
 	int k;
@@ -31,7 +33,8 @@ public class DefaultLearner implements Learner {
 		Document document;
 		State goldState;
 
-		DefaultSampler sampler = new DefaultSampler();
+		DefaultSampler sampler = new DefaultSampler(
+				NUMBER_OF_GENERATED_STATES_PER_STEP);
 
 		for (int i = 0; i < documents.size(); i++) {
 			document = documents.get(i);

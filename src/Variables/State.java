@@ -1,8 +1,8 @@
 package Variables;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,10 +11,15 @@ import Corpus.Token;
 
 public class State {
 
-	EntityManager manager;
-	Document document;
+	public final String id;
+	private EntityManager manager;
+	private Document document;
 
-	double score;
+	private double score;
+
+	private State() {
+		this.id = String.valueOf(Math.random()).substring(2, 7);
+	}
 
 	/**
 	 * This Copy Constructor creates an exact copy of itself including all
@@ -23,8 +28,21 @@ public class State {
 	 * @param state
 	 */
 	public State(State state) {
-		this.manager = new EntityManager(manager);
+		this();
+		this.manager = new EntityManager(state.manager);
 		this.document = state.document;
+	}
+
+	public State(Document document) {
+		this();
+		this.document = document;
+		this.manager = new EntityManager();
+	}
+
+	public State(Document document, Collection<EntityAnnotation> initialEntities) {
+		this();
+		this.document = document;
+		this.manager = new EntityManager(initialEntities);
 	}
 
 	public Collection<EntityAnnotation> getEntities() {
@@ -57,7 +75,13 @@ public class State {
 		manager.removeEntityAnnotation(tokenAnnotation);
 	}
 
-	public EntityAnnotation getNewEntityInstance() {
+	/**
+	 * This method creates a new Entity with the EntityManager of this State as
+	 * a parameter.
+	 * 
+	 * @return
+	 */
+	public EntityAnnotation getNewEntityInstanceForState() {
 		EntityAnnotation e = new EntityAnnotation(manager);
 		return e;
 	}
@@ -70,14 +94,56 @@ public class State {
 		return manager.getAnnotationForToken(token);
 	}
 
-	public String toString() {
-		StringBuilder builder = new StringBuilder(document.getContent());
-		// TODO insert annotations into content
-		return builder.toString();
-	}
-
 	public EntityAnnotation getEntity(String entityID) {
 		return manager.getEntity(entityID);
 	}
 
+	// <T1: tumor necrosis <T2: factor :T1>
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("State: ");
+		builder.append(id);
+		builder.append("| ");
+		for (Token t : document.getTokens()) {
+			Set<String> entities = manager.getAnnotationForToken(t);
+			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
+			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
+			for (String entityID : entities) {
+				EntityAnnotation e = manager.getEntity(entityID);
+				if (e.getBeginTokenIndex() == t.getIndex())
+					begin.add(e);
+				if (e.getEndTokenIndex() == t.getIndex())
+					end.add(e);
+			}
+			if (!begin.isEmpty())
+				buildPrefix(builder, begin);
+			builder.append(t.getText());
+			builder.append(" ");
+			if (!end.isEmpty())
+				buildSuffix(builder, end);
+		}
+		return builder.toString();
+	}
+
+	private void buildPrefix(StringBuilder builder, List<EntityAnnotation> begin) {
+		builder.append("[");
+		for (EntityAnnotation e : begin) {
+			builder.append(e.getID());
+			builder.append(":");
+		}
+		builder.append(" ");
+	}
+
+	private void buildSuffix(StringBuilder builder, List<EntityAnnotation> end) {
+		for (EntityAnnotation e : end) {
+			builder.append(":");
+			builder.append(e.getID());
+		}
+		builder.append("]");
+		builder.append(" ");
+	}
+
+	public Map<Integer, Set<String>> getTokenToEntityMapping() {
+		return manager.getTokenToEntityMapping();
+	}
 }

@@ -25,9 +25,6 @@ public class BratAnnotatedDocument {
 		return content;
 	}
 
-	public String contentToString() {
-		return content;
-	}
 
 	public String annotationsToString() {
 		StringBuilder builder = new StringBuilder();

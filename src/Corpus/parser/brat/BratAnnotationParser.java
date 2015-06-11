@@ -1,6 +1,7 @@
 package Corpus.parser.brat;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,28 +32,31 @@ public class BratAnnotationParser {
 	 * Collect all entity/relation types and their frequencies save to separate
 	 * file
 	 */
-	public BratAnnotatedDocument parseFile(String filepath) {
+	public BratAnnotatedDocument parseFile(String annotationPath,
+			String textPath) {
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(filepath));
+			BufferedReader annotationReader = new BufferedReader(
+					new FileReader(annotationPath));
 
-			StringBuilder contentBuilder = new StringBuilder();
 			String line;
 			int lineNumber = 0;
-			while ((line = reader.readLine()) != null) {
+			while ((line = annotationReader.readLine()) != null) {
 				if (line.startsWith(COMMENT_INDICATOR)) {
 					System.out.println("Skip comment: \"" + line + "\"");
 				} else {
 					parseLine(line, lineNumber);
 				}
 				lineNumber++;
-				contentBuilder.append(line);
-				contentBuilder.append("\n");
 			}
-			// remove last \n occurrence
-			contentBuilder.deleteCharAt(contentBuilder.length() - 1);
-			reader.close();
-			BratAnnotatedDocument doc = new BratAnnotatedDocument(
-					contentBuilder.toString(), manager.getAnnotations());
+			annotationReader.close();
+
+			// Read Text
+			Scanner scanner = new Scanner(new File(textPath));
+			String content = scanner.useDelimiter("\\Z").next();
+			scanner.close();
+			
+			BratAnnotatedDocument doc = new BratAnnotatedDocument(content,
+					manager.getAnnotations());
 			return doc;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
