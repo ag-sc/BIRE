@@ -13,6 +13,7 @@ import Corpus.BratCorpus;
 import Corpus.Corpus;
 import Corpus.Document;
 import Corpus.Token;
+import Learning.ObjectiveFunction;
 import Learning.Scorer;
 import Variables.EntityAnnotation;
 import Variables.EntityManager;
@@ -25,12 +26,12 @@ public class TestSampling {
 		List<Document> documents = corpus.getDocuments();
 		Document doc = documents.get(0);
 		State initialState = new State(doc);
-//		State initialState = new State(doc, doc.getGoldEntities());
+		State goldState = new State(doc, doc.getGoldEntities());
 		System.out.println("initialState: " + initialState);
 		Scorer scorer = new Scorer();
 		DefaultSampler sampler = new DefaultSampler(10);
 		State nextState = initialState;
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 2; i++) {
 			System.out.println("--------- Step: " + i + " ----------");
 			nextState = sampler.getNextState(nextState, scorer);
 			System.out.println("Next state:");
@@ -44,9 +45,12 @@ public class TestSampling {
 			}
 		}
 
+		ObjectiveFunction of = new ObjectiveFunction();
+		double score = of.score(nextState, goldState);
+		System.out.println("Score: " + score);
 	}
 
-	private static Corpus getDummyData() {
+	public static Corpus getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
 		AnnotationConfig config = configReader
 				.readConfig("res/annotation.conf");

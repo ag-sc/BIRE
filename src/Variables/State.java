@@ -2,16 +2,21 @@ package Variables;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import Corpus.Document;
 import Corpus.Token;
+import Factors.Factor;
+import Learning.Model;
+import Templates.Template;
 
 public class State {
 
 	public final String id;
+	public State goldState;
 	private EntityManager manager;
 	private Document document;
 
@@ -57,11 +62,11 @@ public class State {
 		this.score = score;
 	}
 
-	public void propagateChange() {
-		for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
-			entityAnnotation.propagateChange();
-		}
-	}
+//	public void propagateChange() {
+//		for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
+//			entityAnnotation.propagateChange();
+//		}
+//	}
 
 	public Document getDocument() {
 		return document;
@@ -145,5 +150,31 @@ public class State {
 
 	public Map<Integer, Set<String>> getTokenToEntityMapping() {
 		return manager.getTokenToEntityMapping();
+	}
+
+	public void unroll(Model model) {
+		for (Template t : model.getTemplates()) {
+			t.applyTo(this);
+		}
+	}
+
+	public double score() {
+		double score = 0;
+		for (EntityAnnotation e : manager.getAllEntities()) {
+			// TODO factors may contribute multiple times to the score
+			for (Factor f : e.getFactors()) {
+				score *= f.score();
+			}
+		}
+		return score;
+	}
+
+	public Collection<Factor> getFactors() {
+		Set<Factor> factors = new HashSet<Factor>();
+		for (EntityAnnotation e : manager.getAllEntities()) {
+			factors.addAll(e.getFactors());
+		}
+
+		return factors;
 	}
 }

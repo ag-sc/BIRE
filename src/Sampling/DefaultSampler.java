@@ -51,7 +51,7 @@ public class DefaultSampler implements Sampler {
 		State nextState = drawRandomlyFrom(nextStates);
 
 		if (accept(nextState, state)) {
-			nextState.propagateChange();
+//			nextState.propagateChange();
 			return nextState;
 		} else {
 			return state;

@@ -5,19 +5,21 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import Variables.Argument;
 import Variables.EntityType;
 
 public class BratConfigReader {
 
+	private final Logger log = Logger.getLogger(BratConfigReader.class
+			.getSimpleName());
 	private static final String COMMENT_INDICATOR = "#";
 	private static final String SEPARATION_INDICATOR = "-";
 	private static final String ENTITY_SECTION = "[entities]";

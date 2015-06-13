@@ -50,14 +50,16 @@ public class DefaultLearner implements Learner {
 				if (objective.score(next_state, goldState) > objective.score(
 						state, goldState)) {
 					if (next_state.getScore() < state.getScore()) {
-						// model.update(featuresState, alpha);
+						model.update(next_state, alpha);
+						model.update(state, -alpha);
 					}
 
 				} else {
 					if (objective.score(next_state, goldState) < objective
 							.score(state, goldState)) {
 						if (next_state.getScore() > state.getScore()) {
-							// model.update(featuresState), alpha);
+							model.update(state, alpha);
+							model.update(next_state, -alpha);
 						}
 
 					}

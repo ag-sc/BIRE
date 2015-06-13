@@ -1,23 +1,13 @@
 package Variables;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import Changes.StateChange;
 import Factors.Factor;
+import Templates.Template;
 
 public abstract class Annotation {
 
-	Set<Factor> Factors = new HashSet<Factor>();
-
-	StateChange change;
-
-	public void propagateChange() {
-		if (change != null) {
-			for (Factor factor : Factors) {
-				factor.propagateChange(this);
-			}
-		}
-		change = null;
-	}
 }

@@ -1,11 +1,33 @@
 package Variables;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import Changes.StateChange;
+import Factors.Factor;
+import Templates.Template;
 
 public class EntityAnnotation extends Annotation {
+
+	Map<Template, List<Factor>> factors = new HashMap<Template, List<Factor>>();
+
+	StateChange change;
+
+	// public void propagateChange() {
+	// if (change != null) {
+	// for (Factor factor : factors.values()) {
+	// factor.propagateChange(this);
+	// }
+	// }
+	// change = null;
+	// }
+
+	public Collection<Factor> getFactors() {
+		// TODO return all factors from Map
+		return null;
+	}
 
 	EntityManager manager;
 	String id;
@@ -20,7 +42,7 @@ public class EntityAnnotation extends Annotation {
 	 */
 	int endTokenIndex;
 
-//	String text;
+	// String text;
 	EntityType type;
 
 	/**
@@ -54,7 +76,7 @@ public class EntityAnnotation extends Annotation {
 		this.id = entityAnnotation.id;
 		this.beginTokenIndex = entityAnnotation.beginTokenIndex;
 		this.endTokenIndex = entityAnnotation.endTokenIndex;
-//		this.text = entityAnnotation.text;
+		// this.text = entityAnnotation.text;
 		this.type = entityAnnotation.type;
 		this.arguments = new HashMap<String, String>(entityAnnotation.arguments);
 	}
@@ -89,7 +111,7 @@ public class EntityAnnotation extends Annotation {
 		this.arguments = arguments;
 		this.beginTokenIndex = start;
 		this.endTokenIndex = end;
-//		this.text = text;
+		// this.text = text;
 	}
 
 	public String getID() {
@@ -124,7 +146,7 @@ public class EntityAnnotation extends Annotation {
 	public void setEndTokenIndex(int endTokenIndex) {
 		// TODO this handling of changes is not perfectly efficient and allows
 		// errors and inconsistencies if applied wrongly
-		
+
 		manager.removeFromTokenToEntityMapping(this);
 		this.endTokenIndex = endTokenIndex;
 		manager.addToTokenToEntityMapping(this);
@@ -146,8 +168,8 @@ public class EntityAnnotation extends Annotation {
 	@Override
 	public String toString() {
 		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
-				+ ", end=" + endTokenIndex + ", type="
-				+ type.getType() + ", arguments=" + arguments + "]";
+				+ ", end=" + endTokenIndex + ", type=" + type.getType()
+				+ ", arguments=" + arguments + "]";
 	}
 
 	/**
@@ -161,4 +183,7 @@ public class EntityAnnotation extends Annotation {
 		return manager.getEntity(id);
 	}
 
+	public void add(Template template, List<Factor> factors) {
+		this.factors.put(template, factors);
+	}
 }

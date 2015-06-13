@@ -4,7 +4,7 @@ import Variables.State;
 
 public class Scorer {
 
-	Model model;
+	private Model model;
 
 	/**
 	 * Computes the score of this state according to the trained model. The
@@ -16,7 +16,10 @@ public class Scorer {
 	 */
 	public double score(State state) {
 		// TODO Scorer assigns random score to states.
-		double score = Math.random();
+		state.unroll(model);
+		
+		double score = state.score();
+		
 		state.setScore(score);
 		return score;
 	}

@@ -1,9 +1,7 @@
 package Factors;
 
-import Changes.StateChange;
 import Learning.Vector;
 import Templates.Template;
-import Variables.Annotation;
 
 public class Factor {
 
@@ -16,10 +14,26 @@ public class Factor {
 		return features.multiply(template.getWeightVector());
 	}
 
-	public void propagateChange(Annotation annotation) {
-		
-		template.recompute(annotation, features);
-		
+//	public void propagateChange(Annotation annotation) {
+//		
+//		template.recompute(annotation, features);
+//		
+//	}
+
+	public Template getTemplate() {
+		return template;
+	}
+
+	public Vector getFeatureVector() {
+		return features;
+	}
+
+	public void setTemplate(Template template) {
+		this.template = template;
+	}
+
+	public void setFeatures(Vector features) {
+		this.features = features;
 	}
 	
 }

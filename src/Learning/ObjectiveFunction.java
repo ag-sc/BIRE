@@ -8,7 +8,7 @@ import Variables.State;
 
 public class ObjectiveFunction {
 
-	double score(State state, State goldState) {
+	public double score(State state, State goldState) {
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
 		double precision = 0;
@@ -66,7 +66,7 @@ public class ObjectiveFunction {
 			}
 		}
 
-		return overlap / Math.max(e1 - b1, e2 - b2);
+		return overlap / (Math.max(e1 - b1, e2 - b2) + 1);
 	}
 
 	private boolean typeMatches(EntityAnnotation entity,
