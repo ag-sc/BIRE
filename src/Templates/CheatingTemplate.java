@@ -5,7 +5,6 @@ import java.util.Arrays;
 import Factors.Factor;
 import Learning.ObjectiveFunction;
 import Learning.Vector;
-import Variables.Annotation;
 import Variables.EntityAnnotation;
 import Variables.State;
 
@@ -49,7 +48,7 @@ public class CheatingTemplate implements Template {
 		factor.setFeatures(vector);
 
 		for (EntityAnnotation e : state.getEntities()) {
-			e.add(this, Arrays.asList(factor));
+			e.addFactors(this, Arrays.asList(factor));
 		}
 	}
 

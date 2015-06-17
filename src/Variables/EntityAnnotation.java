@@ -2,6 +2,7 @@ package Variables;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -25,8 +26,11 @@ public class EntityAnnotation extends Annotation {
 	// }
 
 	public Collection<Factor> getFactors() {
-		// TODO return all factors from Map
-		return null;
+		Collection<Factor> allFactors = new HashSet<Factor>();
+		for (List<Factor> list : factors.values()) {
+			allFactors.addAll(list);
+		}
+		return allFactors;
 	}
 
 	EntityManager manager;
@@ -183,7 +187,7 @@ public class EntityAnnotation extends Annotation {
 		return manager.getEntity(id);
 	}
 
-	public void add(Template template, List<Factor> factors) {
+	public void addFactors(Template template, List<Factor> factors) {
 		this.factors.put(template, factors);
 	}
 }

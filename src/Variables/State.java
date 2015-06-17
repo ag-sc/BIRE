@@ -36,6 +36,7 @@ public class State {
 		this();
 		this.manager = new EntityManager(state.manager);
 		this.document = state.document;
+		this.goldState = state.goldState;
 	}
 
 	public State(Document document) {
@@ -54,6 +55,11 @@ public class State {
 		return manager.getAllEntities();
 	}
 
+	/**
+	 * Returns a previously computed score.
+	 * 
+	 * @return
+	 */
 	public double getScore() {
 		return score;
 	}
@@ -62,11 +68,11 @@ public class State {
 		this.score = score;
 	}
 
-//	public void propagateChange() {
-//		for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
-//			entityAnnotation.propagateChange();
-//		}
-//	}
+	// public void propagateChange() {
+	// for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
+	// entityAnnotation.propagateChange();
+	// }
+	// }
 
 	public Document getDocument() {
 		return document;
@@ -158,8 +164,13 @@ public class State {
 		}
 	}
 
-	public double score() {
-		double score = 0;
+	/**
+	 * Computes the current score by adding the scores of each factor.
+	 * 
+	 * @return
+	 */
+	public double recomputeScore() {
+		score = 0;
 		for (EntityAnnotation e : manager.getAllEntities()) {
 			// TODO factors may contribute multiple times to the score
 			for (Factor f : e.getFactors()) {

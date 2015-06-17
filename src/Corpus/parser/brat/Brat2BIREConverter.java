@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import Corpus.AnnotationConfig;
-import Corpus.Document;
+import Corpus.AnnotatedDocument;
 import Corpus.Token;
 import Corpus.parser.brat.annotations.BratAnnotation;
 import Corpus.parser.brat.annotations.BratAttributeAnnotation;
@@ -29,7 +29,7 @@ public class Brat2BIREConverter {
 	 * @param bratDoc
 	 * @param config
 	 */
-	public Document brat2BireAnnotations(BratAnnotatedDocument bratDoc,
+	public AnnotatedDocument brat2BireAnnotations(BratAnnotatedDocument bratDoc,
 			AnnotationConfig config) {
 		String content = bratDoc.getText();
 		List<Token> tokens = extractTokens(content);
@@ -56,7 +56,7 @@ public class Brat2BIREConverter {
 						(BratAttributeAnnotation) ann);
 			}
 		}
-		Document doc = new Document(null, content, tokens, manager);
+		AnnotatedDocument doc = new AnnotatedDocument(null, content, tokens, manager);
 		return doc;
 	}
 

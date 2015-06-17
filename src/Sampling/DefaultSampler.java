@@ -1,15 +1,12 @@
 package Sampling;
 
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-
-import javax.swing.text.NumberFormatter;
 
 import Changes.StateChange;
 import Corpus.Token;
@@ -19,6 +16,8 @@ import Variables.EntityType;
 import Variables.State;
 
 public class DefaultSampler implements Sampler {
+
+	private DecimalFormat df = new DecimalFormat("0.0000");
 
 	private int numberOfStates;
 	/**
@@ -45,13 +44,14 @@ public class DefaultSampler implements Sampler {
 				numberOfStates, scorer);
 		System.out.println("generated states:");
 		for (State s : nextStates.keySet()) {
-			System.out.println("["
-					+ String.valueOf(s.getScore()).substring(0, 5) + "]: " + s);
+			// System.out.println("["
+			// + String.valueOf(s.getScore()).substring(0, 5) + "]: " + s);
+			System.out.println("[" + df.format(s.getScore()) + "]: " + s);
 		}
 		State nextState = drawRandomlyFrom(nextStates);
 
 		if (accept(nextState, state)) {
-//			nextState.propagateChange();
+			// nextState.propagateChange();
 			return nextState;
 		} else {
 			return state;

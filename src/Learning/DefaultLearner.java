@@ -2,7 +2,7 @@ package Learning;
 
 import java.util.List;
 
-import Corpus.Document;
+import Corpus.AnnotatedDocument;
 import Sampling.DefaultSampler;
 import Variables.State;
 
@@ -10,60 +10,51 @@ public class DefaultLearner implements Learner {
 
 	private static final int NUMBER_OF_GENERATED_STATES_PER_STEP = 10;
 
-	Model model;
+	private Model model;
+	private Scorer scorer;
 
-	int k;
-
-	int steps;
-
-	Scorer scorer;
+	private int steps = 50;
 
 	double alpha;
 
 	ObjectiveFunction objective;
 
-	public void train(List<Document> documents, List<State> states) {
-
-		scorer = new Scorer();
-
+	public void train(List<AnnotatedDocument> documents) {
+		objective = new ObjectiveFunction();
 		model = new Model();
-
-		scorer.setModel(model);
-
-		Document document;
-		State goldState;
+		scorer = new Scorer(model);
 
 		DefaultSampler sampler = new DefaultSampler(
 				NUMBER_OF_GENERATED_STATES_PER_STEP);
 
 		for (int i = 0; i < documents.size(); i++) {
-			document = documents.get(i);
+			System.out.println("Document: " + i);
+			AnnotatedDocument document = documents.get(i);
+			State goldState = new State(document, document.getGoldEntities());
 
-			goldState = states.get(i);
-
-			State state = generateInitialAnnotations(document);
-
-			List<Vector> featuresState = null;
+			State currentState = generateInitialAnnotations(document, goldState);
 
 			for (int j = 0; j < steps; j++) {
-				State next_state = sampler.getNextState(state, scorer);
-				if (objective.score(next_state, goldState) > objective.score(
-						state, goldState)) {
-					if (next_state.getScore() < state.getScore()) {
-						model.update(next_state, alpha);
-						model.update(state, -alpha);
+				System.out.println("Step: " + j);
+				State nextState = sampler.getNextState(currentState, scorer);
+				System.out.println(nextState);
+				if (objective.score(nextState, goldState) > objective.score(
+						currentState, goldState)) {
+					if (nextState.getScore() < currentState.getScore()) {
+						model.update(nextState, alpha);
+						model.update(currentState, -alpha);
 					}
-
 				} else {
-					if (objective.score(next_state, goldState) < objective
-							.score(state, goldState)) {
-						if (next_state.getScore() > state.getScore()) {
-							model.update(state, alpha);
-							model.update(next_state, -alpha);
+					if (objective.score(nextState, goldState) < objective
+							.score(currentState, goldState)) {
+						if (nextState.getScore() > currentState.getScore()) {
+							model.update(currentState, alpha);
+							model.update(nextState, -alpha);
 						}
 
 					}
 				}
+				currentState = nextState;
 			}
 
 		}
@@ -74,29 +65,15 @@ public class DefaultLearner implements Learner {
 		return model;
 	}
 
-	public void setModel(Model model) {
-		this.model = model;
-	}
-
-	public int getK() {
-		return k;
-	}
-
-	public void setK(int k) {
-		this.k = k;
-	}
-
 	public Scorer getScorer() {
 		return scorer;
 	}
 
-	public void setScorer(Scorer scorer) {
-		this.scorer = scorer;
-	}
-
-	private State generateInitialAnnotations(Document document) {
-		// TODO Auto-generated method stub
-		return null;
+	private State generateInitialAnnotations(AnnotatedDocument document,
+			State goldState) {
+		State state = new State(document);
+		state.goldState = goldState;
+		return state;
 	}
 
 }

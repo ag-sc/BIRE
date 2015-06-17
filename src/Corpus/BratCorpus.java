@@ -5,7 +5,7 @@ import java.util.List;
 
 public class BratCorpus implements Corpus {
 
-	List<Document> documents = new ArrayList<Document>();
+	List<AnnotatedDocument> documents = new ArrayList<AnnotatedDocument>();
 	AnnotationConfig corpusConfig;
 
 	public BratCorpus(AnnotationConfig config) {
@@ -18,11 +18,11 @@ public class BratCorpus implements Corpus {
 	}
 
 	@Override
-	public List<Document> getDocuments() {
+	public List<AnnotatedDocument> getDocuments() {
 		return documents;
 	}
 
-	public void addDocument(Document doc) {
+	public void addDocument(AnnotatedDocument doc) {
 		documents.add(doc);
 	}
 

@@ -11,8 +11,9 @@ import Corpus.AnnotationConfig;
 import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Corpus;
-import Corpus.Document;
+import Corpus.AnnotatedDocument;
 import Corpus.Token;
+import Learning.Model;
 import Learning.ObjectiveFunction;
 import Learning.Scorer;
 import Variables.EntityAnnotation;
@@ -23,12 +24,13 @@ public class TestSampling {
 
 	public static void main(String[] args) {
 		Corpus corpus = getDummyData();
-		List<Document> documents = corpus.getDocuments();
-		Document doc = documents.get(0);
+		List<AnnotatedDocument> documents = corpus.getDocuments();
+		AnnotatedDocument doc = documents.get(0);
 		State initialState = new State(doc);
 		State goldState = new State(doc, doc.getGoldEntities());
 		System.out.println("initialState: " + initialState);
-		Scorer scorer = new Scorer();
+		Model model = new Model();
+		Scorer scorer = new Scorer(model);
 		DefaultSampler sampler = new DefaultSampler(10);
 		State nextState = initialState;
 		for (int i = 0; i < 2; i++) {
@@ -67,7 +69,7 @@ public class TestSampling {
 		manager.addEntityAnnotation(e2);
 
 		BratCorpus corpus = new BratCorpus(config);
-		Document doc = new Document(corpus, content, tokens, manager);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, content, tokens, manager);
 		corpus.addDocument(doc);
 
 		return corpus;

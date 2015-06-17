@@ -6,6 +6,10 @@ public class Scorer {
 
 	private Model model;
 
+	public Scorer(Model model) {
+		this.model = model;
+	}
+
 	/**
 	 * Computes the score of this state according to the trained model. The
 	 * computed score is returned but also updated in the state objects
@@ -15,12 +19,8 @@ public class Scorer {
 	 * @return
 	 */
 	public double score(State state) {
-		// TODO Scorer assigns random score to states.
 		state.unroll(model);
-		
-		double score = state.score();
-		
-		state.setScore(score);
+		double score = state.recomputeScore();
 		return score;
 	}
 
