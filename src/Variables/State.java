@@ -1,5 +1,6 @@
 package Variables;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import Templates.Template;
 
 public class State {
 
+	private static final DecimalFormat df = new DecimalFormat("0.0000");
 	public final String id;
 	public State goldState;
 	private EntityManager manager;
@@ -68,12 +70,6 @@ public class State {
 		this.score = score;
 	}
 
-	// public void propagateChange() {
-	// for (EntityAnnotation entityAnnotation : manager.getAllEntities()) {
-	// entityAnnotation.propagateChange();
-	// }
-	// }
-
 	public Document getDocument() {
 		return document;
 	}
@@ -109,51 +105,6 @@ public class State {
 		return manager.getEntity(entityID);
 	}
 
-	// <T1: tumor necrosis <T2: factor :T1>
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("State: ");
-		builder.append(id);
-		builder.append("| ");
-		for (Token t : document.getTokens()) {
-			Set<String> entities = manager.getAnnotationForToken(t);
-			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
-			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
-			for (String entityID : entities) {
-				EntityAnnotation e = manager.getEntity(entityID);
-				if (e.getBeginTokenIndex() == t.getIndex())
-					begin.add(e);
-				if (e.getEndTokenIndex() == t.getIndex())
-					end.add(e);
-			}
-			if (!begin.isEmpty())
-				buildPrefix(builder, begin);
-			builder.append(t.getText());
-			builder.append(" ");
-			if (!end.isEmpty())
-				buildSuffix(builder, end);
-		}
-		return builder.toString();
-	}
-
-	private void buildPrefix(StringBuilder builder, List<EntityAnnotation> begin) {
-		builder.append("[");
-		for (EntityAnnotation e : begin) {
-			builder.append(e.getID());
-			builder.append(":");
-		}
-		builder.append(" ");
-	}
-
-	private void buildSuffix(StringBuilder builder, List<EntityAnnotation> end) {
-		for (EntityAnnotation e : end) {
-			builder.append(":");
-			builder.append(e.getID());
-		}
-		builder.append("]");
-		builder.append(" ");
-	}
-
 	public Map<Integer, Set<String>> getTokenToEntityMapping() {
 		return manager.getTokenToEntityMapping();
 	}
@@ -170,22 +121,83 @@ public class State {
 	 * @return
 	 */
 	public double recomputeScore() {
-		score = 0;
+		// System.out.println("recompute state score:");
+		// TODO unannotated states always have a score of 1 due to this
+		// initialization
+		score = 1;
 		for (EntityAnnotation e : manager.getAllEntities()) {
 			// TODO factors may contribute multiple times to the score
+			// System.out.println(e.getID() + ": Entity score for Factors: "
+			// + getFactors());
 			for (Factor f : e.getFactors()) {
-				score *= f.score();
+				double entityScore = f.score();
+				// System.out.println(entityScore);
+				score *= entityScore;
 			}
 		}
+		// System.out.println("total score: " + score);
 		return score;
 	}
 
-	public Collection<Factor> getFactors() {
+	public Set<Factor> getFactors() {
 		Set<Factor> factors = new HashSet<Factor>();
 		for (EntityAnnotation e : manager.getAllEntities()) {
 			factors.addAll(e.getFactors());
 		}
 
 		return factors;
+	}
+
+	// <T1: tumor necrosis <T2: factor :T1>
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ID:");
+		builder.append(id);
+		builder.append(" [");
+		builder.append(df.format(score));
+		builder.append("]: ");
+		for (Token t : document.getTokens()) {
+			Set<String> entities = manager.getAnnotationForToken(t);
+			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
+			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
+			for (String entityID : entities) {
+				EntityAnnotation e = manager.getEntity(entityID);
+				if (e.getBeginTokenIndex() == t.getIndex())
+					begin.add(e);
+				if (e.getEndTokenIndex() == t.getIndex())
+					end.add(e);
+			}
+			if (!begin.isEmpty())
+				buildTokenPrefix(builder, begin);
+			builder.append(t.getText());
+			builder.append(" ");
+			if (!end.isEmpty())
+				buildTokenSuffix(builder, end);
+		}
+		return builder.toString();
+	}
+
+	private void buildTokenPrefix(StringBuilder builder,
+			List<EntityAnnotation> begin) {
+		builder.append("[");
+		for (EntityAnnotation e : begin) {
+			builder.append(e.getID());
+			builder.append("-");
+			builder.append(e.getType().getType());
+			builder.append("(");
+			builder.append(e.getArguments());
+			builder.append("):");
+		}
+		builder.append(" ");
+	}
+
+	private void buildTokenSuffix(StringBuilder builder,
+			List<EntityAnnotation> end) {
+		for (EntityAnnotation e : end) {
+			builder.append(":");
+			builder.append(e.getID());
+		}
+		builder.append("]");
+		builder.append(" ");
 	}
 }

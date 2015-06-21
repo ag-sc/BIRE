@@ -2,6 +2,7 @@ package Sampling;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,23 +39,21 @@ public class DefaultSampler implements Sampler {
 		this.numberOfStates = numberOfStates;
 	}
 
-	public State getNextState(State state, Scorer scorer) {
+	@Override
+	public List<State> getNextStates(State state, Scorer scorer) {
 
 		Map<State, Double> nextStates = generateNextStates(state,
 				numberOfStates, scorer);
 		System.out.println("generated states:");
 		for (State s : nextStates.keySet()) {
-			// System.out.println("["
-			// + String.valueOf(s.getScore()).substring(0, 5) + "]: " + s);
-			System.out.println("[" + df.format(s.getScore()) + "]: " + s);
+			System.out.println(s);
 		}
 		State nextState = drawRandomlyFrom(nextStates);
-
 		if (accept(nextState, state)) {
 			// nextState.propagateChange();
-			return nextState;
+			return Arrays.asList(nextState);
 		} else {
-			return state;
+			return Arrays.asList(state);
 		}
 
 	}

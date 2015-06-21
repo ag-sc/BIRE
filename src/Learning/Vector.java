@@ -5,7 +5,7 @@ import java.util.Set;
 
 public class Vector {
 
-	HashMap<String, Double> features;
+	private HashMap<String, Double> features;
 
 	public Vector() {
 		features = new HashMap<String, Double>();
@@ -16,8 +16,13 @@ public class Vector {
 
 	}
 
-	public double multiply(Vector vector) {
-		return 0.0;
+	public double multiply(Vector weights) {
+		double product = 1;
+		for (String feature : features.keySet()) {
+			product *= features.get(feature)
+					* weights.getValueOfFeature(feature);
+		}
+		return product;
 	}
 
 	public Vector add(Vector vector) {
@@ -66,12 +71,9 @@ public class Vector {
 		return features.keySet();
 	}
 
+	@Override
 	public String toString() {
-		String string = "";
-		for (String feature : features.keySet()) {
-			string += feature + " => " + features.get(feature) + "\t";
-		}
-		return string;
+		return features.toString();
 	}
 
 	public void update(String feature, double alpha) {

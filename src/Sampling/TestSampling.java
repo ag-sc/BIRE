@@ -35,7 +35,7 @@ public class TestSampling {
 		State nextState = initialState;
 		for (int i = 0; i < 2; i++) {
 			System.out.println("--------- Step: " + i + " ----------");
-			nextState = sampler.getNextState(nextState, scorer);
+			nextState = sampler.getNextStates(nextState,  scorer).get(0);
 			System.out.println("Next state:");
 			System.out.println(nextState);
 			for (EntityAnnotation e : nextState.getEntities()) {
@@ -69,7 +69,8 @@ public class TestSampling {
 		manager.addEntityAnnotation(e2);
 
 		BratCorpus corpus = new BratCorpus(config);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, content, tokens, manager);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, content, tokens,
+				manager);
 		corpus.addDocument(doc);
 
 		return corpus;

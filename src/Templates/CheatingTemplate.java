@@ -16,21 +16,21 @@ public class CheatingTemplate implements Template {
 
 	public CheatingTemplate() {
 		weights = new Vector();
-		weights.set(GOLD, 0.0);
+		weights.set(GOLD, 1d);
 	}
 
 	@Override
 	public void update(Vector features, double alpha) {
 		for (String feature : features.getFeatures()) {
-			weights.update(feature,alpha);
+			weights.update(feature, alpha);
 		}
 	}
 
-//	@Override
-//	public void recompute(Annotation annotation, Vector features) {
-//		// TODO Auto-generated method stub
-//
-//	}
+	// @Override
+	// public void recompute(Annotation annotation, Vector features) {
+	// // TODO Auto-generated method stub
+	//
+	// }
 
 	@Override
 	public Vector getWeightVector() {
@@ -40,6 +40,7 @@ public class CheatingTemplate implements Template {
 	@Override
 	public void applyTo(State state) {
 		double score = objective.score(state, state.goldState);
+//		System.out.println(state.id + ": ObjectiveFunction Score: " + score);
 		Factor factor = new Factor();
 		factor.setTemplate(this);
 
@@ -47,6 +48,7 @@ public class CheatingTemplate implements Template {
 		vector.set(GOLD, score);
 		factor.setFeatures(vector);
 
+//		System.out.println("Cheating Factor: " + factor);
 		for (EntityAnnotation e : state.getEntities()) {
 			e.addFactors(this, Arrays.asList(factor));
 		}

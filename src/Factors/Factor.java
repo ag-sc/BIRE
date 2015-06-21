@@ -6,19 +6,18 @@ import Templates.Template;
 public class Factor {
 
 	Template template;
-	
+
 	Vector features;
-	
-	public double score()
-	{
+
+	public double score() {
 		return features.multiply(template.getWeightVector());
 	}
 
-//	public void propagateChange(Annotation annotation) {
-//		
-//		template.recompute(annotation, features);
-//		
-//	}
+	// public void propagateChange(Annotation annotation) {
+	//
+	// template.recompute(annotation, features);
+	//
+	// }
 
 	public Template getTemplate() {
 		return template;
@@ -35,5 +34,11 @@ public class Factor {
 	public void setFeatures(Vector features) {
 		this.features = features;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "Factor [template=" + template + ",\n" + "features=" + features
+				+ "]";
+	}
+
 }

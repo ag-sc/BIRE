@@ -9,11 +9,14 @@ import Variables.State;
 public class ObjectiveFunction {
 
 	public double score(State state, State goldState) {
+		// System.out.println("Objective-Score for states:");
+		// System.out.println("State: " + state);
+		// System.out.println("Gold : " + goldState);
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
-		double precision = 0;
+		double precision = 0.0;
 		for (EntityAnnotation entity : entities) {
-			double max = 0;
+			double max = 0.0;
 			for (EntityAnnotation goldEntity : goldEntities) {
 				if (typeMatches(entity, goldEntity)) {
 					double overlapScore = overlap(entity, goldEntity);
@@ -22,9 +25,42 @@ public class ObjectiveFunction {
 					}
 				}
 			}
-			precision = precision + max;
+			precision += max;
 		}
-		return precision / entities.size();
+
+		double recall = 0.0;
+		for (EntityAnnotation entity : goldEntities) {
+			double max = 0.0;
+			for (EntityAnnotation goldEntity : entities) {
+				if (typeMatches(goldEntity, entity)) {
+					double overlapScore = overlap(goldEntity, entity);
+					if (overlapScore > max) {
+						max = overlapScore * argumentScore(goldEntity, entity);
+					}
+				}
+			}
+			recall += max;
+		}
+
+		// System.out.println("Precision: " + precision + "/" +
+		// entities.size());
+		// System.out.println("Recall: " + recall + "/" + goldEntities.size());
+
+		if (precision == 0 || recall == 0 || entities.size() == 0
+				|| goldEntities.size() == 0) {
+
+			// System.out.println("0");
+			return 0;
+		}
+
+		precision /= entities.size();
+		recall /= goldEntities.size();
+		// System.out.println("Precision norm.: " + precision);
+		// System.out.println("Recall norm.: " + recall);
+
+		double f1 = 2 * (precision * recall) / (precision + recall);
+		// System.out.println(f1);
+		return f1;
 	}
 
 	private double argumentScore(EntityAnnotation entity,
@@ -54,19 +90,15 @@ public class ObjectiveFunction {
 
 	}
 
-	private double overlap(EntityAnnotation entity, EntityAnnotation goldEntity) {
-		int overlap = 0;
-		int b1 = entity.getBeginTokenIndex();
-		int e1 = entity.getEndTokenIndex();
-		int b2 = goldEntity.getBeginTokenIndex();
-		int e2 = goldEntity.getEndTokenIndex();
-		for (int i = b1; i <= e1; i++) {
-			if (b2 <= i && i <= e2) {
-				overlap++;
-			}
-		}
+	private static double overlap(EntityAnnotation entity,
+			EntityAnnotation goldEntity) {
+		int a = entity.getBeginTokenIndex();
+		int b = entity.getEndTokenIndex();
+		int x = goldEntity.getBeginTokenIndex();
+		int y = goldEntity.getEndTokenIndex();
+		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
 
-		return overlap / (Math.max(e1 - b1, e2 - b2) + 1);
+		return overlap / (Math.max(b - a, y - x) + 1);
 	}
 
 	private boolean typeMatches(EntityAnnotation entity,
