@@ -11,15 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
 
+import Logging.Log;
 import Variables.Argument;
 import Variables.EntityType;
 
 public class BratConfigReader {
 
-	private final Logger log = Logger.getLogger(BratConfigReader.class
-			.getSimpleName());
 	private static final String COMMENT_INDICATOR = "#";
 	private static final String SEPARATION_INDICATOR = "-";
 	private static final String ENTITY_SECTION = "[entities]";
@@ -39,6 +37,7 @@ public class BratConfigReader {
 	 * @return
 	 */
 	public synchronized AnnotationConfig readConfig(String filePath) {
+		Log.classOff();
 		try {
 			eventReferencingArguments = new HashSet<Argument>();
 			events = new HashSet<EntityType>();
@@ -49,14 +48,14 @@ public class BratConfigReader {
 			int lineNumber = 1;
 			while ((line = reader.readLine()) != null) {
 				if (line.startsWith(COMMENT_INDICATOR)) {
-					System.out.println(lineNumber + ": Skip comment " + ": \""
+					Log.i(lineNumber + ": Skip comment " + ": \""
 							+ line + "\"");
 				} else if (line.startsWith(SEPARATION_INDICATOR)) {
-					System.out.println(lineNumber + ": Separation line");
+					Log.i(lineNumber + ": Separation line");
 				} else if (line.trim().length() == 0) {
-					System.out.println(lineNumber + ": Empty line ignored");
+					Log.i(lineNumber + ": Empty line ignored");
 				} else {
-					System.out.println(lineNumber + ": parse...");
+					Log.i(lineNumber + ": parse...");
 					state = parseLine(config, line, state);
 				}
 				lineNumber++;
@@ -91,16 +90,16 @@ public class BratConfigReader {
 			ParseState state) {
 
 		if (line.equals(ENTITY_SECTION)) {
-			System.out.println("Begin of entity section");
+			Log.i("Begin of entity section");
 			state = ParseState.ENTITIES;
 		} else if (line.equals(EVENT_SECTION)) {
-			System.out.println("Begin of event section");
+			Log.i("Begin of event section");
 			state = ParseState.EVENTS;
 		} else if (line.equals(RELATION_SECTION)) {
-			System.out.println("Begin of relation section");
+			Log.i("Begin of relation section");
 			state = ParseState.RELATIONS;
 		} else if (line.equals(ATTRIBUTE_SECTION)) {
-			System.out.println("Begin of attribute section");
+			Log.i("Begin of attribute section");
 			state = ParseState.ATTRIBUTES;
 		} else {
 			if (state != null) {
@@ -133,7 +132,7 @@ public class BratConfigReader {
 			config.addEntityType(type);
 		}
 		if (tokenizer.hasMoreTokens()) {
-			System.out.println("Warning: line contains no supported entity: "
+			Log.i("Warning: line contains no supported entity: "
 					+ line);
 		}
 	}
@@ -148,11 +147,11 @@ public class BratConfigReader {
 		 *  Positive_regulation Theme:<EVENT>|Protein, Cause?:<EVENT>|Protein, Site?:Entity, CSite?:Entity
 		 */
 		String[] typeArgSplit = line.split("\t", 2);
-		System.out.println("typeArgSplit: " + arrayToString(typeArgSplit));
+		Log.i("typeArgSplit: " + arrayToString(typeArgSplit));
 		String typeName = typeArgSplit[0];
 		String args = typeArgSplit[1];
 		String argsSplit[] = args.split("\\s");
-		System.out.println("argsSplit: " + arrayToString(argsSplit));
+		Log.i("argsSplit: " + arrayToString(argsSplit));
 
 		Map<String, Argument> coreArguments = new HashMap<String, Argument>();
 		Map<String, Argument> optionalArguments = new HashMap<String, Argument>();
@@ -179,13 +178,13 @@ public class BratConfigReader {
 
 	private Argument extractEventArgument(String arg) {
 		String[] roleArgSplit = arg.split("\\:");
-		System.out.println("roleArgSplit: " + arrayToString(roleArgSplit));
+		Log.i("roleArgSplit: " + arrayToString(roleArgSplit));
 		String role = roleArgSplit[0];
 		if (role.endsWith("?") || role.endsWith("*") || role.endsWith("+")) {
 			role = role.substring(0, role.length() - 1);
 		}
 		String[] args = roleArgSplit[1].split("\\|");
-		System.out.println("args: " + arrayToString(args));
+		Log.i("args: " + arrayToString(args));
 		List<String> types = new ArrayList<String>();
 		boolean isEventReferencingPossible = false;
 		for (int i = 0; i < args.length; i++) {

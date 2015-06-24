@@ -1,36 +1,36 @@
 package Templates;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import Factors.Factor;
 import Learning.ObjectiveFunction;
 import Learning.Vector;
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
 public class CheatingTemplate implements Template {
 
 	private static final String GOLD = "GOLD";
-	Vector weights;
-	ObjectiveFunction objective = new ObjectiveFunction();
+	private Vector weights;
+
+	private ObjectiveFunction objective = new ObjectiveFunction();
 
 	public CheatingTemplate() {
 		weights = new Vector();
-		weights.set(GOLD, 1d);
+		weights.set(GOLD, 1.0);
+		// TODO keep weights and actual features consistent
 	}
 
 	@Override
-	public void update(Vector features, double alpha) {
-		for (String feature : features.getFeatures()) {
+	public void update(Factor factor, double alpha) {
+		Log.d("Update factor!");
+		for (String feature : factor.getFeatureVector().getFeatures()) {
 			weights.update(feature, alpha);
 		}
 	}
-
-	// @Override
-	// public void recompute(Annotation annotation, Vector features) {
-	// // TODO Auto-generated method stub
-	//
-	// }
 
 	@Override
 	public Vector getWeightVector() {
@@ -39,19 +39,39 @@ public class CheatingTemplate implements Template {
 
 	@Override
 	public void applyTo(State state) {
-		double score = objective.score(state, state.goldState);
-//		System.out.println(state.id + ": ObjectiveFunction Score: " + score);
-		Factor factor = new Factor();
-		factor.setTemplate(this);
+		Set<Factor> factors = computeFactorsForState(state);
+		Log.d("Apply %s factors to %s entities in state %s", factors.size(),
+				state.getEntities().size(), state.getID());
+		for (EntityAnnotation e : state.getEntities()) {
+			for (Factor factor : factors) {
+				if (appliesTo(factor, e)) {
+					e.addFactors(this, Arrays.asList(factor));
+				}
+			}
+		}
+	}
 
+	private Set<Factor> computeFactorsForState(State state) {
+		Set<Factor> factors = new HashSet<Factor>();
+		double score = objective.score(state, state.goldState);
+		Log.d("Factor score: %s", score);
+		Factor factor = new Factor(this);
 		Vector vector = new Vector();
 		vector.set(GOLD, score);
 		factor.setFeatures(vector);
 
-//		System.out.println("Cheating Factor: " + factor);
-		for (EntityAnnotation e : state.getEntities()) {
-			e.addFactors(this, Arrays.asList(factor));
-		}
+		factors.add(factor);
+		return factors;
+	}
+
+	private boolean appliesTo(Factor f, EntityAnnotation e) {
+		// TODO Check if factor applies to entity
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "CheatingTemplate [weights=" + weights + "]";
 	}
 
 }

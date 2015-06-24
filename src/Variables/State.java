@@ -3,29 +3,46 @@ package Variables;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import Corpus.Document;
 import Corpus.Token;
 import Factors.Factor;
 import Learning.Model;
+import Logging.Log;
 import Templates.Template;
 
 public class State {
 
-	private static final DecimalFormat df = new DecimalFormat("0.0000");
-	public final String id;
-	public State goldState;
-	private EntityManager manager;
+	private static final Random random = new Random();
+	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
+	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat(
+			"0.0000");
+	private static final DecimalFormat STATE_ID_FORMAT = new DecimalFormat(
+			"00000");
+	private int entityIdIndex = 0;
+	private static int stateIdIndex = 0;
+	/**
+	 * Since Entities only hold weak pointer via references to one another,
+	 * using a Map is sensible to enable an efficient access to the entities.
+	 */
+	private Map<String, EntityAnnotation> entities = new HashMap<String, EntityAnnotation>();;
+	private Map<Integer, Set<String>> tokenToEntities = new HashMap<Integer, Set<String>>();
+
+	private final String id;
 	private Document document;
+	public State goldState;
 
 	private double score;
 
-	private State() {
-		this.id = String.valueOf(Math.random()).substring(2, 7);
+	public State() {
+		this.id = generateStateID();
 	}
 
 	/**
@@ -36,25 +53,30 @@ public class State {
 	 */
 	public State(State state) {
 		this();
-		this.manager = new EntityManager(state.manager);
+		this.entityIdIndex = state.entityIdIndex;
 		this.document = state.document;
 		this.goldState = state.goldState;
+		for (EntityAnnotation entityAnnotation : state.entities.values()) {
+			this.entities.put(entityAnnotation.id, new EntityAnnotation(this,
+					entityAnnotation));
+		}
+		for (Entry<Integer, Set<String>> e : state.tokenToEntities.entrySet()) {
+			this.tokenToEntities.put(e.getKey(),
+					new HashSet<String>(e.getValue()));
+		}
 	}
 
 	public State(Document document) {
 		this();
 		this.document = document;
-		this.manager = new EntityManager();
 	}
 
 	public State(Document document, Collection<EntityAnnotation> initialEntities) {
 		this();
 		this.document = document;
-		this.manager = new EntityManager(initialEntities);
-	}
-
-	public Collection<EntityAnnotation> getEntities() {
-		return manager.getAllEntities();
+		for (EntityAnnotation e : initialEntities) {
+			addEntityAnnotation(e);
+		}
 	}
 
 	/**
@@ -62,24 +84,12 @@ public class State {
 	 * 
 	 * @return
 	 */
-	public double getScore() {
+	public double getModelScore() {
 		return score;
-	}
-
-	public void setScore(double score) {
-		this.score = score;
 	}
 
 	public Document getDocument() {
 		return document;
-	}
-
-	public void addEntityAnnotation(EntityAnnotation tokenAnnotation) {
-		manager.addEntityAnnotation(tokenAnnotation);
-	}
-
-	public void removeEntityAnnotation(EntityAnnotation tokenAnnotation) {
-		manager.removeEntityAnnotation(tokenAnnotation);
 	}
 
 	/**
@@ -89,24 +99,8 @@ public class State {
 	 * @return
 	 */
 	public EntityAnnotation getNewEntityInstanceForState() {
-		EntityAnnotation e = new EntityAnnotation(manager);
+		EntityAnnotation e = new EntityAnnotation(this);
 		return e;
-	}
-
-	public boolean tokenHasAnnotation(Token token) {
-		return manager.tokenHasAnnotation(token);
-	}
-
-	public Set<String> getAnnotationForToken(Token token) {
-		return manager.getAnnotationForToken(token);
-	}
-
-	public EntityAnnotation getEntity(String entityID) {
-		return manager.getEntity(entityID);
-	}
-
-	public Map<Integer, Set<String>> getTokenToEntityMapping() {
-		return manager.getTokenToEntityMapping();
 	}
 
 	public void unroll(Model model) {
@@ -120,48 +114,135 @@ public class State {
 	 * 
 	 * @return
 	 */
-	public double recomputeScore() {
-		// System.out.println("recompute state score:");
-		// TODO unannotated states always have a score of 1 due to this
-		// initialization
-		score = 1;
-		for (EntityAnnotation e : manager.getAllEntities()) {
-			// TODO factors may contribute multiple times to the score
-			// System.out.println(e.getID() + ": Entity score for Factors: "
-			// + getFactors());
-			for (Factor f : e.getFactors()) {
-				double entityScore = f.score();
-				// System.out.println(entityScore);
-				score *= entityScore;
+	public double recomputeModelScore() {
+		Collection<EntityAnnotation> allEntities = getEntities();
+		if (allEntities.isEmpty()) {
+			score = 0;
+			Log.d("No entities: Model score = 0");
+		} else {
+			score = 1;
+			for (Factor f : getFactors()) {
+				double factorScore = f.score();
+				score *= factorScore;
 			}
+			Log.d("Model score = %s using %s factors", score, getFactors()
+					.size());
 		}
-		// System.out.println("total score: " + score);
+		// for (EntityAnnotation e : getEntities()) {
+		// // TODO factors may contribute multiple times to the score
+		// for (Factor f : e.getFactors()) {
+		// double entityScore = f.score();
+		// score *= entityScore;
+		// }
+		// }
 		return score;
 	}
 
 	public Set<Factor> getFactors() {
 		Set<Factor> factors = new HashSet<Factor>();
-		for (EntityAnnotation e : manager.getAllEntities()) {
+		for (EntityAnnotation e : getEntities()) {
 			factors.addAll(e.getFactors());
 		}
 
 		return factors;
 	}
 
-	// <T1: tumor necrosis <T2: factor :T1>
+	public void addEntityAnnotation(EntityAnnotation entity) {
+		entities.put(entity.id, entity);
+		addToTokenToEntityMapping(entity);
+	}
+
+	public void removeEntityAnnotation(EntityAnnotation entity) {
+		entities.remove(entity.getID());
+		removeFromTokenToEntityMapping(entity);
+	}
+
+	public Set<String> getEntityIDs() {
+		return entities.keySet();
+	}
+
+	public Collection<EntityAnnotation> getEntities() {
+		return entities.values();
+	}
+
+	public EntityAnnotation getEntity(String id) {
+		return entities.get(id);
+	}
+
+	public boolean tokenHasAnnotation(Token token) {
+		Set<String> entities = tokenToEntities.get(token.getIndex());
+		return entities != null && !entities.isEmpty();
+	}
+
+	public Set<String> getAnnotationForToken(Token token) {
+		Set<String> entities = tokenToEntities.get(token.getIndex());
+		if (entities == null) {
+			entities = new HashSet<String>();
+			tokenToEntities.put(token.getIndex(), entities);
+		}
+		return entities;
+	}
+
+	public void removeFromTokenToEntityMapping(EntityAnnotation entityAnnotation) {
+		for (int i = entityAnnotation.getBeginTokenIndex(); i <= entityAnnotation
+				.getEndTokenIndex(); i++) {
+			Set<String> entities = tokenToEntities.get(i);
+			if (entities == null) {
+				entities = new HashSet<String>();
+				tokenToEntities.put(i, entities);
+			} else {
+				entities.remove(entityAnnotation.getID());
+			}
+		}
+	}
+
+	public void addToTokenToEntityMapping(EntityAnnotation entityAnnotation) {
+		for (int i = entityAnnotation.getBeginTokenIndex(); i <= entityAnnotation
+				.getEndTokenIndex(); i++) {
+			Set<String> entities = tokenToEntities.get(i);
+			if (entities == null) {
+				entities = new HashSet<String>();
+				tokenToEntities.put(i, entities);
+			}
+			entities.add(entityAnnotation.getID());
+		}
+	}
+
+	public String generateStateID() {
+		String id = STATE_ID_FORMAT.format(stateIdIndex);
+		stateIdIndex++;
+		return id;
+	}
+
+	public String generateEntityID() {
+		String id = GENERATED_ENTITY_ID_PREFIX + entityIdIndex;
+		assert !entities.containsKey(id);
+		entityIdIndex++;
+		return id;
+	}
+
+	public Map<Integer, Set<String>> getTokenToEntityMapping() {
+		return tokenToEntities;
+	}
+
+	public String getID() {
+		return id;
+	}
+
+	// <T1-Protein: tumor necrosis <T2-Protein: factor :T1:T2>
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("ID:");
 		builder.append(id);
 		builder.append(" [");
-		builder.append(df.format(score));
+		builder.append(SCORE_FORMAT.format(score));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
-			Set<String> entities = manager.getAnnotationForToken(t);
+			Set<String> entities = getAnnotationForToken(t);
 			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
 			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
 			for (String entityID : entities) {
-				EntityAnnotation e = manager.getEntity(entityID);
+				EntityAnnotation e = getEntity(entityID);
 				if (e.getBeginTokenIndex() == t.getIndex())
 					begin.add(e);
 				if (e.getEndTokenIndex() == t.getIndex())
@@ -199,5 +280,19 @@ public class State {
 		}
 		builder.append("]");
 		builder.append(" ");
+	}
+
+	public String toDetailedString() {
+		StringBuilder builder = new StringBuilder();
+		for (EntityAnnotation e : getEntities()) {
+			builder.append(e);
+			builder.append("\n");
+		}
+		for (Entry<Integer, Set<String>> e : getTokenToEntityMapping()
+				.entrySet()) {
+			builder.append(e);
+			builder.append("\n");
+		}
+		return builder.toString().trim();
 	}
 }

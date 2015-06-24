@@ -1,25 +1,32 @@
-package Learning;
+package Learning.learner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import Corpus.AnnotatedDocument;
+import Learning.Learner;
+import Learning.Model;
+import Learning.ObjectiveFunction;
+import Learning.Scorer;
 import Sampling.DefaultListSampler;
 import Sampling.Sampler;
+import Sampling.SamplingHelper;
 import Variables.State;
 
 public class DefaultLearner implements Learner {
 
-	private int statesPerStep = 20;
-	private int steps = 1;
+	private int statesPerStep;
+	private int steps;
+	private double alpha = 0.1;
 
 	private Model model;
 	private Scorer scorer;
 	private ObjectiveFunction objective;
 
-	public DefaultLearner(int steps, int statesPerStep) {
+	public DefaultLearner(int steps, int statesPerStep, double alpha) {
 		this.steps = steps;
 		this.statesPerStep = statesPerStep;
+		this.alpha = alpha;
 	}
 
 	public void train(List<AnnotatedDocument> documents) {
@@ -54,31 +61,34 @@ public class DefaultLearner implements Learner {
 
 					// TODO Which state should be selected to use for next
 					// sampler/next step? Or all/top k?
-					State nextState = nextStates.get(0);
+					// State nextState = nextStates.get(0);
+
+					State nextState = SamplingHelper
+							.drawRandomlyFrom(nextStates);
 					System.out.println("Next state: " + nextState);
 					currentState = nextState;
 				}
+				System.out.println(model);
 			}
 		}
 
 	}
 
 	private void updateModelForState(State goldState, State currentState,
-			State state) {
-		// TODO learning rate alpha needs to be set correctly
-		double alpha = 0;
-		if (objective.score(state, goldState) > objective.score(currentState,
+			State possibleNextState) {
+		if (objective.score(possibleNextState, goldState) > objective.score(currentState,
 				goldState)) {
-			if (state.getScore() < currentState.getScore()) {
-				model.update(state, alpha);
+			if (possibleNextState.getModelScore() < currentState.getModelScore()) {
+				model.update(possibleNextState, alpha);
 				model.update(currentState, -alpha);
 			}
 		} else {
-			if (objective.score(state, goldState) < objective.score(
+			//TODO What to do if scores are equal?
+			if (objective.score(possibleNextState, goldState) < objective.score(
 					currentState, goldState)) {
-				if (state.getScore() > currentState.getScore()) {
+				if (possibleNextState.getModelScore() > currentState.getModelScore()) {
 					model.update(currentState, alpha);
-					model.update(state, -alpha);
+					model.update(possibleNextState, -alpha);
 				}
 			}
 		}

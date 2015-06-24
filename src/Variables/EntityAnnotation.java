@@ -8,6 +8,7 @@ import java.util.Map;
 
 import Changes.StateChange;
 import Factors.Factor;
+import Logging.Log;
 import Templates.Template;
 
 public class EntityAnnotation extends Annotation {
@@ -33,7 +34,7 @@ public class EntityAnnotation extends Annotation {
 		return allFactors;
 	}
 
-	EntityManager manager;
+	State state;
 	String id;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
@@ -57,12 +58,12 @@ public class EntityAnnotation extends Annotation {
 	 */
 	Map<String, String> arguments;
 
-	public EntityAnnotation(EntityManager manager) {
-		this(manager, manager.generateID());
+	public EntityAnnotation(State state) {
+		this(state, state.generateEntityID());
 	}
 
-	public EntityAnnotation(EntityManager manager, String id) {
-		this.manager = manager;
+	public EntityAnnotation(State state, String id) {
+		this.state = state;
 		this.id = id;
 	}
 
@@ -71,12 +72,11 @@ public class EntityAnnotation extends Annotation {
 	 * clone process of a state. The cloned Entity is added to the given
 	 * EnityManagers Collection of entities.
 	 * 
-	 * @param manager
+	 * @param state
 	 * @param entityAnnotation
 	 */
-	protected EntityAnnotation(EntityManager manager,
-			EntityAnnotation entityAnnotation) {
-		this.manager = manager;
+	protected EntityAnnotation(State state, EntityAnnotation entityAnnotation) {
+		this.state = state;
 		this.id = entityAnnotation.id;
 		this.beginTokenIndex = entityAnnotation.beginTokenIndex;
 		this.endTokenIndex = entityAnnotation.endTokenIndex;
@@ -85,8 +85,8 @@ public class EntityAnnotation extends Annotation {
 		this.arguments = new HashMap<String, String>(entityAnnotation.arguments);
 	}
 
-	public void setManager(EntityManager manager) {
-		this.manager = manager;
+	public void setManager(State state) {
+		this.state = state;
 	}
 
 	/**
@@ -137,9 +137,9 @@ public class EntityAnnotation extends Annotation {
 	public void setBeginTokenIndex(int beginTokenIndex) {
 		// TODO this handling of changes is not perfectly efficient and allows
 		// errors and inconsistencies if applied wrongly
-		manager.removeFromTokenToEntityMapping(this);
+		state.removeFromTokenToEntityMapping(this);
 		this.beginTokenIndex = beginTokenIndex;
-		manager.addToTokenToEntityMapping(this);
+		state.addToTokenToEntityMapping(this);
 		change = StateChange.BOUNDARIES_CHANGED;
 	}
 
@@ -151,9 +151,9 @@ public class EntityAnnotation extends Annotation {
 		// TODO this handling of changes is not perfectly efficient and allows
 		// errors and inconsistencies if applied wrongly
 
-		manager.removeFromTokenToEntityMapping(this);
+		state.removeFromTokenToEntityMapping(this);
 		this.endTokenIndex = endTokenIndex;
-		manager.addToTokenToEntityMapping(this);
+		state.addToTokenToEntityMapping(this);
 		change = StateChange.BOUNDARIES_CHANGED;
 	}
 
@@ -184,7 +184,7 @@ public class EntityAnnotation extends Annotation {
 	 * @return
 	 */
 	public EntityAnnotation getEntity(String id) {
-		return manager.getEntity(id);
+		return state.getEntity(id);
 	}
 
 	public void addFactors(Template template, List<Factor> factors) {

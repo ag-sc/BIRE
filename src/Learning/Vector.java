@@ -17,6 +17,8 @@ public class Vector {
 	}
 
 	public double multiply(Vector weights) {
+		System.out.println("Features: " + features);
+		System.out.println("Weights: " + weights);
 		double product = 1;
 		for (String feature : features.keySet()) {
 			product *= features.get(feature)
@@ -58,7 +60,6 @@ public class Vector {
 	}
 
 	public double getValueOfFeature(String feature) {
-
 		if (features.containsKey(feature)) {
 			return features.get(feature);
 		} else {

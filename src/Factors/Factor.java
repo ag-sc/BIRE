@@ -9,6 +9,10 @@ public class Factor {
 
 	Vector features;
 
+	public Factor(Template template) {
+		this.template = template;
+	}
+
 	public double score() {
 		return features.multiply(template.getWeightVector());
 	}

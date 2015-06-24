@@ -6,26 +6,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 
 import Corpus.Token;
 
-public class EntityManager {
+public abstract class AbstractState {
 
 	/**
 	 * Since Entities only hold weak pointer via references to one another,
 	 * using a Map is sensible to enable an efficient access to the entities.
 	 */
-	private Map<String, EntityAnnotation> entities = new HashMap<String, EntityAnnotation>();;
-	private Map<Integer, Set<String>> tokenToEntities = new HashMap<Integer, Set<String>>();
+	protected Map<String, EntityAnnotation> entities = new HashMap<String, EntityAnnotation>();;
+	protected Map<Integer, Set<String>> tokenToEntities = new HashMap<Integer, Set<String>>();
 
-	private static final String GENERATED_ID_PREFIX = "G";
-	private int idIndex = 0;
+	protected static final String GENERATED_ID_PREFIX = "G";
+	protected int idIndex = 0;
 
-	public EntityManager() {
+	public AbstractState() {
 	}
 
-	public EntityManager(EntityManager manager) {
+	public AbstractState(AbstractState manager) {
 		this();
 		this.idIndex = manager.idIndex;
 		for (EntityAnnotation entityAnnotation : manager.entities.values()) {
@@ -37,7 +36,7 @@ public class EntityManager {
 		}
 	}
 
-	public EntityManager(Collection<EntityAnnotation> initialEntities) {
+	public AbstractState(Collection<EntityAnnotation> initialEntities) {
 		this();
 		for (EntityAnnotation e : initialEntities) {
 			addEntityAnnotation(e);

@@ -1,12 +1,16 @@
 package Sampling;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.sun.org.apache.bcel.internal.generic.RETURN;
+
+import Changes.BoundaryChange;
 import Changes.StateChange;
 import Corpus.Token;
 import Learning.Scorer;
@@ -14,18 +18,17 @@ import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
 
-public class DefaultSampler implements Sampler {
+public class DefaultListSampler implements Sampler {
 
-	private DecimalFormat df = new DecimalFormat("0.0000");
+	Comparator<State> comparator = new Comparator<State>() {
 
+		@Override
+		public int compare(State s1, State s2) {
+			// inverse sign for descending order
+			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
+		}
+	};
 	private int numberOfStates;
-	/**
-	 * This variable is used to determine if a state with a lower score should
-	 * be accepted nonetheless. This variable should start with a value < 1 and
-	 * decrease during the training. This allows to accept worse states more
-	 * often at the beginning of the training than at the end.
-	 */
-	private double acceptanceFactor = 0.5;
 
 	/**
 	 * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
@@ -33,32 +36,28 @@ public class DefaultSampler implements Sampler {
 	 * 
 	 * @param numberOfStates
 	 */
-	public DefaultSampler(int numberOfStates) {
+	public DefaultListSampler(int numberOfStates) {
 		this.numberOfStates = numberOfStates;
 	}
 
-	@Override
 	public List<State> getNextStates(State state, Scorer scorer) {
 
-		Map<State, Double> nextStates = generateNextStates(state,
-				numberOfStates, scorer);
+		Set<State> nextStates = generateNextStates(state, numberOfStates,
+				scorer);
+		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
+		nextStatesSorted.sort(comparator);
 		System.out.println("generated states:");
-		for (State s : nextStates.keySet()) {
+		for (State s : nextStatesSorted) {
 			System.out.println(s);
 		}
-		State nextState = SamplingHelper.drawRandomlyFrom(nextStates);
-		if (SamplingHelper.accept(nextState, state, acceptanceFactor)) {
-			// nextState.propagateChange();
-			return Arrays.asList(nextState);
-		} else {
-			return Arrays.asList(state);
-		}
+
+		return nextStatesSorted;
 
 	}
 
-	private Map<State, Double> generateNextStates(State previousState,
+	private Set<State> generateNextStates(State previousState,
 			int numberOfStates, Scorer scorer) {
-		Map<State, Double> generatedStates = new HashMap<State, Double>();
+		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);
 			List<Token> tokens = generatedState.getDocument().getTokens();
@@ -119,10 +118,8 @@ public class DefaultSampler implements Sampler {
 				}
 			}
 
-			double score = scorer.score(generatedState);
-			// generatedState.setScore(score); // this is already done in
-			// scorer.score(...)
-			generatedStates.put(generatedState, score);
+			scorer.score(generatedState);
+			generatedStates.add(generatedState);
 		}
 		return generatedStates;
 	}

@@ -9,9 +9,6 @@ import Variables.State;
 public class ObjectiveFunction {
 
 	public double score(State state, State goldState) {
-		// System.out.println("Objective-Score for states:");
-		// System.out.println("State: " + state);
-		// System.out.println("Gold : " + goldState);
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
 		double precision = 0.0;
@@ -42,24 +39,15 @@ public class ObjectiveFunction {
 			recall += max;
 		}
 
-		// System.out.println("Precision: " + precision + "/" +
-		// entities.size());
-		// System.out.println("Recall: " + recall + "/" + goldEntities.size());
-
 		if (precision == 0 || recall == 0 || entities.size() == 0
 				|| goldEntities.size() == 0) {
-
-			// System.out.println("0");
 			return 0;
 		}
 
 		precision /= entities.size();
 		recall /= goldEntities.size();
-		// System.out.println("Precision norm.: " + precision);
-		// System.out.println("Recall norm.: " + recall);
 
 		double f1 = 2 * (precision * recall) / (precision + recall);
-		// System.out.println(f1);
 		return f1;
 	}
 

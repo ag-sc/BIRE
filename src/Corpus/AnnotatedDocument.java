@@ -4,23 +4,23 @@ import java.util.Collection;
 import java.util.List;
 
 import Variables.EntityAnnotation;
-import Variables.EntityManager;
+import Variables.State;
 
 public class AnnotatedDocument extends Document {
 	/**
 	 * Since Entities only hold weak pointer via references to one another,
 	 * using a Map is sensible to enable an efficient access to the entities.
 	 */
-	EntityManager goldEntityManager;
+	private State goldState;
 
 	public AnnotatedDocument(Corpus corpus, String content, List<Token> tokens,
-			EntityManager goldEntityManager) {
+			State goldState) {
 		super(corpus, content, tokens);
-		this.goldEntityManager = goldEntityManager;
+		this.goldState = goldState;
 	}
 
 	public Collection<EntityAnnotation> getGoldEntities() {
-		return goldEntityManager.getAllEntities();
+		return goldState.getEntities();
 	}
 
 }

@@ -1,11 +1,12 @@
 package Templates;
 
+import Factors.Factor;
 import Learning.Vector;
 import Variables.State;
 
 public interface Template {
 
-	void update(Vector features, double alpha);
+	void update(Factor f, double alpha);
 //
 //	void recompute(Annotation annotation, Vector features);
 

@@ -1,6 +1,5 @@
 package Learning;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,10 +11,9 @@ import Variables.State;
 public class Model {
 
 	Set<Template> templates;
-	HashMap<Integer, Double> model;
 
 	public Model() {
-		// TODO adds a CheatingTemplate
+		// TODO adds a CheatingTemplate for testing purposes
 		this.templates = new HashSet<Template>();
 		templates.add(new CheatingTemplate());
 	}
@@ -25,7 +23,7 @@ public class Model {
 	}
 
 	public void saveModelToFile(String file) {
-		// do something
+		// TODO save model to file
 	}
 
 	public Set<Template> getTemplates() {
@@ -34,8 +32,13 @@ public class Model {
 
 	public void update(State state, double alpha) {
 		for (Factor f : state.getFactors()) {
-			f.getTemplate().update(f.getFeatureVector(), alpha);
+			f.getTemplate().update(f, alpha);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "Model [templates=" + templates + "]";
 	}
 
 }

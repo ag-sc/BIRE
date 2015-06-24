@@ -20,7 +20,7 @@ public class Scorer {
 	 */
 	public double score(State state) {
 		state.unroll(model);
-		double score = state.recomputeScore();
+		double score = state.recomputeModelScore();
 		return score;
 	}
 
