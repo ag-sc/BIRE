@@ -26,7 +26,7 @@ public class CheatingTemplate implements Template {
 
 	@Override
 	public void update(Factor factor, double alpha) {
-		Log.d("Update factor!");
+		Log.d("Update factor");
 		for (String feature : factor.getFeatureVector().getFeatures()) {
 			weights.update(feature, alpha);
 		}

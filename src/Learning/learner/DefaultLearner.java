@@ -1,6 +1,5 @@
 package Learning.learner;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import Corpus.AnnotatedDocument;
@@ -8,25 +7,25 @@ import Learning.Learner;
 import Learning.Model;
 import Learning.ObjectiveFunction;
 import Learning.Scorer;
-import Sampling.DefaultListSampler;
+import Logging.Log;
 import Sampling.Sampler;
 import Sampling.SamplingHelper;
 import Variables.State;
 
 public class DefaultLearner implements Learner {
 
-	private int statesPerStep;
 	private int steps;
 	private double alpha = 0.1;
 
 	private Model model;
 	private Scorer scorer;
 	private ObjectiveFunction objective;
+	private List<Sampler> samplers;
 
-	public DefaultLearner(int steps, int statesPerStep, double alpha) {
+	public DefaultLearner(int steps, double alpha, List<Sampler> samplers) {
 		this.steps = steps;
-		this.statesPerStep = statesPerStep;
 		this.alpha = alpha;
+		this.samplers = samplers;
 	}
 
 	public void train(List<AnnotatedDocument> documents) {
@@ -34,19 +33,17 @@ public class DefaultLearner implements Learner {
 		model = new Model();
 		scorer = new Scorer(model);
 
-		List<Sampler> samplerList = new ArrayList<Sampler>();
-		samplerList.add(new DefaultListSampler(statesPerStep));
-
 		for (int i = 0; i < documents.size(); i++) {
-			System.out.println("Document: " + i);
+			Log.d("Document: %s", i);
 			AnnotatedDocument document = documents.get(i);
 			State goldState = new State(document, document.getGoldEntities());
 
 			State currentState = generateInitialAnnotations(document, goldState);
 
 			for (int j = 0; j < steps; j++) {
-				System.out.println("Step: " + j);
-				for (Sampler sampler : samplerList) {
+				Log.d("Step: %s", j);
+				for (Sampler sampler : samplers) {
+					Log.d("Sampler: %s", sampler.getClass().getSimpleName());
 					List<State> nextStates = sampler.getNextStates(
 							currentState, scorer);
 					for (State state : nextStates) {
@@ -65,7 +62,7 @@ public class DefaultLearner implements Learner {
 
 					State nextState = SamplingHelper
 							.drawRandomlyFrom(nextStates);
-					System.out.println("Next state: " + nextState);
+					Log.d("Next state: %s", nextState);
 					currentState = nextState;
 				}
 				System.out.println(model);
@@ -76,21 +73,31 @@ public class DefaultLearner implements Learner {
 
 	private void updateModelForState(State goldState, State currentState,
 			State possibleNextState) {
-		if (objective.score(possibleNextState, goldState) > objective.score(currentState,
-				goldState)) {
-			if (possibleNextState.getModelScore() < currentState.getModelScore()) {
+		Log.off();
+		Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
+				possibleNextState.getID(),
+				objective.score(currentState, goldState),
+				objective.score(possibleNextState, goldState),
+				currentState.getModelScore(), possibleNextState.getModelScore());
+		if (objective.score(possibleNextState, goldState) > objective.score(
+				currentState, goldState)) {
+			if (possibleNextState.getModelScore() < currentState
+					.getModelScore()) {
 				model.update(possibleNextState, alpha);
 				model.update(currentState, -alpha);
 			}
-		} else {
-			//TODO What to do if scores are equal?
-			if (objective.score(possibleNextState, goldState) < objective.score(
-					currentState, goldState)) {
-				if (possibleNextState.getModelScore() > currentState.getModelScore()) {
-					model.update(currentState, alpha);
-					model.update(possibleNextState, -alpha);
-				}
+		} else if (objective.score(possibleNextState, goldState) < objective
+				.score(currentState, goldState)) {
+			if (possibleNextState.getModelScore() > currentState
+					.getModelScore()) {
+				model.update(currentState, alpha);
+				model.update(possibleNextState, -alpha);
 			}
+		} else {
+			// TODO What to do if ObjectiveFunction scores are equal, but model
+			// scores not?
+			Log.d("Current state %s and next State %s are euqally good. Do nothing.",
+					currentState.getID(), possibleNextState.getID());
 		}
 	}
 

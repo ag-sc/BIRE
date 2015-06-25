@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import Changes.BoundaryChange;
 import Changes.StateChange;
@@ -54,8 +54,8 @@ public class SamplingHelper {
 			 * if new state is worse, accept with probability p(accept).
 			 * p(accept) = exp(-(scoreNew - scoreOld)/acceptanceFactor)
 			 */
-			double pNext = Math.exp(-(nextState.getModelScore() - state.getModelScore()
-					/ acceptanceFactor));
+			double pNext = Math.exp(-(nextState.getModelScore() - state
+					.getModelScore() / acceptanceFactor));
 			if (Math.random() < pNext)
 				return true;
 			else
@@ -167,6 +167,8 @@ public class SamplingHelper {
 			tokenAnnotation
 					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
 			break;
+		case DO_NOTHING:
+			Log.d("Do not change entity boundary");
 		default:
 			break;
 		}
@@ -205,8 +207,12 @@ public class SamplingHelper {
 
 	public static BoundaryChange sampleBoundaryChange(EntityAnnotation entity) {
 		List<BoundaryChange> possibleBoundaryChanges = new ArrayList<BoundaryChange>();
-		possibleBoundaryChanges.add(BoundaryChange.EXPAND_LEFT);
-		possibleBoundaryChanges.add(BoundaryChange.EXPAND_RIGHT);
+//		possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
+		if (entity.getBeginTokenIndex() > 0)
+			possibleBoundaryChanges.add(BoundaryChange.EXPAND_LEFT);
+		if (entity.getEndTokenIndex() < entity.getState().getDocument()
+				.getTokens().size() - 1)
+			possibleBoundaryChanges.add(BoundaryChange.EXPAND_RIGHT);
 		if (entity.getEndTokenIndex() - entity.getBeginTokenIndex() > 0) {
 			possibleBoundaryChanges.add(BoundaryChange.CONTRACT_LEFT);
 			possibleBoundaryChanges.add(BoundaryChange.CONTRACT_RIGHT);

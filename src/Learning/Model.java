@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import Factors.Factor;
+import Logging.Log;
 import Templates.CheatingTemplate;
 import Templates.Template;
 import Variables.State;
@@ -31,6 +32,7 @@ public class Model {
 	}
 
 	public void update(State state, double alpha) {
+		Log.d("Update state %s", state.getID());
 		for (Factor f : state.getFactors()) {
 			f.getTemplate().update(f, alpha);
 		}

@@ -1,19 +1,15 @@
 package Sampling;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import com.sun.org.apache.bcel.internal.generic.RETURN;
-
-import Changes.BoundaryChange;
 import Changes.StateChange;
 import Corpus.Token;
 import Learning.Scorer;
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
@@ -41,14 +37,13 @@ public class DefaultListSampler implements Sampler {
 	}
 
 	public List<State> getNextStates(State state, Scorer scorer) {
-
 		Set<State> nextStates = generateNextStates(state, numberOfStates,
 				scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
-		nextStatesSorted.sort(comparator);
-		System.out.println("generated states:");
+		nextStatesSorted.sort(State.comparator);
+		Log.d("generated states:");
 		for (State s : nextStatesSorted) {
-			System.out.println(s);
+			Log.d("%s", s);
 		}
 
 		return nextStatesSorted;
@@ -67,8 +62,7 @@ public class DefaultListSampler implements Sampler {
 			// if no annotation
 			if (!generatedState.tokenHasAnnotation(sampledToken)) {
 				// add annotation with random type
-				System.out
-						.println(generatedState.getID() + ": add annotation.");
+				Log.d("%s: add annotation", generatedState.getID());
 				SamplingHelper
 						.addRandomAnnotation(sampledToken, generatedState);
 			} else {
@@ -87,33 +81,34 @@ public class DefaultListSampler implements Sampler {
 					// TODO delete annotation completely or only from this token
 					// (this might require to split an annotation in to separate
 					// annotations)
-					System.out.println(generatedState.getID()
-							+ ": delete annotation.");
+					Log.d("%s: delete annotation.", generatedState.getID());
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;
 				case TYPE_CHANGED:
-					System.out.println(generatedState.getID()
-							+ ": change annotation type.");
+					Log.d("%s: change annotation type.", generatedState.getID());
 					EntityType sampledType = SamplingHelper
 							.sampleEntityType(generatedState);
 					tokenAnnotation.setType(sampledType);
 					break;
 				case ARGUMENT_ADDED:
-					System.out.println(generatedState.getID()
-							+ ": add annotation argument.");
+					Log.d("%s: add annotation argument.",
+							generatedState.getID());
 					SamplingHelper.addRandomArgument(tokenAnnotation,
 							generatedState);
 					break;
 				case ARGUMENT_REMOVED:
-					System.out.println(generatedState.getID()
-							+ ": remove annotation argument.");
+					Log.d("%s: remove annotation argument.",
+							generatedState.getID());
 					SamplingHelper.removeRandomArgument(tokenAnnotation);
 					break;
 				case BOUNDARIES_CHANGED:
-					System.out.println(generatedState.getID()
-							+ ": change annotation boundaries.");
+					Log.d("%s: change annotation boundaries.",
+							generatedState.getID());
 					SamplingHelper.changeBoundaries(tokenAnnotation,
 							generatedState);
+					break;
+				case NOTHING:
+					Log.d("Do not change the state");
 					break;
 				}
 			}

@@ -1,7 +1,6 @@
 package Sampling;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,16 +11,8 @@ import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
-public class RelationSampler implements Sampler {
+public class BoundarySampler implements Sampler {
 
-	Comparator<State> comparator = new Comparator<State>() {
-
-		@Override
-		public int compare(State s1, State s2) {
-			// inverse sign for descending order
-			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
-		}
-	};
 	private int numberOfStates;
 
 	/**
@@ -30,7 +21,7 @@ public class RelationSampler implements Sampler {
 	 * 
 	 * @param numberOfStates
 	 */
-	public RelationSampler(int numberOfStates) {
+	public BoundarySampler(int numberOfStates) {
 		this.numberOfStates = numberOfStates;
 	}
 
@@ -44,7 +35,6 @@ public class RelationSampler implements Sampler {
 		for (State s : nextStatesSorted) {
 			Log.d("%s", s);
 		}
-
 		return nextStatesSorted;
 
 	}
@@ -54,7 +44,6 @@ public class RelationSampler implements Sampler {
 		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);
-
 			// pick one entity at random
 			EntityAnnotation sampledEntity = SamplingHelper
 					.getRandomElement(new ArrayList<EntityAnnotation>(
@@ -62,20 +51,14 @@ public class RelationSampler implements Sampler {
 			// if annotation exists
 			if (sampledEntity != null) {
 				// choose a way to alter the state
-				StateChange stateChange = SamplingHelper.sampleStateChange(
-						StateChange.ARGUMENT_ADDED,
-						StateChange.ARGUMENT_REMOVED,StateChange.NOTHING);
+				StateChange stateChange = SamplingHelper
+						.sampleStateChange(StateChange.BOUNDARIES_CHANGED, StateChange.NOTHING);
 				switch (stateChange) {
-				case ARGUMENT_ADDED:
+				case BOUNDARIES_CHANGED:
 					System.out.println(generatedState.getID()
-							+ ": add annotation argument.");
-					SamplingHelper.addRandomArgument(sampledEntity,
+							+ ": change annotation boundaries.");
+					SamplingHelper.changeBoundaries(sampledEntity,
 							generatedState);
-					break;
-				case ARGUMENT_REMOVED:
-					System.out.println(generatedState.getID()
-							+ ": remove annotation argument.");
-					SamplingHelper.removeRandomArgument(sampledEntity);
 					break;
 				case NOTHING:
 					Log.d("Do not change the state");
@@ -86,9 +69,11 @@ public class RelationSampler implements Sampler {
 					break;
 				}
 			}
+
 			scorer.score(generatedState);
 			generatedStates.add(generatedState);
 		}
 		return generatedStates;
 	}
+
 }

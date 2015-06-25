@@ -62,7 +62,7 @@ public class Log {
 	}
 
 	private static String getMethodKey(StackTraceElement e) {
-		return e.getClassName() + e.getFileName();
+		return e.getClassName() + e.getMethodName();
 	}
 
 	private static String getClassKey(StackTraceElement e) {

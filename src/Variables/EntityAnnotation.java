@@ -34,7 +34,7 @@ public class EntityAnnotation extends Annotation {
 		return allFactors;
 	}
 
-	State state;
+	private State state;
 	String id;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
@@ -128,6 +128,10 @@ public class EntityAnnotation extends Annotation {
 
 	public EntityType getType() {
 		return type;
+	}
+
+	public State getState() {
+		return state;
 	}
 
 	public int getBeginTokenIndex() {

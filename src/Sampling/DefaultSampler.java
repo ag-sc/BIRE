@@ -10,6 +10,7 @@ import java.util.Map;
 import Changes.StateChange;
 import Corpus.Token;
 import Learning.Scorer;
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
@@ -115,6 +116,9 @@ public class DefaultSampler implements Sampler {
 							+ ": change annotation boundaries.");
 					SamplingHelper.changeBoundaries(tokenAnnotation,
 							generatedState);
+					break;
+				case NOTHING:
+					Log.d("Do not change the state");
 					break;
 				}
 			}

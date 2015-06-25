@@ -3,12 +3,12 @@ package Variables;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 
 import Corpus.Document;
@@ -20,11 +20,16 @@ import Templates.Template;
 
 public class State {
 
-	private static final Random random = new Random();
+	public static final Comparator<State> comparator = new Comparator<State>() {
+
+		@Override
+		public int compare(State s1, State s2) {
+			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
+		}
+	};
 	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
-	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat(
-			"0.0000");
-	private static final DecimalFormat STATE_ID_FORMAT = new DecimalFormat(
+	private static final DecimalFormat scoreFormat = new DecimalFormat("0.0000");
+	private static final DecimalFormat stateIDFormat = new DecimalFormat(
 			"00000");
 	private int entityIdIndex = 0;
 	private static int stateIdIndex = 0;
@@ -209,7 +214,7 @@ public class State {
 	}
 
 	public String generateStateID() {
-		String id = STATE_ID_FORMAT.format(stateIdIndex);
+		String id = stateIDFormat.format(stateIdIndex);
 		stateIdIndex++;
 		return id;
 	}
@@ -235,7 +240,7 @@ public class State {
 		builder.append("ID:");
 		builder.append(id);
 		builder.append(" [");
-		builder.append(SCORE_FORMAT.format(score));
+		builder.append(scoreFormat.format(score));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<String> entities = getAnnotationForToken(t);
