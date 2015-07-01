@@ -19,6 +19,7 @@ public class CheatingTemplate implements Template {
 	private ObjectiveFunction objective = new ObjectiveFunction();
 
 	public CheatingTemplate() {
+		Log.off();
 		weights = new Vector();
 		weights.set(GOLD, 1.0);
 		// TODO keep weights and actual features consistent

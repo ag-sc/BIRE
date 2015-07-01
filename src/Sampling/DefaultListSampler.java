@@ -78,9 +78,6 @@ public class DefaultListSampler implements Sampler {
 				StateChange stateChange = SamplingHelper.sampleStateChange();
 				switch (stateChange) {
 				case ANNOTATION_DELETED:
-					// TODO delete annotation completely or only from this token
-					// (this might require to split an annotation in to separate
-					// annotations)
 					Log.d("%s: delete annotation.", generatedState.getID());
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;

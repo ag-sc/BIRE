@@ -3,11 +3,14 @@ package Learning;
 import java.util.HashMap;
 import java.util.Set;
 
+import Logging.Log;
+
 public class Vector {
 
 	private HashMap<String, Double> features;
 
 	public Vector() {
+		Log.off();
 		features = new HashMap<String, Double>();
 	}
 
@@ -17,8 +20,8 @@ public class Vector {
 	}
 
 	public double multiply(Vector weights) {
-		System.out.println("Features: " + features);
-		System.out.println("Weights: " + weights);
+		Log.d("Features: %s", features);
+		Log.d("Weights: %s", weights);
 		double product = 1;
 		for (String feature : features.keySet()) {
 			product *= features.get(feature)

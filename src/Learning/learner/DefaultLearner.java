@@ -9,7 +9,6 @@ import Learning.ObjectiveFunction;
 import Learning.Scorer;
 import Logging.Log;
 import Sampling.Sampler;
-import Sampling.SamplingHelper;
 import Variables.State;
 
 public class DefaultLearner implements Learner {
@@ -36,7 +35,7 @@ public class DefaultLearner implements Learner {
 		for (int i = 0; i < documents.size(); i++) {
 			Log.d("Document: %s", i);
 			AnnotatedDocument document = documents.get(i);
-			State goldState = new State(document, document.getGoldEntities());
+			State goldState = document.getGoldState();
 
 			State currentState = generateInitialAnnotations(document, goldState);
 
@@ -47,6 +46,9 @@ public class DefaultLearner implements Learner {
 					List<State> nextStates = sampler.getNextStates(
 							currentState, scorer);
 					for (State state : nextStates) {
+						// TODO if we want to work on a set of currentStates,
+						// how can we update the model (do we compare each
+						// current state with each next state?)
 						updateModelForState(goldState, currentState, state);
 					}
 
@@ -56,16 +58,14 @@ public class DefaultLearner implements Learner {
 					// System.out.println(state);
 					// }
 
-					// TODO Which state should be selected to use for next
-					// sampler/next step? Or all/top k?
-					// State nextState = nextStates.get(0);
+					State nextState = nextStates.get(0);
 
-					State nextState = SamplingHelper
-							.drawRandomlyFrom(nextStates);
+					// State nextState = SamplingHelper
+					// .drawRandomlyFrom(nextStates);
 					Log.d("Next state: %s", nextState);
 					currentState = nextState;
 				}
-				System.out.println(model);
+				Log.d("%s", model);
 			}
 		}
 
@@ -73,25 +73,37 @@ public class DefaultLearner implements Learner {
 
 	private void updateModelForState(State goldState, State currentState,
 			State possibleNextState) {
-		Log.off();
+		Log.methodOff();
 		Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
 				possibleNextState.getID(),
 				objective.score(currentState, goldState),
 				objective.score(possibleNextState, goldState),
 				currentState.getModelScore(), possibleNextState.getModelScore());
-		if (objective.score(possibleNextState, goldState) > objective.score(
-				currentState, goldState)) {
-			if (possibleNextState.getModelScore() < currentState
-					.getModelScore()) {
-				model.update(possibleNextState, alpha);
-				model.update(currentState, -alpha);
+
+		double On = objective.score(possibleNextState, goldState);
+		double Oc = objective.score(currentState, goldState);
+
+		double Mn = possibleNextState.getModelScore();
+		double Mc = currentState.getModelScore();
+
+		/*-
+		 * 2 * (0.9 - 0.8)/(0.9 + 0.8) = 0.2/1.7
+		 * 2 * (2.5 - 1.5)/(2.5 + 1.5) = 1/4
+		 */
+		// double learningSignal = 2 * (On - Oc) / (On + Oc) * 2 * (Mn - Mc) /
+		// (Mn + Mc) / 2;
+		// double learningSignal = Math.signum((On - Oc) * (Mn - Mc));
+		double learningSignal = 1;
+		double learningStep = alpha * learningSignal;
+		if (On >= Oc) { // On-Oc > 0
+			if (Mn < Mc) { // Mn-Mc < 0
+				model.update(possibleNextState, learningStep);
+				model.update(currentState, -learningStep);
 			}
-		} else if (objective.score(possibleNextState, goldState) < objective
-				.score(currentState, goldState)) {
-			if (possibleNextState.getModelScore() > currentState
-					.getModelScore()) {
-				model.update(currentState, alpha);
-				model.update(possibleNextState, -alpha);
+		} else if (On < Oc) { // On-Oc < 0
+			if (Mn > Mc) { // Mn-Mc > 0
+				model.update(currentState, learningStep);
+				model.update(possibleNextState, -learningStep);
 			}
 		} else {
 			// TODO What to do if ObjectiveFunction scores are equal, but model

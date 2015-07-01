@@ -22,8 +22,15 @@ public class BratCorpus implements Corpus {
 		return documents;
 	}
 
+	@Override
 	public void addDocument(AnnotatedDocument doc) {
 		documents.add(doc);
+	}
+
+	@Override
+	public String toString() {
+		return "BratCorpus [corpusConfig=" + corpusConfig + ", documents="
+				+ documents + "]";
 	}
 
 }

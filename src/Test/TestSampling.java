@@ -16,7 +16,7 @@ public class TestSampling {
 		Corpus corpus = TestData.getDummyData();
 		List<AnnotatedDocument> documents = corpus.getDocuments();
 		AnnotatedDocument doc = documents.get(0);
-		State goldState = new State(doc, doc.getGoldEntities());
+		State goldState = doc.getGoldState();
 		State initialState = new State(doc);
 		initialState.goldState = goldState;
 		System.out.println("initialState: " + initialState);

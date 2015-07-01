@@ -1,7 +1,9 @@
 package Corpus;
 
+import java.io.Serializable;
 
-public class Token {
+
+public class Token implements Serializable{
 
 	int index;
 	int from, to;

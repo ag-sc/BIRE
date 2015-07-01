@@ -73,9 +73,6 @@ public class EntitySampler implements Sampler {
 						StateChange.BOUNDARIES_CHANGED, StateChange.NOTHING);
 				switch (stateChange) {
 				case ANNOTATION_DELETED:
-					// TODO delete annotation completely or only from this token
-					// (this might require to split an annotation in to separate
-					// annotations)
 					System.out.println(generatedState.getID()
 							+ ": delete annotation.");
 					generatedState.removeEntityAnnotation(tokenAnnotation);

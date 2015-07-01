@@ -22,6 +22,7 @@ import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 
 public class BratAnnotationParser {
 
+	// TODO Use Jena-Tokenizer and project character-offset to token-indices
 	private static final String COMMENT_INDICATOR = "#";
 	private static final String UNKNOWN_ANNOTATION_TYPE = "Line %s was not recognized as a supported annotation:\n"
 			+ "\t%s";
@@ -51,11 +52,12 @@ public class BratAnnotationParser {
 			annotationReader.close();
 
 			// Read Text
-			Scanner scanner = new Scanner(new File(textPath));
-			String content = scanner.useDelimiter("\\Z").next();
-			scanner.close();
-			
-			BratAnnotatedDocument doc = new BratAnnotatedDocument(content,
+			String content = Utils.readFile(textPath);
+
+			File textFile = new File(textPath);
+			File annotationFile = new File(annotationPath);
+			BratAnnotatedDocument doc = new BratAnnotatedDocument(
+					textFile.getName(), annotationFile.getName(), content,
 					manager.getAnnotations());
 			return doc;
 		} catch (FileNotFoundException e) {

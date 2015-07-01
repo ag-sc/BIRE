@@ -3,14 +3,20 @@ package Learning;
 import java.util.Collection;
 import java.util.Map;
 
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
 public class ObjectiveFunction {
 
+	public ObjectiveFunction() {
+		Log.off();
+	}
+
 	public double score(State state, State goldState) {
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
+		Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
 		double precision = 0.0;
 		for (EntityAnnotation entity : entities) {
 			double max = 0.0;
@@ -26,9 +32,9 @@ public class ObjectiveFunction {
 		}
 
 		double recall = 0.0;
-		for (EntityAnnotation entity : goldEntities) {
+		for (EntityAnnotation goldEntity : goldEntities) {
 			double max = 0.0;
-			for (EntityAnnotation goldEntity : entities) {
+			for (EntityAnnotation entity : entities) {
 				if (typeMatches(goldEntity, entity)) {
 					double overlapScore = overlap(goldEntity, entity);
 					if (overlapScore > max) {
@@ -38,7 +44,6 @@ public class ObjectiveFunction {
 			}
 			recall += max;
 		}
-
 		if (precision == 0 || recall == 0 || entities.size() == 0
 				|| goldEntities.size() == 0) {
 			return 0;
@@ -46,6 +51,8 @@ public class ObjectiveFunction {
 
 		precision /= entities.size();
 		recall /= goldEntities.size();
+		Log.d("precision: %s", precision);
+		Log.d("recall: %s", recall);
 
 		double f1 = 2 * (precision * recall) / (precision + recall);
 		return f1;
@@ -74,19 +81,23 @@ public class ObjectiveFunction {
 			}
 		}
 
+		//TODO Argument score: division by 0 possible
 		return matchingRoles / args1.keySet().size();
 
 	}
 
 	private static double overlap(EntityAnnotation entity,
 			EntityAnnotation goldEntity) {
+		Log.methodOff();
 		int a = entity.getBeginTokenIndex();
 		int b = entity.getEndTokenIndex();
 		int x = goldEntity.getBeginTokenIndex();
 		int y = goldEntity.getEndTokenIndex();
 		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
-
-		return overlap / (Math.max(b - a, y - x) + 1);
+		double overlapScore = ((double) overlap) / (b - a + 1);
+		Log.d("Overlap for %s and %s (GOLD): %s (%s)", entity.getID(),
+				goldEntity.getID(), overlap, overlapScore);
+		return overlapScore;
 	}
 
 	private boolean typeMatches(EntityAnnotation entity,

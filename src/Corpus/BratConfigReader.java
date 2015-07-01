@@ -37,7 +37,7 @@ public class BratConfigReader {
 	 * @return
 	 */
 	public synchronized AnnotationConfig readConfig(String filePath) {
-		Log.classOff();
+		Log.off();
 		try {
 			eventReferencingArguments = new HashSet<Argument>();
 			events = new HashSet<EntityType>();

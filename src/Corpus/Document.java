@@ -1,12 +1,13 @@
 package Corpus;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Document {
+public class Document implements Serializable {
 
-	Corpus corpus;
-	String content;
-	List<Token> tokens;
+	protected Corpus corpus;
+	protected String content;
+	protected List<Token> tokens;
 
 	public Document(Corpus corpus, String content, List<Token> tokens) {
 		super();

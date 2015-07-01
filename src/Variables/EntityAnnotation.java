@@ -8,7 +8,6 @@ import java.util.Map;
 
 import Changes.StateChange;
 import Factors.Factor;
-import Logging.Log;
 import Templates.Template;
 
 public class EntityAnnotation extends Annotation {

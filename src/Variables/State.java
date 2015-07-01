@@ -1,5 +1,6 @@
 package Variables;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +19,7 @@ import Learning.Model;
 import Logging.Log;
 import Templates.Template;
 
-public class State {
+public class State implements Serializable{
 
 	public static final Comparator<State> comparator = new Comparator<State>() {
 
@@ -47,6 +48,7 @@ public class State {
 	private double score;
 
 	public State() {
+		Log.off();
 		this.id = generateStateID();
 	}
 
@@ -299,5 +301,9 @@ public class State {
 			builder.append("\n");
 		}
 		return builder.toString().trim();
+	}
+
+	public void setDocument(Document document) {
+		this.document = document;
 	}
 }

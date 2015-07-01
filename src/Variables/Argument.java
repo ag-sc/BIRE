@@ -1,8 +1,9 @@
 package Variables;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Argument {
+public class Argument implements Serializable{
 
 	String role;
 	List<String> types;
