@@ -68,7 +68,7 @@ public class DefaultListSampler implements Sampler {
 			} else {
 				// Tokens may be referenced/annotated by different entities
 				List<String> linkedEntities = new ArrayList<String>(
-						generatedState.getAnnotationForToken(sampledToken));
+						generatedState.getAnnotationsForToken(sampledToken));
 				// pick one at random
 				EntityAnnotation tokenAnnotation = generatedState
 						.getEntity(SamplingHelper
@@ -77,35 +77,47 @@ public class DefaultListSampler implements Sampler {
 				// choose a way to alter the state
 				StateChange stateChange = SamplingHelper.sampleStateChange();
 				switch (stateChange) {
-				case ANNOTATION_DELETED:
+				case DELETE_ANNOTATION:
 					Log.d("%s: delete annotation.", generatedState.getID());
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;
-				case TYPE_CHANGED:
+				case CHANGE_TYPE:
 					Log.d("%s: change annotation type.", generatedState.getID());
 					EntityType sampledType = SamplingHelper
 							.sampleEntityType(generatedState);
 					tokenAnnotation.setType(sampledType);
 					break;
-				case ARGUMENT_ADDED:
+				case ADD_ARGUMENT:
 					Log.d("%s: add annotation argument.",
 							generatedState.getID());
 					SamplingHelper.addRandomArgument(tokenAnnotation,
 							generatedState);
 					break;
-				case ARGUMENT_REMOVED:
+				case REMOVE_ARGUMENT:
 					Log.d("%s: remove annotation argument.",
 							generatedState.getID());
 					SamplingHelper.removeRandomArgument(tokenAnnotation);
 					break;
-				case BOUNDARIES_CHANGED:
+				case CHANGE_BOUNDRARIES:
 					Log.d("%s: change annotation boundaries.",
 							generatedState.getID());
 					SamplingHelper.changeBoundaries(tokenAnnotation,
 							generatedState);
 					break;
-				case NOTHING:
+				case CHANGE_ARGUMENT_ROLE:
+					Log.d("%s: change argument role", generatedState.getID());
+					SamplingHelper.changeRandomArgumentRole(tokenAnnotation,
+							generatedState);
+					break;
+				case CHANGE_ARGUMENT_ENTITY:
+					Log.d("%s: change argument entity", generatedState.getID());
+					SamplingHelper.changeRandomArgumentEntity(tokenAnnotation,
+							generatedState);
+					break;
+				case DO_NOTHING:
 					Log.d("Do not change the state");
+					break;
+				default:
 					break;
 				}
 			}

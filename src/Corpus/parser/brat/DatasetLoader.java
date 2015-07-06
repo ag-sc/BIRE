@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import Corpus.BratCorpus;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.julie.SentenceSplitter;
+import Corpus.julie.Tokenization;
 import Logging.Log;
 
 public class DatasetLoader {
@@ -40,6 +42,7 @@ public class DatasetLoader {
 		File annDir = new File("res/bionlp/ann");
 		File textDir = new File("res/bionlp/text");
 		File sentencesDir = new File("res/bionlp/julie/sentences");
+		File tokensDir = new File("res/bionlp/julie/tokens");
 		String modelFilepath = "res/bionlp/julie/models/JULIE_life-science-1.6.mod.gz";
 		String configFilepath = "res/bionlp/annotation.conf";
 
@@ -58,10 +61,14 @@ public class DatasetLoader {
 		completeDocumnts.retainAll(textFiles.keySet());
 		Log.d("%s documents with a given text and annotation file",
 				completeDocumnts.size());
-
+		Log.d("filesnames: %s", completeDocumnts);
 		Corpus corpus = new BratCorpus(config);
+		int curr = 1;
 		for (String filename : completeDocumnts) {
-			Log.d("parse document \"%s\"", filename);
+			Log.d("#############################");
+			Log.d("#############################");
+			Log.d("parse document \"%s\" (%s/%s)", filename, curr,
+					completeDocumnts.size());
 			File annFile = annotationFiles.get(filename);
 			File textFile = textFiles.get(filename);
 			try {
@@ -80,12 +87,20 @@ public class DatasetLoader {
 				File sentFile = new File(sentencesDir, textFile.getName());
 				SentenceSplitter.getSentencesAndStore(
 						new File(textFile.getPath()), sentFile.getPath());
+
+				Log.d("#####################");
+				Log.d("### Tokenization of sentences:");
+				List<Tokenization> tokenizations = Tokenization
+						.extractAndSaveTokens(filename, tokensDir.getPath(),
+								sentFile.getPath(), modelFilepath);
+
 				Log.d("#####################");
 				Log.d("### BIRE annotations:");
-				AnnotatedDocument doc = Brat2BIREConverter.convert(bratDoc,
-						corpus, sentFile.getPath(), modelFilepath);
-				Log.d("%s", doc.getGoldState().toDetailedString());
-				corpus.addDocument(doc);
+				List<AnnotatedDocument> documents = Brat2BIREConverter.convert(
+						bratDoc, corpus, tokenizations);
+				// Log.d("%s", doc.getGoldState().toDetailedString());
+				corpus.addDocuments(documents);
+				curr++;
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -129,7 +144,7 @@ public class DatasetLoader {
 		return files;
 	}
 
-	private static String getFilenameWithoutExtension(String name) {
+	public static String getFilenameWithoutExtension(String name) {
 
 		return name.replaceFirst("[.][^.]+$", "");
 	}

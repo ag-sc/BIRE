@@ -22,7 +22,6 @@ import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 
 public class BratAnnotationParser {
 
-	// TODO Use Jena-Tokenizer and project character-offset to token-indices
 	private static final String COMMENT_INDICATOR = "#";
 	private static final String UNKNOWN_ANNOTATION_TYPE = "Line %s was not recognized as a supported annotation:\n"
 			+ "\t%s";

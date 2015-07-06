@@ -19,7 +19,7 @@ public class TestData {
 	public static Corpus getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
 		AnnotationConfig originalConfig = configReader
-				.readConfig("res/annotation.conf");
+				.readConfig("res/bionlp/annotation.conf");
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
 		simplifiedConfig.addEntityType(originalConfig.getEntityType("Protein"));
 
@@ -36,8 +36,9 @@ public class TestData {
 		goldState.addEntityAnnotation(e2);
 
 		BratCorpus corpus = new BratCorpus(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, content, tokens,
-				goldState);
+		AnnotatedDocument doc = new AnnotatedDocument("DummyDocument", content,
+				tokens, goldState);
+		doc.setCorpus(corpus);
 		corpus.addDocument(doc);
 
 		return corpus;

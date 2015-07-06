@@ -14,6 +14,9 @@ import Variables.State;
 
 public class RelationSampler implements Sampler {
 
+	{
+		Log.off();
+	}
 	Comparator<State> comparator = new Comparator<State>() {
 
 		@Override
@@ -63,21 +66,33 @@ public class RelationSampler implements Sampler {
 			if (sampledEntity != null) {
 				// choose a way to alter the state
 				StateChange stateChange = SamplingHelper.sampleStateChange(
-						StateChange.ARGUMENT_ADDED,
-						StateChange.ARGUMENT_REMOVED,StateChange.NOTHING);
+						StateChange.ADD_ARGUMENT, StateChange.REMOVE_ARGUMENT,
+						StateChange.CHANGE_ARGUMENT_ROLE,
+						StateChange.CHANGE_ARGUMENT_ENTITY,
+						StateChange.DO_NOTHING);
 				switch (stateChange) {
-				case ARGUMENT_ADDED:
+				case ADD_ARGUMENT:
 					System.out.println(generatedState.getID()
 							+ ": add annotation argument.");
 					SamplingHelper.addRandomArgument(sampledEntity,
 							generatedState);
 					break;
-				case ARGUMENT_REMOVED:
+				case REMOVE_ARGUMENT:
 					System.out.println(generatedState.getID()
 							+ ": remove annotation argument.");
 					SamplingHelper.removeRandomArgument(sampledEntity);
 					break;
-				case NOTHING:
+				case CHANGE_ARGUMENT_ROLE:
+					Log.d("%s: change argument role", generatedState.getID());
+					SamplingHelper.changeRandomArgumentRole(sampledEntity,
+							generatedState);
+					break;
+				case CHANGE_ARGUMENT_ENTITY:
+					Log.d("%s: change argument entity", generatedState.getID());
+					SamplingHelper.changeRandomArgumentEntity(sampledEntity,
+							generatedState);
+					break;
+				case DO_NOTHING:
 					Log.d("Do not change the state");
 					break;
 				default:

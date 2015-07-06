@@ -16,7 +16,7 @@ public class AnnotationConfig implements Serializable {
 	}
 
 	public void addEntityType(EntityType entityType) {
-		entityTypes.put(entityType.getType(), entityType);
+		entityTypes.put(entityType.getName(), entityType);
 	}
 
 	public EntityType getEntityType(String type) {

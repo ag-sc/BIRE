@@ -10,7 +10,7 @@ import Variables.State;
 public class ObjectiveFunction {
 
 	public ObjectiveFunction() {
-		Log.off();
+		 Log.off();
 	}
 
 	public double score(State state, State goldState) {
@@ -58,31 +58,31 @@ public class ObjectiveFunction {
 		return f1;
 	}
 
-	private double argumentScore(EntityAnnotation entity,
-			EntityAnnotation goldEntity) {
+	private double argumentScore(EntityAnnotation entity1,
+			EntityAnnotation entity2) {
 
-		Map<String, String> args1 = entity.getArguments();
-		Map<String, String> args2 = goldEntity.getArguments();
-		EntityAnnotation annotation1;
-		EntityAnnotation annotation2;
+		Map<String, String> arguments1 = entity1.getArguments();
+		Map<String, String> arguments2 = entity2.getArguments();
 
-		if (args1.keySet().size() == 0 && args2.keySet().size() == 0)
-			return 1.0;
+		if (arguments1.keySet().size() == 0)
+			return 1;
 
 		int matchingRoles = 0;
 
-		for (String role : args1.keySet()) {
-			annotation1 = entity.getEntity(args1.get(role));
-			if (args2.containsKey(role)) {
-				annotation2 = goldEntity.getEntity(args2.get(role));
-				if (overlap(annotation1, annotation2) > 0) {
+		for (String role : arguments1.keySet()) {
+			// TODO check if entity for id actually exists!
+			EntityAnnotation argEntity1 = entity1.getEntity(arguments1
+					.get(role));
+			if (arguments2.containsKey(role)) {
+				EntityAnnotation argEntity2 = entity2.getEntity(arguments2
+						.get(role));
+				if (overlap(argEntity1, argEntity2) > 0) {
 					matchingRoles++;
 				}
 			}
 		}
 
-		//TODO Argument score: division by 0 possible
-		return matchingRoles / args1.keySet().size();
+		return matchingRoles / arguments1.keySet().size();
 
 	}
 

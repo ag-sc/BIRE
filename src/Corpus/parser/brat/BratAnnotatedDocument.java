@@ -52,4 +52,5 @@ public class BratAnnotatedDocument {
 		return content + "\n" + annotationsToString();
 	}
 
+
 }

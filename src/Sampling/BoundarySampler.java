@@ -13,6 +13,9 @@ import Variables.State;
 
 public class BoundarySampler implements Sampler {
 
+	{
+		Log.off();
+	}
 	private int numberOfStates;
 
 	/**
@@ -27,9 +30,9 @@ public class BoundarySampler implements Sampler {
 
 	public List<State> getNextStates(State state, Scorer scorer) {
 
-		Set<State> nextStates = generateNextStates(state, numberOfStates,
+		Set<State> generatedStates = generateNextStates(state, numberOfStates,
 				scorer);
-		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
+		List<State> nextStatesSorted = new ArrayList<State>(generatedStates);
 		nextStatesSorted.sort(State.comparator);
 		Log.d("generated states:");
 		for (State s : nextStatesSorted) {
@@ -51,16 +54,17 @@ public class BoundarySampler implements Sampler {
 			// if annotation exists
 			if (sampledEntity != null) {
 				// choose a way to alter the state
-				StateChange stateChange = SamplingHelper
-						.sampleStateChange(StateChange.BOUNDARIES_CHANGED, StateChange.NOTHING);
+				//TODO consider merging entities
+				StateChange stateChange = SamplingHelper.sampleStateChange(
+						StateChange.CHANGE_BOUNDRARIES, StateChange.DO_NOTHING);
 				switch (stateChange) {
-				case BOUNDARIES_CHANGED:
+				case CHANGE_BOUNDRARIES:
 					System.out.println(generatedState.getID()
 							+ ": change annotation boundaries.");
 					SamplingHelper.changeBoundaries(sampledEntity,
 							generatedState);
 					break;
-				case NOTHING:
+				case DO_NOTHING:
 					Log.d("Do not change the state");
 					break;
 				default:

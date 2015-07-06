@@ -1,5 +1,6 @@
 package Variables;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import Changes.StateChange;
+import Corpus.Token;
 import Factors.Factor;
 import Templates.Template;
 
@@ -84,10 +86,6 @@ public class EntityAnnotation extends Annotation {
 		this.arguments = new HashMap<String, String>(entityAnnotation.arguments);
 	}
 
-	public void setManager(State state) {
-		this.state = state;
-	}
-
 	/**
 	 * This method is needed in the process of parsing/creating the annotations.
 	 * 
@@ -143,7 +141,7 @@ public class EntityAnnotation extends Annotation {
 		state.removeFromTokenToEntityMapping(this);
 		this.beginTokenIndex = beginTokenIndex;
 		state.addToTokenToEntityMapping(this);
-		change = StateChange.BOUNDARIES_CHANGED;
+		change = StateChange.CHANGE_BOUNDRARIES;
 	}
 
 	public int getEndTokenIndex() {
@@ -157,7 +155,7 @@ public class EntityAnnotation extends Annotation {
 		state.removeFromTokenToEntityMapping(this);
 		this.endTokenIndex = endTokenIndex;
 		state.addToTokenToEntityMapping(this);
-		change = StateChange.BOUNDARIES_CHANGED;
+		change = StateChange.CHANGE_BOUNDRARIES;
 	}
 
 	public Map<String, String> getArguments() {
@@ -175,7 +173,7 @@ public class EntityAnnotation extends Annotation {
 	@Override
 	public String toString() {
 		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
-				+ ", end=" + endTokenIndex + ", type=" + type.getType()
+				+ ", end=" + endTokenIndex + ", type=" + type.getName()
 				+ ", arguments=" + arguments + "]";
 	}
 
@@ -192,5 +190,29 @@ public class EntityAnnotation extends Annotation {
 
 	public void addFactors(Template template, List<Factor> factors) {
 		this.factors.put(template, factors);
+	}
+
+	public boolean isChanged() {
+		return true;
+	}
+
+	public List<Token> getTokens() {
+		List<Token> tokens = new ArrayList<Token>();
+		for (int i = beginTokenIndex; i < endTokenIndex; i++)
+			tokens.add(state.getDocument().getTokens().get(i));
+		return tokens;
+	}
+
+	public String getText() {
+		List<Token> tokens = getTokens();
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < tokens.size(); i++) {
+			Token token = tokens.get(i);
+			builder.append(token.getText());
+			if (i < tokens.size() - 1) {
+				builder.append(" ");
+			}
+		}
+		return builder.toString();
 	}
 }

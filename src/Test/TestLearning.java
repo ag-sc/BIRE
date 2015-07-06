@@ -13,7 +13,8 @@ import Learning.Learner;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Sampling.BoundarySampler;
-import Sampling.EntitySampler;
+import Sampling.ExhaustiveEntitySampler;
+import Sampling.RelationSampler;
 import Sampling.Sampler;
 
 public class TestLearning {
@@ -21,8 +22,10 @@ public class TestLearning {
 	public static void main(String[] args) {
 		// Corpus corpus = TestData.getDummyData();
 		Corpus corpus = null;
+
 		// corpus = DatasetLoader
 		// .convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+
 		try {
 			corpus = DatasetLoader
 					.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
@@ -33,14 +36,15 @@ public class TestLearning {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		Log.d("%s", corpus);
+		Log.d("Corpus:\n%s", corpus);
 		// System.out.println(corpus.getCorpusConfig());
 		List<AnnotatedDocument> documents = corpus.getDocuments();
+		documents = documents.subList(0, 1);
 		List<Sampler> samplers = new ArrayList<Sampler>();
 		// samplers.add(new DefaultListSampler(20));
-		samplers.add(new EntitySampler(20));
+		samplers.add(new ExhaustiveEntitySampler(20));
 		samplers.add(new BoundarySampler(20));
-		// samplers.add(new RelationSampler(20));
+		samplers.add(new RelationSampler(20));
 		Learner learner = new DefaultLearner(10, 0.01, samplers);
 		learner.train(documents);
 	}

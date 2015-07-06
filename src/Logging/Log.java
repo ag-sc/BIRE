@@ -1,39 +1,61 @@
 package Logging;
 
-import java.util.Arrays;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Log {
 
+	private static boolean logToFile = false;
 	private static final String BIRE_LOGGER_NAME = "BIRE";
-//	private static Logger log;
+	private static final String DEFAULT_LOGFILE_DIR = "res/log";
+	private static final String LOGFILE_NAME_PATTERN = DEFAULT_LOGFILE_DIR
+			+ "/LOG_%s-%s-%s_%s-%s-%s";
+	// private static Logger log;
 	private static Set<String> mutedMethods;
 	private static Set<String> mutedClasses;
+	private static File logFile;
+	private static BufferedWriter writer;
 
 	static {
 		init();
 	}
 
 	public static void init() {
-//		System.out.println("init logger");
-//		log = Logger.getLogger(BIRE_LOGGER_NAME);
-//		log.setLevel(Level.ALL);
-//		log.setUseParentHandlers(false);
-//		ConsoleHandler h = new ConsoleHandler() {
-//			{
-//				setOutputStream(System.out);
-//			}
-//		};
-//		h.setLevel(Level.ALL);
-//		h.setFormatter(new SimpleLogFormatter());
-//		log.addHandler(h);
+		System.out.println("init logger");
+		// log = Logger.getLogger(BIRE_LOGGER_NAME);
+		// log.setLevel(Level.ALL);
+		// log.setUseParentHandlers(false);
+		// ConsoleHandler h = new ConsoleHandler() {
+		// {
+		// setOutputStream(System.out);
+		// }
+		// };
+		// h.setLevel(Level.ALL);
+		// h.setFormatter(new SimpleLogFormatter());
+		// log.addHandler(h);
 		mutedMethods = new HashSet<String>();
 		mutedClasses = new HashSet<String>();
-//		Log.status();
+		Calendar now = Calendar.getInstance();
+		logFile = new File(getLogFilename(now));
+		try {
+			writer = new BufferedWriter(new FileWriter(logFile));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// Log.status();
+	}
+
+	private static String getLogFilename(Calendar now) {
+		return String.format(LOGFILE_NAME_PATTERN, now.get(Calendar.YEAR),
+				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
+				now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+				now.get(Calendar.SECOND));
 	}
 
 	private static StackTraceElement getCallingMethod() {
@@ -47,13 +69,13 @@ public class Log {
 	}
 
 	public static void status() {
-//		System.out
-//				.println(String.format("Logger: %s (%s)", log.getName(), log));
-//		System.out.println(String.format("Level: %s", log.getLevel()));
-//		System.out.println(String.format("Handler: %s",
-//				Arrays.toString(log.getHandlers())));
-//		System.out.println(String.format("Muted Classes: %s", mutedClasses));
-//		System.out.println(String.format("Muted Methods: %s", mutedClasses));
+		// System.out
+		// .println(String.format("Logger: %s (%s)", log.getName(), log));
+		// System.out.println(String.format("Level: %s", log.getLevel()));
+		// System.out.println(String.format("Handler: %s",
+		// Arrays.toString(log.getHandlers())));
+		// System.out.println(String.format("Muted Classes: %s", mutedClasses));
+		// System.out.println(String.format("Muted Methods: %s", mutedClasses));
 	}
 
 	/**
@@ -78,6 +100,7 @@ public class Log {
 		StackTraceElement e = getCallingMethod();
 		mutedClasses.remove(getClassKey(e));
 	}
+
 
 	private static boolean isMuted(StackTraceElement e) {
 		// System.out.println("Muted Classes: " + mutedClasses);
@@ -122,7 +145,7 @@ public class Log {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
 			logp(DebugLevel.DEBUG, e.getClassName(), e.getMethodName(),
-					message, args);
+					String.format(message, args));
 	}
 
 	public static void i(String message) {
@@ -134,7 +157,8 @@ public class Log {
 	public static void i(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.INFO, e.getClassName(), e.getMethodName(), message, args);
+			logp(Level.INFO, e.getClassName(), e.getMethodName(),
+					String.format(message, args));
 	}
 
 	public static void c(String message) {
@@ -146,8 +170,8 @@ public class Log {
 	public static void c(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.CONFIG, e.getClassName(), e.getMethodName(), message,
-					args);
+			logp(Level.CONFIG, e.getClassName(), e.getMethodName(),
+					String.format(message, args));
 	}
 
 	public static void w(String message) {
@@ -159,8 +183,8 @@ public class Log {
 	public static void w(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.WARNING, e.getClassName(), e.getMethodName(), message,
-					args);
+			logp(Level.WARNING, e.getClassName(), e.getMethodName(),
+					String.format(message, args));
 	}
 
 	public static void s(String message) {
@@ -172,14 +196,21 @@ public class Log {
 	public static void s(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.SEVERE, e.getClassName(), e.getMethodName(), message,
-					args);
+			logp(Level.SEVERE, e.getClassName(), e.getMethodName(),
+					String.format(message, args));
 	}
 
 	private static void logp(Level level, String className, String methodName,
-			String message, Object... args) {
-//		log.logp(level, className, methodName, String.format(message, args));
-		System.out.println(String.format(message, args));
+			String message) {
+		// log.logp(level, className, methodName, String.format(message, args));
+		System.out.println(message);
+		if (logToFile) {
+			try {
+				writer.write(message);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

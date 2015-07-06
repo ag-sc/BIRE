@@ -1,6 +1,7 @@
 package Corpus;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class BratCorpus implements Corpus {
@@ -24,13 +25,18 @@ public class BratCorpus implements Corpus {
 
 	@Override
 	public void addDocument(AnnotatedDocument doc) {
-		documents.add(doc);
+		this.documents.add(doc);
+	}
+
+	@Override
+	public void addDocuments(Collection<AnnotatedDocument> documents) {
+		this.documents.addAll(documents);
 	}
 
 	@Override
 	public String toString() {
-		return "BratCorpus [corpusConfig=" + corpusConfig + ", documents="
-				+ documents + "]";
+		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents="
+				+ documents.size() + "]";
 	}
 
 }

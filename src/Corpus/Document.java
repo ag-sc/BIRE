@@ -5,13 +5,14 @@ import java.util.List;
 
 public class Document implements Serializable {
 
+	protected String name;
 	protected Corpus corpus;
 	protected String content;
 	protected List<Token> tokens;
 
-	public Document(Corpus corpus, String content, List<Token> tokens) {
+	public Document(String name, String content, List<Token> tokens) {
 		super();
-		this.corpus = corpus;
+		this.name = name;
 		this.content = content;
 		this.tokens = tokens;
 	}
@@ -26,6 +27,14 @@ public class Document implements Serializable {
 
 	public Corpus getCorpus() {
 		return corpus;
+	}
+
+	public void setCorpus(Corpus corpus) {
+		this.corpus = corpus;
+	}
+
+	public String getName() {
+		return name;
 	}
 
 }

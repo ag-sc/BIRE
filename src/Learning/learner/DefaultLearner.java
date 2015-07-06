@@ -33,9 +33,11 @@ public class DefaultLearner implements Learner {
 		scorer = new Scorer(model);
 
 		for (int i = 0; i < documents.size(); i++) {
-			Log.d("Document: %s", i);
 			AnnotatedDocument document = documents.get(i);
 			State goldState = document.getGoldState();
+
+			Log.d("Document(%s):\n\t%s\n\t%s", i, document.getContent(),
+					goldState);
 
 			State currentState = generateInitialAnnotations(document, goldState);
 
@@ -46,9 +48,6 @@ public class DefaultLearner implements Learner {
 					List<State> nextStates = sampler.getNextStates(
 							currentState, scorer);
 					for (State state : nextStates) {
-						// TODO if we want to work on a set of currentStates,
-						// how can we update the model (do we compare each
-						// current state with each next state?)
 						updateModelForState(goldState, currentState, state);
 					}
 
@@ -58,15 +57,15 @@ public class DefaultLearner implements Learner {
 					// System.out.println(state);
 					// }
 
-					State nextState = nextStates.get(0);
-
-					// State nextState = SamplingHelper
+					// currentState = SamplingHelper
 					// .drawRandomlyFrom(nextStates);
-					Log.d("Next state: %s", nextState);
-					currentState = nextState;
+					//TODO check if this implementation makes it possible to get stuck in local minima
+					currentState = nextStates.get(0);
+					Log.d("Next state: %s", currentState);
 				}
-				Log.d("%s", model);
+//				Log.d("%s", model);
 			}
+			Log.d("Final, sampled state:\n\t%s", currentState);
 		}
 
 	}

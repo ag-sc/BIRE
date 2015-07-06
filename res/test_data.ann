@@ -1,8 +1,0 @@
-T1	Protein 0 7	RFLAT-1
-T2	Positive_regulation 53 62	activates
-E1	Positive_regulation:T2 Theme:T1 Cause:T1
-E2	Positive_regulation:T1 Theme:E1 Cause:T2
-R1	Subunit-Complex Arg1:T1 Arg2:E1
-
-# M1	Speculation E1
-# A1	Negation E1

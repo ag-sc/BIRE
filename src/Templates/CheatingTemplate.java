@@ -11,10 +11,9 @@ import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
-public class CheatingTemplate implements Template {
+public class CheatingTemplate extends Template {
 
 	private static final String GOLD = "GOLD";
-	private Vector weights;
 
 	private ObjectiveFunction objective = new ObjectiveFunction();
 
@@ -22,20 +21,6 @@ public class CheatingTemplate implements Template {
 		Log.off();
 		weights = new Vector();
 		weights.set(GOLD, 1.0);
-		// TODO keep weights and actual features consistent
-	}
-
-	@Override
-	public void update(Factor factor, double alpha) {
-		Log.d("Update factor");
-		for (String feature : factor.getFeatureVector().getFeatures()) {
-			weights.update(feature, alpha);
-		}
-	}
-
-	@Override
-	public Vector getWeightVector() {
-		return weights;
 	}
 
 	@Override

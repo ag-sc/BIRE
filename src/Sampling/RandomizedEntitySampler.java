@@ -13,7 +13,7 @@ import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
 
-public class EntitySampler implements Sampler {
+public class RandomizedEntitySampler implements Sampler {
 
 	private int numberOfStates;
 
@@ -23,7 +23,7 @@ public class EntitySampler implements Sampler {
 	 * 
 	 * @param numberOfStates
 	 */
-	public EntitySampler(int numberOfStates) {
+	public RandomizedEntitySampler(int numberOfStates) {
 		this.numberOfStates = numberOfStates;
 	}
 
@@ -60,7 +60,7 @@ public class EntitySampler implements Sampler {
 			} else {
 				// Tokens may be referenced/annotated by different entities
 				List<String> linkedEntities = new ArrayList<String>(
-						generatedState.getAnnotationForToken(sampledToken));
+						generatedState.getAnnotationsForToken(sampledToken));
 				// pick one at random
 				EntityAnnotation tokenAnnotation = generatedState
 						.getEntity(SamplingHelper
@@ -68,29 +68,29 @@ public class EntitySampler implements Sampler {
 				// if annotation exists
 				// choose a way to alter the state
 				StateChange stateChange = SamplingHelper.sampleStateChange(
-						StateChange.ANNOTATION_DELETED,
-						StateChange.TYPE_CHANGED,
-						StateChange.BOUNDARIES_CHANGED, StateChange.NOTHING);
+						StateChange.DELETE_ANNOTATION,
+						StateChange.CHANGE_TYPE,
+						StateChange.CHANGE_BOUNDRARIES, StateChange.DO_NOTHING);
 				switch (stateChange) {
-				case ANNOTATION_DELETED:
+				case DELETE_ANNOTATION:
 					System.out.println(generatedState.getID()
 							+ ": delete annotation.");
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;
-				case TYPE_CHANGED:
+				case CHANGE_TYPE:
 					System.out.println(generatedState.getID()
 							+ ": change annotation type.");
 					EntityType sampledType = SamplingHelper
 							.sampleEntityType(generatedState);
 					tokenAnnotation.setType(sampledType);
 					break;
-				case BOUNDARIES_CHANGED:
+				case CHANGE_BOUNDRARIES:
 					System.out.println(generatedState.getID()
 							+ ": change annotation boundaries.");
 					SamplingHelper.changeBoundaries(tokenAnnotation,
 							generatedState);
 					break;
-				case NOTHING:
+				case DO_NOTHING:
 					Log.d("Do not change the state");
 					break;
 				default:

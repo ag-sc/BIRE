@@ -14,7 +14,7 @@ public class Model {
 	Set<Template> templates;
 
 	public Model() {
-		// TODO adds a CheatingTemplate for testing purposes
+		// TODO add other templates to model
 		this.templates = new HashSet<Template>();
 		templates.add(new CheatingTemplate());
 	}

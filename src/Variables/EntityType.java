@@ -24,7 +24,7 @@ public class EntityType implements Serializable{
 		this.optionalArguments = optionalArguments;
 	}
 
-	public String getType() {
+	public String getName() {
 		return type;
 	}
 

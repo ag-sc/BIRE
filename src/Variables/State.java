@@ -19,7 +19,7 @@ import Learning.Model;
 import Logging.Log;
 import Templates.Template;
 
-public class State implements Serializable{
+public class State implements Serializable {
 
 	public static final Comparator<State> comparator = new Comparator<State>() {
 
@@ -136,7 +136,6 @@ public class State implements Serializable{
 					.size());
 		}
 		// for (EntityAnnotation e : getEntities()) {
-		// // TODO factors may contribute multiple times to the score
 		// for (Factor f : e.getFactors()) {
 		// double entityScore = f.score();
 		// score *= entityScore;
@@ -160,8 +159,10 @@ public class State implements Serializable{
 	}
 
 	public void removeEntityAnnotation(EntityAnnotation entity) {
+		// TODO remove all references to this annotation
 		entities.remove(entity.getID());
 		removeFromTokenToEntityMapping(entity);
+		removeReferencingArguments(entity);
 	}
 
 	public Set<String> getEntityIDs() {
@@ -181,7 +182,7 @@ public class State implements Serializable{
 		return entities != null && !entities.isEmpty();
 	}
 
-	public Set<String> getAnnotationForToken(Token token) {
+	public Set<String> getAnnotationsForToken(Token token) {
 		Set<String> entities = tokenToEntities.get(token.getIndex());
 		if (entities == null) {
 			entities = new HashSet<String>();
@@ -215,6 +216,20 @@ public class State implements Serializable{
 		}
 	}
 
+	/**
+	 * This function iterates over all entities and all of their arguments to
+	 * remove all reference to the given entity.
+	 * 
+	 * @param removedEntity
+	 */
+	private void removeReferencingArguments(EntityAnnotation removedEntity) {
+		for (EntityAnnotation e : entities.values()) {
+			boolean referenceDeleted = true;
+			while (referenceDeleted)
+				referenceDeleted = e.arguments.values().remove(removedEntity.getID());
+		}
+	}
+
 	public String generateStateID() {
 		String id = stateIDFormat.format(stateIdIndex);
 		stateIdIndex++;
@@ -245,7 +260,7 @@ public class State implements Serializable{
 		builder.append(scoreFormat.format(score));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
-			Set<String> entities = getAnnotationForToken(t);
+			Set<String> entities = getAnnotationsForToken(t);
 			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
 			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
 			for (String entityID : entities) {
@@ -271,7 +286,7 @@ public class State implements Serializable{
 		for (EntityAnnotation e : begin) {
 			builder.append(e.getID());
 			builder.append("-");
-			builder.append(e.getType().getType());
+			builder.append(e.getType().getName());
 			builder.append("(");
 			builder.append(e.getArguments());
 			builder.append("):");

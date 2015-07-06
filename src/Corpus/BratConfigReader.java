@@ -81,7 +81,7 @@ public class BratConfigReader {
 	private void resolveEventReferences() {
 		for (Argument argument : eventReferencingArguments) {
 			for (EntityType event : events) {
-				argument.getTypes().add(event.getType());
+				argument.getTypes().add(event.getName());
 			}
 		}
 	}

@@ -8,6 +8,7 @@ import Learning.Model;
 import Learning.ObjectiveFunction;
 import Learning.Scorer;
 import Sampling.DefaultSampler;
+import Sampling.ExhaustiveEntitySampler;
 import Variables.State;
 
 public class TestSampling {
@@ -22,9 +23,10 @@ public class TestSampling {
 		System.out.println("initialState: " + initialState);
 		Model model = new Model();
 		Scorer scorer = new Scorer(model);
-		DefaultSampler sampler = new DefaultSampler(10);
+		// DefaultSampler sampler = new DefaultSampler(10);
+		ExhaustiveEntitySampler sampler = new ExhaustiveEntitySampler();
 		State nextState = initialState;
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 4; i++) {
 			System.out.println("--------- Step: " + i + " ----------");
 			nextState = sampler.getNextStates(nextState, scorer).get(0);
 			System.out.println("Next state:");

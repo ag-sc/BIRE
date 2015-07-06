@@ -5,8 +5,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import jdk.jfr.events.FileWriteEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Utils {
 
@@ -23,6 +23,17 @@ public class Utils {
 		}
 		reader.close();
 		return builder.toString();
+	}
+
+	public static List<String> readLines(String filepath) throws IOException {
+		List<String> lines = new ArrayList<String>();
+		BufferedReader reader = new BufferedReader(new FileReader(filepath));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			lines.add(line);
+		}
+		reader.close();
+		return lines;
 	}
 
 	public static void writeFile(String filepath, String content)

@@ -77,39 +77,39 @@ public class SamplingHelper {
 	 * annotation from the given state and add the pair as a new argument to the
 	 * given entity.
 	 * 
-	 * @param tokenAnnotation
+	 * @param entity
 	 * @param state
 	 */
-	public static void addRandomArgument(EntityAnnotation tokenAnnotation,
+	public static void addRandomArgument(EntityAnnotation entity,
 			State state) {
 		// get all possible argument (roles)
 		List<EntityAnnotation> entities = new ArrayList<EntityAnnotation>(
 				state.getEntities());
-		entities.remove(tokenAnnotation);
+		entities.remove(entity);
 		if (!entities.isEmpty()) {
 			List<String> unassignedRoles = new ArrayList<String>();
-			unassignedRoles.addAll(tokenAnnotation.getType().getCoreArguments()
+			unassignedRoles.addAll(entity.getType().getCoreArguments()
 					.keySet());
-			unassignedRoles.addAll(tokenAnnotation.getType()
+			unassignedRoles.addAll(entity.getType()
 					.getOptionalArguments().keySet());
 			// remove already assigned roles
-			unassignedRoles.removeAll(tokenAnnotation.getArguments().keySet());
+			unassignedRoles.removeAll(entity.getArguments().keySet());
 
 			if (!unassignedRoles.isEmpty()) {
 				String sampledRole = getRandomElement(unassignedRoles);
 
 				EntityAnnotation sampledEntity = getRandomElement(entities);
-				tokenAnnotation.addArgument(sampledRole, sampledEntity.getID());
-				System.out.println("\t" + tokenAnnotation.getID() + " + "
+				entity.addArgument(sampledRole, sampledEntity.getID());
+				System.out.println("\t" + entity.getID() + " + "
 						+ sampledRole + ":" + sampledEntity.getID());
 			} else {
-				System.out.println("\t" + tokenAnnotation.getID() + " ("
-						+ tokenAnnotation.getType().getType()
+				System.out.println("\t" + entity.getID() + " ("
+						+ entity.getType().getName()
 						+ "): No unassigned arguments left");
 			}
 		} else {
-			System.out.println("\t" + tokenAnnotation.getID() + " ("
-					+ tokenAnnotation.getType().getType()
+			System.out.println("\t" + entity.getID() + " ("
+					+ entity.getType().getName()
 					+ "): No entities for argument existing");
 		}
 	}
@@ -132,13 +132,13 @@ public class SamplingHelper {
 						.println("\t"
 								+ tokenAnnotation.getID()
 								+ " ("
-								+ tokenAnnotation.getType().getType()
+								+ tokenAnnotation.getType().getName()
 								+ "): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)");
 				assert (false);
 			}
 		} else {
 			System.out.println("\t" + tokenAnnotation.getID() + " ("
-					+ tokenAnnotation.getType().getType()
+					+ tokenAnnotation.getType().getName()
 					+ "): No arguments assigned, yet");
 		}
 	}
@@ -207,7 +207,7 @@ public class SamplingHelper {
 
 	public static BoundaryChange sampleBoundaryChange(EntityAnnotation entity) {
 		List<BoundaryChange> possibleBoundaryChanges = new ArrayList<BoundaryChange>();
-//		possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
+		// possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
 		if (entity.getBeginTokenIndex() > 0)
 			possibleBoundaryChanges.add(BoundaryChange.EXPAND_LEFT);
 		if (entity.getEndTokenIndex() < entity.getState().getDocument()
@@ -233,4 +233,80 @@ public class SamplingHelper {
 		return list.get((int) (Math.random() * list.size()));
 	}
 
+	public static List<State> getBest(List<State> states, int n) {
+		return states.subList(0, Math.min(n, states.size()));
+	}
+
+	public static List<State> getBest(List<State> states, int n, boolean sort) {
+		if (sort)
+			states.sort(State.comparator);
+		return getBest(states, n);
+	}
+
+	public static void changeRandomArgumentRole(EntityAnnotation entity,
+			State state) {
+		List<String> possibleNewRoles = new ArrayList<String>();
+		possibleNewRoles.addAll(entity.getType().getCoreArguments().keySet());
+		possibleNewRoles.addAll(entity.getType().getOptionalArguments()
+				.keySet());
+
+		List<String> assignedRoles = new ArrayList<String>(entity
+				.getArguments().keySet());
+		if (!assignedRoles.isEmpty()) {
+			// select random existing argument by role
+			String argumentRoleToChange = getRandomElement(assignedRoles);
+			String argumentEntityID = entity.getArguments().get(
+					argumentRoleToChange);
+			// remove current role from possible alternatives
+			possibleNewRoles.remove(argumentRoleToChange);
+			// sample from alternatives
+			String sampledNewRole = getRandomElement(possibleNewRoles);
+			// remove already assigned roles
+			// unassignedRoles.removeAll(entity.getArguments().keySet());
+
+			if (!possibleNewRoles.isEmpty()) {
+				entity.removeArgument(argumentRoleToChange);
+				entity.addArgument(sampledNewRole, argumentEntityID);
+				Log.d("\tChange role from %s to %s for argument entity %s",
+						argumentRoleToChange, sampledNewRole, argumentEntityID);
+			} else {
+				System.out.println("\t" + entity.getID() + " ("
+						+ entity.getType().getName()
+						+ "): No unassigned arguments left");
+			}
+		} else {
+			Log.d("\tEntity has no arguments assigned, yet.");
+		}
+	}
+
+	public static void changeRandomArgumentEntity(EntityAnnotation entity,
+			State state) {
+		List<String> assignedRoles = new ArrayList<String>(entity
+				.getArguments().keySet());
+		if (!assignedRoles.isEmpty()) {
+			// select random existing argument by role
+			String roleOfArgumentToChange = getRandomElement(assignedRoles);
+			String argumentToChange = entity.getArguments().get(
+					roleOfArgumentToChange);
+
+			// list alternative argument entities
+			List<String> entityIDs = new ArrayList<String>(state.getEntityIDs());
+
+			entityIDs.remove(entity.getID());
+			entityIDs.remove(argumentToChange);
+
+			if (!entityIDs.isEmpty()) {
+				String newArgumentID = getRandomElement(entityIDs);
+				entity.addArgument(roleOfArgumentToChange, newArgumentID);
+				Log.d("\tChange entity of argument %s from entity %s to %s",
+						roleOfArgumentToChange, argumentToChange, newArgumentID);
+			} else {
+				System.out.println("\t" + entity.getID() + " ("
+						+ entity.getType().getName()
+						+ "): No entities for argument existing");
+			}
+		} else {
+			Log.d("\tEntity has no arguments assigned, yet.");
+		}
+	}
 }
