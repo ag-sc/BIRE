@@ -9,8 +9,11 @@ import Variables.State;
 
 public class ObjectiveFunction {
 
+	{
+		Log.off();
+	}
+
 	public ObjectiveFunction() {
-		 Log.off();
 	}
 
 	public double score(State state, State goldState) {
@@ -44,17 +47,19 @@ public class ObjectiveFunction {
 			}
 			recall += max;
 		}
-		if (precision == 0 || recall == 0 || entities.size() == 0
+		Log.d("Precision: %s/%s, Recall: %s/%s", precision, entities.size(),
+				recall, goldEntities.size());
+		// TODO score = 0 only because precision/recall = 0
+		if ((precision == 0 && recall == 0) || entities.size() == 0
 				|| goldEntities.size() == 0) {
+			Log.d("Score: %s", 0);
 			return 0;
 		}
-
 		precision /= entities.size();
 		recall /= goldEntities.size();
-		Log.d("precision: %s", precision);
-		Log.d("recall: %s", recall);
 
 		double f1 = 2 * (precision * recall) / (precision + recall);
+		Log.d("Score: %s\t\t(Precision: %s, Recall: %s)", f1, precision, recall);
 		return f1;
 	}
 

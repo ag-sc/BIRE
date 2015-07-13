@@ -9,6 +9,6 @@ import Changes.StateChange;
 import Factors.Factor;
 import Templates.Template;
 
-public abstract class Annotation implements Serializable{
+public abstract class AbstractAnnotation implements Serializable{
 
 }

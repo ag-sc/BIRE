@@ -14,7 +14,7 @@ import Variables.State;
 public class BoundarySampler implements Sampler {
 
 	{
-		Log.off();
+		// Log.off();
 	}
 	private int numberOfStates;
 
@@ -33,17 +33,19 @@ public class BoundarySampler implements Sampler {
 		Set<State> generatedStates = generateNextStates(state, numberOfStates,
 				scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(generatedStates);
-		nextStatesSorted.sort(State.comparator);
-		Log.d("generated states:");
-		for (State s : nextStatesSorted) {
-			Log.d("%s", s);
-		}
+		
+//		nextStatesSorted.sort(State.comparator);
+//		Log.d("generated states:");
+//		for (State s : nextStatesSorted) {
+//			Log.d("%s", s);
+//		}
 		return nextStatesSorted;
 
 	}
 
 	private Set<State> generateNextStates(State previousState,
 			int numberOfStates, Scorer scorer) {
+		Log.methodOff();
 		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);
@@ -54,13 +56,13 @@ public class BoundarySampler implements Sampler {
 			// if annotation exists
 			if (sampledEntity != null) {
 				// choose a way to alter the state
-				//TODO consider merging entities
+				// TODO consider merging entities
 				StateChange stateChange = SamplingHelper.sampleStateChange(
 						StateChange.CHANGE_BOUNDRARIES, StateChange.DO_NOTHING);
 				switch (stateChange) {
 				case CHANGE_BOUNDRARIES:
-					System.out.println(generatedState.getID()
-							+ ": change annotation boundaries.");
+					Log.d("%s: change annotation boundaries.",
+							generatedState.getID());
 					SamplingHelper.changeBoundaries(sampledEntity,
 							generatedState);
 					break;
@@ -68,13 +70,12 @@ public class BoundarySampler implements Sampler {
 					Log.d("Do not change the state");
 					break;
 				default:
-					System.out.println(generatedState.getID()
-							+ ": unsupported state change");
+					Log.d("%s: unsupported state change",
+							generatedState.getID());
 					break;
 				}
 			}
 
-			scorer.score(generatedState);
 			generatedStates.add(generatedState);
 		}
 		return generatedStates;

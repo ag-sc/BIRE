@@ -12,11 +12,11 @@ import Corpus.Token;
 import Factors.Factor;
 import Templates.Template;
 
-public class EntityAnnotation extends Annotation {
+public class EntityAnnotation extends AbstractAnnotation {
 
-	Map<Template, List<Factor>> factors = new HashMap<Template, List<Factor>>();
+//	private Map<Template, List<Factor>> factors = new HashMap<Template, List<Factor>>();
 
-	StateChange change;
+	private StateChange change;
 
 	// public void propagateChange() {
 	// if (change != null) {
@@ -27,29 +27,29 @@ public class EntityAnnotation extends Annotation {
 	// change = null;
 	// }
 
-	public Collection<Factor> getFactors() {
-		Collection<Factor> allFactors = new HashSet<Factor>();
-		for (List<Factor> list : factors.values()) {
-			allFactors.addAll(list);
-		}
-		return allFactors;
-	}
+	// public Collection<Factor> getFactors() {
+	// Collection<Factor> allFactors = new HashSet<Factor>();
+	// for (List<Factor> list : factors.values()) {
+	// allFactors.addAll(list);
+	// }
+	// return allFactors;
+	// }
 
 	private State state;
-	String id;
+	private String id;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
 	 * first token that this annotation references.
 	 */
-	int beginTokenIndex;
+	private int beginTokenIndex;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
 	 * last token that this annotation references.
 	 */
-	int endTokenIndex;
+	private int endTokenIndex;
 
 	// String text;
-	EntityType type;
+	private EntityType type;
 
 	/**
 	 * We need to keep weak references (IDs only) to other entities in order to
@@ -57,7 +57,7 @@ public class EntityAnnotation extends Annotation {
 	 * training phase of the model. The state in which this entity lives offers
 	 * methods to resolve this weak reference.
 	 */
-	Map<String, String> arguments;
+	private Map<String, String> arguments;
 
 	public EntityAnnotation(State state) {
 		this(state, state.generateEntityID());
@@ -188,9 +188,9 @@ public class EntityAnnotation extends Annotation {
 		return state.getEntity(id);
 	}
 
-	public void addFactors(Template template, List<Factor> factors) {
-		this.factors.put(template, factors);
-	}
+//	public void addFactors(Template template, List<Factor> factors) {
+//		this.factors.put(template, factors);
+//	}
 
 	public boolean isChanged() {
 		return true;
@@ -198,7 +198,7 @@ public class EntityAnnotation extends Annotation {
 
 	public List<Token> getTokens() {
 		List<Token> tokens = new ArrayList<Token>();
-		for (int i = beginTokenIndex; i < endTokenIndex; i++)
+		for (int i = beginTokenIndex; i <= endTokenIndex; i++)
 			tokens.add(state.getDocument().getTokens().get(i));
 		return tokens;
 	}

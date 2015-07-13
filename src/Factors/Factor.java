@@ -1,10 +1,17 @@
 package Factors;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import Learning.Vector;
+import Logging.Log;
 import Templates.Template;
 
 public class Factor {
 
+	{
+		Log.off();
+	}
 	Template template;
 
 	Vector features;
@@ -14,14 +21,19 @@ public class Factor {
 	}
 
 	public double score() {
-		return features.multiply(template.getWeightVector());
+		Vector weights = template.getWeightVector();
+		// Log.d("Score factor:");
+		// Set<String> allFeatures = new
+		// HashSet<String>(features.getFeatures());
+		// allFeatures.addAll(weights.getFeatures());
+		// for (String feature : allFeatures) {
+		// Log.d("\t%s:\t\t%s * %s", feature,
+		// features.getValueOfFeature(feature),
+		// weights.getValueOfFeature(feature));
+		// }
+		double factorScore = Math.exp(features.dotProduct(weights));
+		return factorScore;
 	}
-
-	// public void propagateChange(Annotation annotation) {
-	//
-	// template.recompute(annotation, features);
-	//
-	// }
 
 	public Template getTemplate() {
 		return template;

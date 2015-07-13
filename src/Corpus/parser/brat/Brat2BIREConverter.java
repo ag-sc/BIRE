@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
@@ -69,6 +70,7 @@ public class Brat2BIREConverter {
 							(BratAttributeAnnotation) ann);
 				}
 			}
+			checkConsistency(state);
 			AnnotatedDocument doc = new AnnotatedDocument(
 					bratDoc.getTextFilename(), content, tokenization.tokens,
 					state);
@@ -76,6 +78,28 @@ public class Brat2BIREConverter {
 			documents.add(doc);
 		}
 		return documents;
+	}
+
+	private static void checkConsistency(State state) {
+		Set<String> existingEntities = state.getEntityIDs();
+		for (EntityAnnotation e : state.getEntities()) {
+			for (String id : e.getArguments().values()) {
+				if (!existingEntities.contains(id)) {
+					Log.w("Entity %s references missing entity %s", e.getID(),
+							id);
+				}
+			}
+			// FIXME apparently some annotations span across multiple sentences
+			// (PMID-8051172: E4 Trigger:T10 Theme:T5, where T5 and T10 are not
+			// part of the same sentence)
+			for (int index = e.getBeginTokenIndex(); index <= e
+					.getEndTokenIndex(); index++) {
+				if (!state.getAnnotationsForToken(index).contains(e.getID())) {
+					Log.w("Entity %s references token %s, but state %s holds no reference to that",
+							e.getID(), index, state.getID());
+				}
+			}
+		}
 	}
 
 	private static boolean isInSentence(BratTextBoundAnnotation ann,
@@ -87,22 +111,29 @@ public class Brat2BIREConverter {
 	private static void convertTextBoundAnnotation(State state,
 			AnnotationConfig config, Tokenization tokenization,
 			BratTextBoundAnnotation t) {
-		EntityAnnotation entity = new EntityAnnotation(state, t.getID());
 		EntityType entityType = config.getEntityType(t.getRole());
 		int fromTokenIndex = findTokenForPosition(t.getStart(), tokenization);
 		int toTokenIndex = findTokenForPosition(t.getEnd() - 1, tokenization);
 
-		Log.d("---- Annotation: %s (%d-%d) ----", t.getText(), t.getStart(),
-				t.getEnd());
-		Log.d("\tSpanning tokens:");
-		String total = "";
-		for (int i = fromTokenIndex; i <= toTokenIndex; i++) {
-			Log.d("\t\tTokens[%d]: %s", i, tokenization.tokens.get(i));
-			total += tokenization.tokens.get(i).getText() + " ";
+		// only add if there is no other annotation occupying this token. This
+		// should prevent adding a BratEventAnnotation along with the
+		// corresponding TextBoundAnnotation
+		if (state.getAnnotationsForToken(fromTokenIndex).isEmpty()) {
+			Log.d("---- Annotation: %s (%d-%d) ----", t.getText(),
+					t.getStart(), t.getEnd());
+			Log.d("\tSpanning tokens:");
+			String total = "";
+			for (int i = fromTokenIndex; i <= toTokenIndex; i++) {
+				Log.d("\t\tTokens[%d]: %s", i, tokenization.tokens.get(i));
+				total += tokenization.tokens.get(i).getText() + " ";
+			}
+			Log.d("\t# %s | %s", t.getText(), total);
+			EntityAnnotation entity = new EntityAnnotation(state, t.getID());
+			entity.init(entityType, fromTokenIndex, toTokenIndex);
+			state.addEntityAnnotation(entity);
+		} else {
+			Log.d("Skipping annotation %s (\"%s\")", t.getID(), t.getText());
 		}
-		Log.d("\t# %s | %s", t.getText(), total);
-		entity.init(entityType, fromTokenIndex, toTokenIndex);
-		state.addEntityAnnotation(entity);
 	}
 
 	private static void convertEventAnnotation(State state,
@@ -116,7 +147,6 @@ public class Brat2BIREConverter {
 			arguments.put(entry.getKey(), ann.getID());
 		}
 
-		EntityAnnotation entity = new EntityAnnotation(state, e.getID());
 		EntityType entityType = config.getEntityType(e.getRole());
 
 		int fromTokenIndex = findTokenForPosition(e.getTrigger().getStart(),
@@ -126,13 +156,26 @@ public class Brat2BIREConverter {
 		Log.d("---- Annotation: %s (%d-%d) ----", e.getTrigger().getText(), e
 				.getTrigger().getStart(), e.getTrigger().getEnd());
 
-		 Log.d("\tSpanning tokens:");
+		Log.d("\tSpanning tokens:");
 		String total = " ";
 		for (int i = fromTokenIndex; i <= toTokenIndex; i++) {
 			Log.d("\t\tTokens[%d]: %s", i, tokenization.tokens.get(i));
 			total += tokenization.tokens.get(i).getText() + " ";
 		}
 		Log.d("\t# %s | %s", e.getTrigger().getText(), total);
+		// remove all previously assigned annotations to these tokens. This
+		// should prevent to add BratEventAnnotations along with their
+		// corresponding and overlapping TextBoudnAnnotations.
+		for (int i = fromTokenIndex; i <= toTokenIndex; i++) {
+			Set<String> entities = state.getAnnotationsForToken(i);
+			for (String id : entities) {
+				Log.d("Token %s already annotated by %s.\n\tRemove previous annotation!",
+						i, id);
+				state.removeEntityAnnotation(state.getEntity(id));
+			}
+			entities.clear();
+		}
+		EntityAnnotation entity = new EntityAnnotation(state, e.getID());
 		entity.init(entityType, arguments, fromTokenIndex, toTokenIndex);
 		state.addEntityAnnotation(entity);
 	}

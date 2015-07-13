@@ -15,37 +15,41 @@ import Variables.EntityType;
 import Variables.State;
 
 public class ExhaustiveEntitySampler implements Sampler {
-	
 
 	{
-		Log.off();
+		// Log.off();
 	}
 	private int numberOfStates;
 
-	/**
-	 * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
-	 * generated States in each sampling step.
-	 * 
-	 * @param numberOfStates
-	 */
-	public ExhaustiveEntitySampler(int numberOfStates) {
-		this.numberOfStates = numberOfStates;
-	}
+//	/**
+//	 * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
+//	 * generated States in each sampling step.
+//	 * 
+//	 * @param numberOfStates
+//	 */
+//	public ExhaustiveEntitySampler(int numberOfStates) {
+//		this.numberOfStates = numberOfStates;
+//	}
 
 	public ExhaustiveEntitySampler() {
-		this.numberOfStates = -1;
+		this.numberOfStates = 0;
 	}
 
 	public List<State> getNextStates(State state, Scorer scorer) {
 
 		Set<State> nextStates = generateNextStates(state, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
-		nextStatesSorted.sort(State.comparator);
-		Log.d("generated states (%s):", nextStatesSorted.size());
-		for (State s : nextStatesSorted) {
-			Log.d("%s", s);
-		}
-		return SamplingHelper.getBest(nextStatesSorted, numberOfStates);
+		
+		// nextStatesSorted.sort(State.comparator);
+		// Log.d("generated states (%s):", nextStatesSorted.size());
+		// for (State s : nextStatesSorted) {
+		// Log.d("%s", s);
+		// }
+		
+		if (numberOfStates > 0)
+			return SamplingHelper.getBest(nextStatesSorted, numberOfStates);
+		else
+			return nextStatesSorted;
 
 	}
 
@@ -85,9 +89,6 @@ public class ExhaustiveEntitySampler implements Sampler {
 			EntityAnnotation entity = generatedState.getEntity(entityID);
 			generatedState.removeEntityAnnotation(entity);
 			generatedStates.add(generatedState);
-		}
-		for (State state : generatedStates) {
-			scorer.score(state);
 		}
 		return generatedStates;
 	}

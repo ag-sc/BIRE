@@ -11,7 +11,7 @@ import java.util.logging.Level;
 
 public class Log {
 
-	private static boolean logToFile = false;
+	private static final boolean logToFile = false;
 	private static final String BIRE_LOGGER_NAME = "BIRE";
 	private static final String DEFAULT_LOGFILE_DIR = "res/log";
 	private static final String LOGFILE_NAME_PATTERN = DEFAULT_LOGFILE_DIR
@@ -21,6 +21,12 @@ public class Log {
 	private static Set<String> mutedClasses;
 	private static File logFile;
 	private static BufferedWriter writer;
+
+	protected static final String LEVEL_MESSAGE_FORMAT = "%s: %s\n";
+	protected static final Set<Level> HIDDEN_LEVELS = new HashSet<Level>();
+	static {
+		HIDDEN_LEVELS.add(DebugLevel.DEBUG);
+	}
 
 	static {
 		init();
@@ -41,14 +47,20 @@ public class Log {
 		// log.addHandler(h);
 		mutedMethods = new HashSet<String>();
 		mutedClasses = new HashSet<String>();
-		Calendar now = Calendar.getInstance();
-		logFile = new File(getLogFilename(now));
-		try {
-			writer = new BufferedWriter(new FileWriter(logFile));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		initLogToFile();
 		// Log.status();
+	}
+
+	private static void initLogToFile() {
+		if (logToFile) {
+			try {
+				Calendar now = Calendar.getInstance();
+				logFile = new File(getLogFilename(now));
+				writer = new BufferedWriter(new FileWriter(logFile));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private static String getLogFilename(Calendar now) {
@@ -100,7 +112,6 @@ public class Log {
 		StackTraceElement e = getCallingMethod();
 		mutedClasses.remove(getClassKey(e));
 	}
-
 
 	private static boolean isMuted(StackTraceElement e) {
 		// System.out.println("Muted Classes: " + mutedClasses);
@@ -203,10 +214,18 @@ public class Log {
 	private static void logp(Level level, String className, String methodName,
 			String message) {
 		// log.logp(level, className, methodName, String.format(message, args));
-		System.out.println(message);
+		String logMessage = null;
+		if (HIDDEN_LEVELS.contains(level)) {
+			logMessage = message;
+		} else {
+			logMessage = String.format(LEVEL_MESSAGE_FORMAT, level.getName()
+					.toUpperCase(), message);
+		}
+
+		System.out.println(logMessage);
 		if (logToFile) {
 			try {
-				writer.write(message);
+				writer.write(logMessage);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -16,11 +16,15 @@ import Corpus.Document;
 import Corpus.Token;
 import Factors.Factor;
 import Learning.Model;
+import Learning.Vector;
 import Logging.Log;
 import Templates.Template;
 
 public class State implements Serializable {
 
+	{
+		Log.off();
+	}
 	public static final Comparator<State> comparator = new Comparator<State>() {
 
 		@Override
@@ -45,10 +49,9 @@ public class State implements Serializable {
 	private Document document;
 	public State goldState;
 
-	private double score;
+	private double score = 1;
 
 	public State() {
-		Log.off();
 		this.id = generateStateID();
 	}
 
@@ -63,9 +66,8 @@ public class State implements Serializable {
 		this.entityIdIndex = state.entityIdIndex;
 		this.document = state.document;
 		this.goldState = state.goldState;
-		for (EntityAnnotation entityAnnotation : state.entities.values()) {
-			this.entities.put(entityAnnotation.id, new EntityAnnotation(this,
-					entityAnnotation));
+		for (EntityAnnotation e : state.entities.values()) {
+			this.entities.put(e.getID(), new EntityAnnotation(this, e));
 		}
 		for (Entry<Integer, Set<String>> e : state.tokenToEntities.entrySet()) {
 			this.tokenToEntities.put(e.getKey(),
@@ -110,56 +112,52 @@ public class State implements Serializable {
 		return e;
 	}
 
-	public void unroll(Model model) {
-		for (Template t : model.getTemplates()) {
-			t.applyTo(this);
-		}
-	}
+	// /**
+	// * Computes the current score by adding the scores of each factor.
+	// *
+	// * @param templates
+	// *
+	// * @return
+	// */
+	// public double recomputeModelScore(Collection<Template> templates) {
+	// List<Factor> factors = getFactors();
+	// if (factors.isEmpty()) {
+	// score = 0;
+	// Log.d("No factors: Model score = 0");
+	// } else {
+	// score = 1;
+	// for (Factor f : factors) {
+	// double factorScore = f.score();
+	// Log.d("Factor score = %s", factorScore);
+	// // FIXME Add or multiply factor scores??
+	// score *= factorScore;
+	// }
+	// Log.d("Model score = %s using %s factors", score, getFactors()
+	// .size());
+	// }
+	// return score;
+	// }
 
-	/**
-	 * Computes the current score by adding the scores of each factor.
-	 * 
-	 * @return
-	 */
-	public double recomputeModelScore() {
-		Collection<EntityAnnotation> allEntities = getEntities();
-		if (allEntities.isEmpty()) {
-			score = 0;
-			Log.d("No entities: Model score = 0");
-		} else {
-			score = 1;
-			for (Factor f : getFactors()) {
-				double factorScore = f.score();
-				score *= factorScore;
-			}
-			Log.d("Model score = %s using %s factors", score, getFactors()
-					.size());
-		}
-		// for (EntityAnnotation e : getEntities()) {
-		// for (Factor f : e.getFactors()) {
-		// double entityScore = f.score();
-		// score *= entityScore;
-		// }
-		// }
-		return score;
-	}
-
-	public Set<Factor> getFactors() {
-		Set<Factor> factors = new HashSet<Factor>();
-		for (EntityAnnotation e : getEntities()) {
-			factors.addAll(e.getFactors());
-		}
-
-		return factors;
-	}
+	// public List<Factor> getFactors() {
+	// // TODO Factors should not be tied to entities. Some Factors/Features
+	// // may relate to the state as a whole instead of to individual entities.
+	// // For example: if a state has no entities at all, it also has no
+	// // factors/features that could be used to score it -> impossible to
+	// // reward unannotated states.
+	// List<Factor> factors = new ArrayList<Factor>();
+	// // for (EntityAnnotation e : getEntities()) {
+	// // factors.addAll(e.getFactors());
+	// // }
+	//
+	// return factors;
+	// }
 
 	public void addEntityAnnotation(EntityAnnotation entity) {
-		entities.put(entity.id, entity);
+		entities.put(entity.getID(), entity);
 		addToTokenToEntityMapping(entity);
 	}
 
 	public void removeEntityAnnotation(EntityAnnotation entity) {
-		// TODO remove all references to this annotation
 		entities.remove(entity.getID());
 		removeFromTokenToEntityMapping(entity);
 		removeReferencingArguments(entity);
@@ -183,10 +181,14 @@ public class State implements Serializable {
 	}
 
 	public Set<String> getAnnotationsForToken(Token token) {
-		Set<String> entities = tokenToEntities.get(token.getIndex());
+		return getAnnotationsForToken(token.getIndex());
+	}
+
+	public Set<String> getAnnotationsForToken(int tokenIndex) {
+		Set<String> entities = tokenToEntities.get(tokenIndex);
 		if (entities == null) {
 			entities = new HashSet<String>();
-			tokenToEntities.put(token.getIndex(), entities);
+			tokenToEntities.put(tokenIndex, entities);
 		}
 		return entities;
 	}
@@ -226,7 +228,8 @@ public class State implements Serializable {
 		for (EntityAnnotation e : entities.values()) {
 			boolean referenceDeleted = true;
 			while (referenceDeleted)
-				referenceDeleted = e.arguments.values().remove(removedEntity.getID());
+				referenceDeleted = e.getArguments().values()
+						.remove(removedEntity.getID());
 		}
 	}
 
@@ -320,5 +323,9 @@ public class State implements Serializable {
 
 	public void setDocument(Document document) {
 		this.document = document;
+	}
+
+	public void setModelScore(double score) {
+		this.score = score;
 	}
 }

@@ -1,51 +1,75 @@
 package Test;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import evaluation.DataSplit;
 import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.parser.brat.DatasetLoader;
 import Learning.Learner;
+import Learning.Model;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Sampling.BoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
 import Sampling.RelationSampler;
 import Sampling.Sampler;
+import Templates.ContextTemplate;
+import Templates.MorphologicalTemplate;
+import Templates.RelationTemplate;
+import Templates.Template;
 
 public class TestLearning {
 
 	public static void main(String[] args) {
-		// Corpus corpus = TestData.getDummyData();
 		Corpus corpus = null;
 
-		// corpus = DatasetLoader
-		// .convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
-
-		try {
+		switch (2) {
+		case 0:
+			corpus = TestData.getDummyData();
+			break;
+		case 1:
 			corpus = DatasetLoader
-					.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+			break;
+		case 2:
+			try {
+				corpus = DatasetLoader
+						.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+			} catch (Exception e) {
+				e.printStackTrace();
+				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
+				corpus = DatasetLoader
+						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+			}
+			break;
+		default:
+			break;
 		}
+
 		Log.d("Corpus:\n%s", corpus);
-		// System.out.println(corpus.getCorpusConfig());
-		List<AnnotatedDocument> documents = corpus.getDocuments();
-		documents = documents.subList(0, 1);
+		Log.d("Create train/test split");
+		DataSplit dataSplit = new DataSplit(corpus, 0.7);
+		Log.d("Split: %s => #Train: %s; #Test: %s", dataSplit.getSplit(),
+				dataSplit.getTrain().size(), dataSplit.getTest().size());
+
 		List<Sampler> samplers = new ArrayList<Sampler>();
-		// samplers.add(new DefaultListSampler(20));
-		samplers.add(new ExhaustiveEntitySampler(20));
+		samplers.add(new ExhaustiveEntitySampler());
 		samplers.add(new BoundarySampler(20));
 		samplers.add(new RelationSampler(20));
-		Learner learner = new DefaultLearner(10, 0.01, samplers);
-		learner.train(documents);
+		// samplers.add(new DefaultListSampler(20));
+
+		List<Template> templates = new ArrayList<Template>();
+		templates.add(new RelationTemplate());
+		templates.add(new MorphologicalTemplate());
+		templates.add(new ContextTemplate());
+		// templates.add(new CheatingTemplate());
+
+		Model model = new Model(templates);
+		Learner learner = new DefaultLearner(model, samplers, 10, 0.01, false);
+		// learner.train(dataSplit.getTrain());
+		learner.train(dataSplit.getTrain().subList(0, 1));
 	}
 }

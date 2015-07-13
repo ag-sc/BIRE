@@ -63,11 +63,11 @@ public class DatasetLoader {
 				completeDocumnts.size());
 		Log.d("filesnames: %s", completeDocumnts);
 		Corpus corpus = new BratCorpus(config);
-		int curr = 1;
+		int current = 1;
 		for (String filename : completeDocumnts) {
 			Log.d("#############################");
 			Log.d("#############################");
-			Log.d("parse document \"%s\" (%s/%s)", filename, curr,
+			Log.d("parse document \"%s\" (%s/%s)", filename, current,
 					completeDocumnts.size());
 			File annFile = annotationFiles.get(filename);
 			File textFile = textFiles.get(filename);
@@ -100,7 +100,7 @@ public class DatasetLoader {
 						bratDoc, corpus, tokenizations);
 				// Log.d("%s", doc.getGoldState().toDetailedString());
 				corpus.addDocuments(documents);
-				curr++;
+				current++;
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}

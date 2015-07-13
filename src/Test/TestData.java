@@ -11,6 +11,7 @@ import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Corpus;
 import Corpus.Token;
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
@@ -25,7 +26,7 @@ public class TestData {
 
 		String content = "a critical role for tumor necrosis factor and interleukin-7";
 		List<Token> tokens = extractTokens(content);
-		System.out.println(tokens);
+		Log.d("Tokens for dummy data: %s", tokens);
 		State goldState = new State();
 
 		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1");

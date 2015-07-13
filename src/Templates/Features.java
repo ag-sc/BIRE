@@ -8,7 +8,7 @@ import Variables.State;
 
 public class Features {
 
-	public static final String PUNCTUATION = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+	public static final String PUNCTUATION = "!\"#$%&'\\(\\)\\*\\+,-\\./:;<=>\\?@\\[\\]\\^_`{\\|}~";
 
 	public static final TokenFeature ContainsDigit = new TokenFeature() {
 

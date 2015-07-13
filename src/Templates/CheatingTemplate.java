@@ -1,63 +1,59 @@
 package Templates;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import Factors.Factor;
 import Learning.ObjectiveFunction;
 import Learning.Vector;
 import Logging.Log;
-import Variables.EntityAnnotation;
 import Variables.State;
 
 public class CheatingTemplate extends Template {
 
+	{
+		Log.off();
+	}
 	private static final String GOLD = "GOLD";
 
 	private ObjectiveFunction objective = new ObjectiveFunction();
 
 	public CheatingTemplate() {
-		Log.off();
-		weights = new Vector();
-		weights.set(GOLD, 1.0);
+		// weights.set(GOLD, 1.0);
 	}
 
 	@Override
-	public void applyTo(State state) {
-		Set<Factor> factors = computeFactorsForState(state);
-		Log.d("Apply %s factors to %s entities in state %s", factors.size(),
-				state.getEntities().size(), state.getID());
-		for (EntityAnnotation e : state.getEntities()) {
-			for (Factor factor : factors) {
-				if (appliesTo(factor, e)) {
-					e.addFactors(this, Arrays.asList(factor));
-				}
-			}
-		}
-	}
-
-	private Set<Factor> computeFactorsForState(State state) {
-		Set<Factor> factors = new HashSet<Factor>();
-		double score = objective.score(state, state.goldState);
-		Log.d("Factor score: %s", score);
+	public List<Factor> generateFactors(State state) {
+		List<Factor> factors = new ArrayList<Factor>();
+		// TODO one factor for all entites. Is that correct? Is that always
+		// possible?
 		Factor factor = new Factor(this);
-		Vector vector = new Vector();
-		vector.set(GOLD, score);
-		factor.setFeatures(vector);
-
 		factors.add(factor);
+		Vector featureVector = new Vector();
+		factor.setFeatures(featureVector);
+		// e.addFactors(this, Arrays.asList(factor));
+
+		double score = objective.score(state, state.goldState);
+		featureVector.set(GOLD, score);
+
+		// for (EntityAnnotation e : state.getEntities()) {
+		// if (e.isChanged()) {
+		// Log.d("\tAdd features to entity %s (\"%s\"):", e.getID(),
+		// e.getText());
+		// Factor factor = new Factor(this);
+		// factors.add(factor);
+		// Vector featureVector = new Vector();
+		// factor.setFeatures(featureVector);
+		// // e.addFactors(this, Arrays.asList(factor));
+		//
+		// double score = objective.score(state, state.goldState);
+		// featureVector.set(GOLD, score);
+		//
+		// Log.d("\tFeatures for entity %s (\"%s\"): %s", e.getID(),
+		// e.getText(), featureVector);
+		// }
+		// }
 		return factors;
-	}
-
-	private boolean appliesTo(Factor f, EntityAnnotation e) {
-		// TODO Check if factor applies to entity
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "CheatingTemplate [weights=" + weights + "]";
 	}
 
 }

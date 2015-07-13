@@ -1,28 +1,40 @@
 package Templates;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import Corpus.Token;
 import Factors.Factor;
 import Learning.Vector;
+import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
 public class MorphologicalTemplate extends Template {
 
+	{
+		Log.off();
+	}
+
 	@Override
-	public void applyTo(State state) {
-		Factor factor;
+	public List<Factor> generateFactors(State state) {
+		List<Factor> factors = new ArrayList<Factor>();
 		for (EntityAnnotation e : state.getEntities()) {
 			if (e.isChanged()) {
-				factor = new Factor(this);
+				Log.d("Add features to entity %s (\"%s\"):", e.getID(),
+						e.getText());
+				Factor factor = new Factor(this);
+				factors.add(factor);
+				Vector featureVector = new Vector();
+				factor.setFeatures(featureVector);
+
 				List<Token> tokens = e.getTokens();
 				Token first = tokens.get(0);
 				Token last = tokens.get(tokens.size() - 1);
-				Vector featureVector = new Vector();
-				
-				// TODO Entity Type as prefix + null-entity
-				String entityType = "ENTITY_TYPE=" + e.getType().getName() + "_";
+
+				String entityType = "ENTITY_TYPE=" + e.getType().getName()
+						+ "_";
 				featureVector.set(entityType + "ALL_TOKENS_INIT_CAP",
 						Features.StartsWithCapital.all(tokens));
 				featureVector.set(entityType + "AT_LEAST_ONE_TOKEN_INIT_CAP",
@@ -66,31 +78,27 @@ public class MorphologicalTemplate extends Template {
 				 * token, thus, they always have a value of 1
 				 */
 
-				featureVector.set(
-						entityType + "LAST_TOKEN_SUFFIX_3="
-								+ suffix(last.getText(), 3), 1.0);
-				featureVector.set(entityType + "FIRST_TOKEN_SUFFIX_3="
-						+ suffix(first.getText(), 3), 1.0);
-				featureVector.set(
-						entityType + "LAST_TOKEN_SUFFIX_2="
-								+ suffix(last.getText(), 2), 1.0);
-				featureVector.set(entityType + "FIRST_TOKEN_SUFFIX_2="
-						+ suffix(first.getText(), 2), 1.0);
+				int[] suffixLengths = { 2, 3 };
+				for (int i : suffixLengths) {
+					featureVector.set(entityType + "LAST_TOKEN_SUFFIX_" + i
+							+ "=" + suffix(last.getText(), i), 1.0);
+					featureVector.set(entityType + "FIRST_TOKEN_SUFFIX_" + i
+							+ "=" + suffix(first.getText(), i), 1.0);
+				}
 
-				featureVector.set(
-						entityType + "LAST_TOKEN_PREFIX_3="
-								+ prefix(last.getText(), 3), 1.0);
-				featureVector.set(entityType + "FIRST_TOKEN_PREFIX_3="
-						+ prefix(first.getText(), 3), 1.0);
-				featureVector.set(
-						entityType + "LAST_TOKEN_PREFIX_2="
-								+ prefix(last.getText(), 2), 1.0);
-				featureVector.set(entityType + "FIRST_TOKEN_PREFIX_2="
-						+ prefix(first.getText(), 2), 1.0);
+				int[] prefixLengths = { 2, 3 };
+				for (int i : prefixLengths) {
+					featureVector.set(entityType + "LAST_TOKEN_PREFIX_" + i
+							+ "=" + prefix(last.getText(), i), 1.0);
+					featureVector.set(entityType + "FIRST_TOKEN_PREFIX_" + i
+							+ "=" + prefix(first.getText(), i), 1.0);
+				}
 
-				factor.setFeatures(featureVector);
+				Log.d("Features for entity %s (\"%s\"): %s", e.getID(),
+						e.getText(), featureVector);
 			}
 		}
+		return factors;
 	}
 
 	private String suffix(String text, int i) {
@@ -102,7 +110,7 @@ public class MorphologicalTemplate extends Template {
 
 	private String prefix(String text, int i) {
 		if (i > 0) {
-			return text.substring(0, i);
+			return text.substring(0, Math.min(text.length(), i));
 		} else
 			return "";
 	}

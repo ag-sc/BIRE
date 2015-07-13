@@ -9,6 +9,7 @@ import Learning.ObjectiveFunction;
 import Learning.Scorer;
 import Sampling.DefaultSampler;
 import Sampling.ExhaustiveEntitySampler;
+import Templates.CheatingTemplate;
 import Variables.State;
 
 public class TestSampling {
@@ -21,7 +22,7 @@ public class TestSampling {
 		State initialState = new State(doc);
 		initialState.goldState = goldState;
 		System.out.println("initialState: " + initialState);
-		Model model = new Model();
+		Model model = new Model(new CheatingTemplate());
 		Scorer scorer = new Scorer(model);
 		// DefaultSampler sampler = new DefaultSampler(10);
 		ExhaustiveEntitySampler sampler = new ExhaustiveEntitySampler();
