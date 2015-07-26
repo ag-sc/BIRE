@@ -8,6 +8,7 @@ import Variables.EntityAnnotation;
 import Variables.State;
 
 public class ObjectiveFunction {
+	
 
 	{
 		Log.off();
@@ -16,10 +17,10 @@ public class ObjectiveFunction {
 	public ObjectiveFunction() {
 	}
 
-	public double score(State state, State goldState) {
+	public Score score(State state, State goldState) {
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
-		Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
+		// Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
 		double precision = 0.0;
 		for (EntityAnnotation entity : entities) {
 			double max = 0.0;
@@ -47,20 +48,26 @@ public class ObjectiveFunction {
 			}
 			recall += max;
 		}
-		Log.d("Precision: %s/%s, Recall: %s/%s", precision, entities.size(),
-				recall, goldEntities.size());
+		// Log.d("Precision: %s/%s, Recall: %s/%s", precision, entities.size(),
+		// recall, goldEntities.size());
 		// TODO score = 0 only because precision/recall = 0
+		Score score;
 		if ((precision == 0 && recall == 0) || entities.size() == 0
 				|| goldEntities.size() == 0) {
-			Log.d("Score: %s", 0);
-			return 0;
-		}
-		precision /= entities.size();
-		recall /= goldEntities.size();
+			// Log.d("Score: %s", 0);
+			score = new Score();
+		} else {
+			precision /= entities.size();
+			recall /= goldEntities.size();
 
-		double f1 = 2 * (precision * recall) / (precision + recall);
-		Log.d("Score: %s\t\t(Precision: %s, Recall: %s)", f1, precision, recall);
-		return f1;
+			double f1 = 2 * (precision * recall) / (precision + recall);
+			// Log.d("Score: %s\t\t(Precision: %s, Recall: %s)", f1, precision,
+			// recall);
+			score = new Score(precision, recall, f1);
+		}
+		// TODO not the cleanest way to make the score accessible everywhere
+		state.setObjectiveFunctionScore(score);
+		return score;
 	}
 
 	private double argumentScore(EntityAnnotation entity1,
@@ -100,8 +107,8 @@ public class ObjectiveFunction {
 		int y = goldEntity.getEndTokenIndex();
 		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
 		double overlapScore = ((double) overlap) / (b - a + 1);
-		Log.d("Overlap for %s and %s (GOLD): %s (%s)", entity.getID(),
-				goldEntity.getID(), overlap, overlapScore);
+		// Log.d("Overlap for %s and %s (GOLD): %s (%s)", entity.getID(),
+		// goldEntity.getID(), overlap, overlapScore);
 		return overlapScore;
 	}
 

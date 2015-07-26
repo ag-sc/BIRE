@@ -1,5 +1,6 @@
 package Templates;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +12,7 @@ import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
-public class MorphologicalTemplate extends Template {
+public class MorphologicalTemplate extends Template implements Serializable {
 
 	{
 		Log.off();
@@ -19,12 +20,15 @@ public class MorphologicalTemplate extends Template {
 
 	@Override
 	public List<Factor> generateFactors(State state) {
+		// TODO features on unannotated tokens (thus, type/name = "null") might
+		// be useful
 		List<Factor> factors = new ArrayList<Factor>();
 		for (EntityAnnotation e : state.getEntities()) {
 			if (e.isChanged()) {
 				Log.d("Add features to entity %s (\"%s\"):", e.getID(),
 						e.getText());
 				Factor factor = new Factor(this);
+				factor.setEntity(e);
 				factors.add(factor);
 				Vector featureVector = new Vector();
 				factor.setFeatures(featureVector);

@@ -50,10 +50,6 @@ public class TestLearning {
 		}
 
 		Log.d("Corpus:\n%s", corpus);
-		Log.d("Create train/test split");
-		DataSplit dataSplit = new DataSplit(corpus, 0.7);
-		Log.d("Split: %s => #Train: %s; #Test: %s", dataSplit.getSplit(),
-				dataSplit.getTrain().size(), dataSplit.getTest().size());
 
 		List<Sampler> samplers = new ArrayList<Sampler>();
 		samplers.add(new ExhaustiveEntitySampler());
@@ -68,8 +64,8 @@ public class TestLearning {
 		// templates.add(new CheatingTemplate());
 
 		Model model = new Model(templates);
-		Learner learner = new DefaultLearner(model, samplers, 10, 0.01, false);
+		Learner learner = new DefaultLearner(model, samplers, 10, 0.01, 0.001, false);
 		// learner.train(dataSplit.getTrain());
-		learner.train(dataSplit.getTrain().subList(0, 1));
+		learner.train(corpus.getDocuments().subList(0, 1), 1);
 	}
 }

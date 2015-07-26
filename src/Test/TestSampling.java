@@ -36,7 +36,7 @@ public class TestSampling {
 		}
 
 		ObjectiveFunction of = new ObjectiveFunction();
-		double score = of.score(nextState, goldState);
+		double score = of.score(nextState, goldState).score;
 		System.out.println("Score: " + score);
 	}
 }

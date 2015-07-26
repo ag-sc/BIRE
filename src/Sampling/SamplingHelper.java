@@ -17,7 +17,7 @@ import Variables.State;
 
 public class SamplingHelper {
 	static {
-		// Log.off();
+		Log.off();
 	}
 
 	public static State drawRandomlyFrom(List<State> nextStates) {
@@ -235,7 +235,7 @@ public class SamplingHelper {
 
 	public static List<State> getBest(List<State> states, int n, boolean sort) {
 		if (sort)
-			states.sort(State.comparator);
+			states.sort(State.modelScoreComparator);
 		return getBest(states, n);
 	}
 

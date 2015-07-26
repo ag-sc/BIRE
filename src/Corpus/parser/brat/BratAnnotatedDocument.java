@@ -8,14 +8,6 @@ import Corpus.parser.brat.annotations.BratAnnotation;
 public class BratAnnotatedDocument {
 
 	private String textFilename;
-	public String getTextFilename() {
-		return textFilename;
-	}
-
-	public String getAnnotationFilename() {
-		return annotationFilename;
-	}
-
 	private String annotationFilename;
 	private Map<String, BratAnnotation> allAnnotations = new HashMap<String, BratAnnotation>();
 	private String content;
@@ -28,6 +20,14 @@ public class BratAnnotatedDocument {
 		this.content = text;
 		this.textFilename = textFilename;
 		this.annotationFilename = annotationFilename;
+	}
+
+	public String getTextFilename() {
+		return textFilename;
+	}
+
+	public String getAnnotationFilename() {
+		return annotationFilename;
 	}
 
 	public Map<String, BratAnnotation> getAllAnnotations() {
@@ -51,6 +51,5 @@ public class BratAnnotatedDocument {
 	public String toString() {
 		return content + "\n" + annotationsToString();
 	}
-
 
 }

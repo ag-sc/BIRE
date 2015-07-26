@@ -45,7 +45,7 @@ public class Tokenization {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public static List<Tokenization> extractAndSaveTokens(String documentName,
+	public static List<Tokenization> extractAndStoreTokens(String documentName,
 			String tokenizationDirPath, String sentencesFilepath,
 			String julieModelFilepath) throws FileNotFoundException,
 			IOException {
@@ -125,7 +125,7 @@ public class Tokenization {
 		try {
 			File tokenizationFile = new File(tokenizationDirPath, documentName
 					+ TOKENIZATION_FILE_SUFFIX);
-			Utils.writeFile(tokenizationFile.getPath(), builder.toString());
+			Utils.writeFile(tokenizationFile, builder.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

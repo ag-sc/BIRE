@@ -1,5 +1,6 @@
 package Templates;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +14,7 @@ import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
 
-public class RelationTemplate extends Template {
+public class RelationTemplate extends Template implements Serializable {
 	{
 		Log.off();
 	}
@@ -29,6 +30,7 @@ public class RelationTemplate extends Template {
 				Log.d("Add features to entity %s (\"%s\"):", e.getID(),
 						e.getText());
 				Factor factor = new Factor(this);
+				factor.setEntity(e);
 				factors.add(factor);
 				Vector featureVector = new Vector();
 				factor.setFeatures(featureVector);
@@ -42,6 +44,8 @@ public class RelationTemplate extends Template {
 					EntityAnnotation argEntity = state.getEntity(a.getValue());
 					EntityType argType = argEntity.getType();
 
+					// TODO the next few features are (partly) unnecessary due
+					// to CorpusConfig specification
 					/*
 					 * The next few features are always present for each
 					 * individual token, thus, they always have a value of 1

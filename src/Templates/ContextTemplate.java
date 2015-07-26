@@ -1,5 +1,6 @@
 package Templates;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +12,7 @@ import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
-public class ContextTemplate extends Template {
+public class ContextTemplate extends Template implements Serializable {
 
 	{
 		Log.off();
@@ -25,6 +26,7 @@ public class ContextTemplate extends Template {
 				Log.d("Add features to entity %s (\"%s\"):", e.getID(),
 						e.getText());
 				Factor factor = new Factor(this);
+				factor.setEntity(e);
 				factors.add(factor);
 				Vector featureVector = new Vector();
 				factor.setFeatures(featureVector);
@@ -33,8 +35,7 @@ public class ContextTemplate extends Template {
 				Token first = tokens.get(0);
 				Token last = tokens.get(tokens.size() - 1);
 
-				// TODO compare value with entity text, entity type or
-				// dictionary entry?
+				// TODO Maybe include Type/Name in feature name
 				featureVector.set("FIRST_TOKEN_EQUALS=" + first.getText(), 1.0);
 				featureVector.set("LAST_TOKEN_EQUALS=" + last.getText(), 1.0);
 
@@ -43,8 +44,10 @@ public class ContextTemplate extends Template {
 					Token tokenAt = Features.getTokenRelativeToEntity(state, e,
 							i);
 					if (tokenAt != null) {
+						String at = i > 0 ? "+" + String.valueOf(i) : String
+								.valueOf(i);
 						featureVector.set(
-								"TOKEN@" + i + "_EQUALS=" + tokenAt.getText(),
+								"TOKEN@" + at + "_EQUALS=" + tokenAt.getText(),
 								1.0);
 					}
 				}

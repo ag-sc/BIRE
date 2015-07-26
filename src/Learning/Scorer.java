@@ -27,41 +27,43 @@ public class Scorer {
 	 * @return
 	 */
 	public double score(State state) {
-		// apply all templates to this state first
-		unroll(state);
+		// at this point, the function unroll(state) should be applied at least
+		// once
 
 		// compute the score of the state according to all templates and all
 		// respective factors
 		double score = 1;
 		Collection<Template> templates = model.getTemplates();
 		// boolean factorsApplied = false;
-		Log.d("Score state: %s", state);
+		// Log.d("Score state: %s", state);
 		for (Template template : templates) {
-			Log.d("\tTemplate %s", template.getClass().getSimpleName());
+			// Log.d("\tTemplate %s", template.getClass().getSimpleName());
 			Vector weightVector = template.getWeightVector();
 			List<Factor> factors = template.getFactors(state);
 			for (Factor factor : factors) {
-				Log.d("\t\tFactor Features:\n\t\t%s", factor.getFeatureVector());
+				// Log.d("\t\tFactor Features:\n\t\t%s",
+				// factor.getFeatureVector());
 				Vector featureVector = factor.getFeatureVector();
 				double factorScore = Math.exp(featureVector
 						.dotProduct(weightVector));
 				score *= factorScore;
 				// factorsApplied = true;
-				Log.d("\t\tfactor with score = %s applied", factorScore);
+				// Log.d("\t\tfactor with score = %s applied", factorScore);
 			}
 		}
-		// return a score of 0 if no factors exist that contribute to this score
-		// (we cannot simply initialize the score with 0 due to the score being
-		// a product!)
-		// if (!factorsApplied) {
-		// score = 0;
-		// }
-		Log.d("\tFinal score = %s", score);
 		state.setModelScore(score);
 		return score;
 	}
 
 	public void unroll(State state) {
+		/*
+		 * TODO to safe some RAM this function could return the generated
+		 * factors directly. This would safe some unnecessary loops and the
+		 * templates would not need to safe the factors for every state. Still,
+		 * templates would need to safe some kind of information to allow for
+		 * the update of specific factors when the learner tries to update
+		 * weights. However
+		 */
 		for (Template t : model.getTemplates()) {
 			t.applyTo(state);
 		}

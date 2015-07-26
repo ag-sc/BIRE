@@ -2,6 +2,7 @@ package Corpus.parser.brat;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,8 +11,8 @@ import java.util.List;
 
 public class Utils {
 
-	public static String readFile(String filepath) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(filepath));
+	public static String readFile(File file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
 		StringBuilder builder = new StringBuilder();
 		String line;
 		boolean addPreviousLinebreak = false;
@@ -36,9 +37,9 @@ public class Utils {
 		return lines;
 	}
 
-	public static void writeFile(String filepath, String content)
+	public static void writeFile(File file, String content)
 			throws IOException {
-		BufferedWriter writer = new BufferedWriter(new FileWriter(filepath));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 		writer.write(content);
 		writer.close();
 	}

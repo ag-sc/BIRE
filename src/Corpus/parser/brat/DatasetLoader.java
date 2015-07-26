@@ -19,7 +19,7 @@ import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Constants;
 import Corpus.Corpus;
-import Corpus.julie.SentenceSplitter;
+import Corpus.julie.JavaSentenceSplitter;
 import Corpus.julie.Tokenization;
 import Logging.Log;
 
@@ -43,8 +43,11 @@ public class DatasetLoader {
 		File textDir = new File("res/bionlp/text");
 		File sentencesDir = new File("res/bionlp/julie/sentences");
 		File tokensDir = new File("res/bionlp/julie/tokens");
-		String modelFilepath = "res/bionlp/julie/models/JULIE_life-science-1.6.mod.gz";
-		String configFilepath = "res/bionlp/annotation.conf";
+		File tokenModelFile = new File(
+				"res/bionlp/julie/models/JULIE_life-science-1.6-token.mod.gz");
+		File sentenceModelFile = new File(
+				"res/bionlp/julie/models/JULIE_life-science-1.6-sentence.mod.gz");
+		File configFilepath = new File("res/bionlp/annotation.conf");
 
 		BratConfigReader confReader = new BratConfigReader();
 		Log.d("### Annotation configuration:");
@@ -59,6 +62,8 @@ public class DatasetLoader {
 		Set<String> completeDocumnts = new HashSet<String>(
 				annotationFiles.keySet());
 		completeDocumnts.retainAll(textFiles.keySet());
+		// FIXME include again when sentence splitter works better
+		completeDocumnts.remove("PMID-10364260");
 		Log.d("%s documents with a given text and annotation file",
 				completeDocumnts.size());
 		Log.d("filesnames: %s", completeDocumnts);
@@ -77,22 +82,23 @@ public class DatasetLoader {
 				Log.d("#####################");
 				Log.d("### Brat annotations:");
 				BratAnnotationParser parser = new BratAnnotationParser();
-				BratAnnotatedDocument bratDoc = parser.parseFile(
-						annFile.getPath(), textFile.getPath());
+				BratAnnotatedDocument bratDoc = parser.parseFile(annFile,
+						textFile);
 				Log.d("%s", bratDoc);
 
 				Log.d("#####################");
 				Log.d("### Text splitted in sentences:");
 
 				File sentFile = new File(sentencesDir, textFile.getName());
-				SentenceSplitter.getSentencesAndStore(
-						new File(textFile.getPath()), sentFile.getPath());
-
+				// JulieSentenceSplitter.extractAndStoreSentences(textFile,
+				// sentFile, sentenceModelFile);
+				JavaSentenceSplitter.extractAndStoreSentences(textFile,
+						sentFile);
 				Log.d("#####################");
 				Log.d("### Tokenization of sentences:");
 				List<Tokenization> tokenizations = Tokenization
-						.extractAndSaveTokens(filename, tokensDir.getPath(),
-								sentFile.getPath(), modelFilepath);
+						.extractAndStoreTokens(filename, tokensDir.getPath(),
+								sentFile.getPath(), tokenModelFile.getPath());
 
 				Log.d("#####################");
 				Log.d("### BIRE annotations:");
@@ -101,8 +107,10 @@ public class DatasetLoader {
 				// Log.d("%s", doc.getGoldState().toDetailedString());
 				corpus.addDocuments(documents);
 				current++;
-			} catch (IOException e1) {
+			} catch (Exception e1) {
 				e1.printStackTrace();
+				Log.w("Parsing of files for %s not possible. Skip this instance",
+						filename);
 			}
 		}
 

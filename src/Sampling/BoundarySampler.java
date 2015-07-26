@@ -14,7 +14,7 @@ import Variables.State;
 public class BoundarySampler implements Sampler {
 
 	{
-		// Log.off();
+		 Log.off();
 	}
 	private int numberOfStates;
 
@@ -45,7 +45,6 @@ public class BoundarySampler implements Sampler {
 
 	private Set<State> generateNextStates(State previousState,
 			int numberOfStates, Scorer scorer) {
-		Log.methodOff();
 		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);

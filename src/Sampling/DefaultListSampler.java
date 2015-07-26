@@ -40,7 +40,7 @@ public class DefaultListSampler implements Sampler {
 		Set<State> nextStates = generateNextStates(state, numberOfStates,
 				scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
-		nextStatesSorted.sort(State.comparator);
+		nextStatesSorted.sort(State.modelScoreComparator);
 		Log.d("generated states:");
 		for (State s : nextStatesSorted) {
 			Log.d("%s", s);

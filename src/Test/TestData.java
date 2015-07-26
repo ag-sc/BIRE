@@ -1,5 +1,6 @@
 package Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -19,8 +20,8 @@ public class TestData {
 
 	public static Corpus getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
-		AnnotationConfig originalConfig = configReader
-				.readConfig("res/bionlp/annotation.conf");
+		AnnotationConfig originalConfig = configReader.readConfig(new File(
+				"res/bionlp/annotation.conf"));
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
 		simplifiedConfig.addEntityType(originalConfig.getEntityType("Protein"));
 
@@ -36,6 +37,8 @@ public class TestData {
 		e2.init(simplifiedConfig.getEntityType("Protein"), 8, 8);
 		goldState.addEntityAnnotation(e2);
 
+		
+		
 		BratCorpus corpus = new BratCorpus(simplifiedConfig);
 		AnnotatedDocument doc = new AnnotatedDocument("DummyDocument", content,
 				tokens, goldState);

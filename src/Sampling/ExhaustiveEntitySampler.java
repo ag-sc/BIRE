@@ -17,19 +17,19 @@ import Variables.State;
 public class ExhaustiveEntitySampler implements Sampler {
 
 	{
-		// Log.off();
+		Log.off();
 	}
 	private int numberOfStates;
 
-//	/**
-//	 * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
-//	 * generated States in each sampling step.
-//	 * 
-//	 * @param numberOfStates
-//	 */
-//	public ExhaustiveEntitySampler(int numberOfStates) {
-//		this.numberOfStates = numberOfStates;
-//	}
+	// /**
+	// * Creates a new DefaultSampler that samples from <i>numberOfStates</i>
+	// * generated States in each sampling step.
+	// *
+	// * @param numberOfStates
+	// */
+	// public ExhaustiveEntitySampler(int numberOfStates) {
+	// this.numberOfStates = numberOfStates;
+	// }
 
 	public ExhaustiveEntitySampler() {
 		this.numberOfStates = 0;
@@ -39,13 +39,13 @@ public class ExhaustiveEntitySampler implements Sampler {
 
 		Set<State> nextStates = generateNextStates(state, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
-		
+
 		// nextStatesSorted.sort(State.comparator);
 		// Log.d("generated states (%s):", nextStatesSorted.size());
 		// for (State s : nextStatesSorted) {
 		// Log.d("%s", s);
 		// }
-		
+
 		if (numberOfStates > 0)
 			return SamplingHelper.getBest(nextStatesSorted, numberOfStates);
 		else

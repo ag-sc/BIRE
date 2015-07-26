@@ -14,7 +14,8 @@ import Templates.Template;
 
 public class EntityAnnotation extends AbstractAnnotation {
 
-//	private Map<Template, List<Factor>> factors = new HashMap<Template, List<Factor>>();
+	// private Map<Template, List<Factor>> factors = new HashMap<Template,
+	// List<Factor>>();
 
 	private StateChange change;
 
@@ -177,6 +178,12 @@ public class EntityAnnotation extends AbstractAnnotation {
 				+ ", arguments=" + arguments + "]";
 	}
 
+	public String toDetailedString() {
+		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
+				+ ", end=" + endTokenIndex + " => \"" + getText() + "\", type="
+				+ type.getName() + ", arguments=" + arguments + "]";
+	}
+
 	/**
 	 * Returns the entity that is associated with the specified ID, using the
 	 * predefined EntityManager.
@@ -188,9 +195,9 @@ public class EntityAnnotation extends AbstractAnnotation {
 		return state.getEntity(id);
 	}
 
-//	public void addFactors(Template template, List<Factor> factors) {
-//		this.factors.put(template, factors);
-//	}
+	// public void addFactors(Template template, List<Factor> factors) {
+	// this.factors.put(template, factors);
+	// }
 
 	public boolean isChanged() {
 		return true;

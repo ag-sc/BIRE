@@ -1,6 +1,7 @@
 package Corpus;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -33,15 +34,15 @@ public class BratConfigReader {
 	 * AnnotationConfig object. Due to the use of internal states, this method
 	 * is marked as synchronized and cannot run more than once at a time.
 	 * 
-	 * @param filePath
+	 * @param configFile
 	 * @return
 	 */
-	public synchronized AnnotationConfig readConfig(String filePath) {
+	public synchronized AnnotationConfig readConfig(File configFile) {
 		Log.off();
 		try {
 			eventReferencingArguments = new HashSet<Argument>();
 			events = new HashSet<EntityType>();
-			BufferedReader reader = new BufferedReader(new FileReader(filePath));
+			BufferedReader reader = new BufferedReader(new FileReader(configFile));
 			AnnotationConfig config = new AnnotationConfig();
 			ParseState state = null;
 			String line;

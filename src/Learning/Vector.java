@@ -1,11 +1,12 @@
 package Learning;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Set;
 
 import Logging.Log;
 
-public class Vector {
+public class Vector implements Serializable{
 
 	{
 		Log.off();
@@ -27,8 +28,6 @@ public class Vector {
 	}
 
 	public double dotProduct(Vector weights) {
-		// FIXME should we add or multiply the individual feature-weight
-		// products
 		double result = 0;
 		for (String feature : this.getFeatures()) {
 			result += this.getValueOfFeature(feature)
@@ -82,8 +81,8 @@ public class Vector {
 		} else {
 			// TODO default values should not be defined here
 			double initialWeight = DEFAULT_VALUE;
-			Log.w("Feature %s does not exist. Insert default value %s",
-					feature, initialWeight);
+//			Log.w("Feature %s does not exist. Insert default value %s",
+//					feature, initialWeight);
 			features.put(feature, initialWeight);
 			return initialWeight;
 		}

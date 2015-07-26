@@ -31,11 +31,10 @@ public class BratAnnotationParser {
 	 * Collect all entity/relation types and their frequencies save to separate
 	 * file
 	 */
-	public BratAnnotatedDocument parseFile(String annotationPath,
-			String textPath) {
+	public BratAnnotatedDocument parseFile(File annFile, File textFile) {
 		try {
 			BufferedReader annotationReader = new BufferedReader(
-					new FileReader(annotationPath));
+					new FileReader(annFile));
 
 			String line;
 			int lineNumber = 0;
@@ -50,12 +49,9 @@ public class BratAnnotationParser {
 			annotationReader.close();
 
 			// Read Text
-			String content = Utils.readFile(textPath);
-
-			File textFile = new File(textPath);
-			File annotationFile = new File(annotationPath);
+			String content = Utils.readFile(textFile);
 			BratAnnotatedDocument doc = new BratAnnotatedDocument(
-					textFile.getName(), annotationFile.getName(), content,
+					textFile.getName(), annFile.getName(), content,
 					manager.getAnnotations());
 			return doc;
 		} catch (FileNotFoundException e) {

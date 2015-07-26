@@ -1,5 +1,6 @@
 package Templates;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import Learning.Vector;
 import Logging.Log;
 import Variables.State;
 
-public class CheatingTemplate extends Template {
+public class CheatingTemplate extends Template implements Serializable {
 
 	{
 		Log.off();
@@ -33,7 +34,7 @@ public class CheatingTemplate extends Template {
 		factor.setFeatures(featureVector);
 		// e.addFactors(this, Arrays.asList(factor));
 
-		double score = objective.score(state, state.goldState);
+		double score = objective.score(state, state.goldState).score;
 		featureVector.set(GOLD, score);
 
 		// for (EntityAnnotation e : state.getEntities()) {

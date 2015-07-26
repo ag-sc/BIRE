@@ -14,28 +14,35 @@ import java.util.Set;
 
 import Corpus.Document;
 import Corpus.Token;
-import Factors.Factor;
-import Learning.Model;
-import Learning.Vector;
+import Learning.Score;
 import Logging.Log;
-import Templates.Template;
 
 public class State implements Serializable {
 
 	{
 		Log.off();
 	}
-	public static final Comparator<State> comparator = new Comparator<State>() {
+	public static final Comparator<State> modelScoreComparator = new Comparator<State>() {
 
 		@Override
 		public int compare(State s1, State s2) {
 			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
 		}
 	};
+	public static final Comparator<State> objectiveScoreComparator = new Comparator<State>() {
+
+		@Override
+		public int compare(State s1, State s2) {
+			return (int) -Math.signum(s1.getObjectiveFunctionScore().score
+					- s2.getObjectiveFunctionScore().score);
+		}
+	};
 	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
-	private static final DecimalFormat scoreFormat = new DecimalFormat("0.0000");
+	private static final DecimalFormat scoreFormat = new DecimalFormat(
+			"0.00000");
+
 	private static final DecimalFormat stateIDFormat = new DecimalFormat(
-			"00000");
+			"0000000");
 	private int entityIdIndex = 0;
 	private static int stateIdIndex = 0;
 	/**
@@ -49,7 +56,8 @@ public class State implements Serializable {
 	private Document document;
 	public State goldState;
 
-	private double score = 1;
+	private double modelScore = 1;
+	private Score objectiveFunctionScore;
 
 	public State() {
 		this.id = generateStateID();
@@ -94,7 +102,7 @@ public class State implements Serializable {
 	 * @return
 	 */
 	public double getModelScore() {
-		return score;
+		return modelScore;
 	}
 
 	public Document getDocument() {
@@ -260,7 +268,7 @@ public class State implements Serializable {
 		builder.append("ID:");
 		builder.append(id);
 		builder.append(" [");
-		builder.append(scoreFormat.format(score));
+		builder.append(scoreFormat.format(modelScore));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<String> entities = getAnnotationsForToken(t);
@@ -325,7 +333,16 @@ public class State implements Serializable {
 		this.document = document;
 	}
 
-	public void setModelScore(double score) {
-		this.score = score;
+	public void setModelScore(double modelScore) {
+		this.modelScore = modelScore;
 	}
+
+	public void setObjectiveFunctionScore(Score objectiveFunctionScore) {
+		this.objectiveFunctionScore = objectiveFunctionScore;
+	}
+
+	public Score getObjectiveFunctionScore() {
+		return objectiveFunctionScore;
+	}
+
 }
