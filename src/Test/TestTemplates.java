@@ -24,12 +24,12 @@ public class TestTemplates {
 
 		try {
 			corpus = DatasetLoader
-					.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+					.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 		} catch (Exception e) {
 			e.printStackTrace();
 			Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
 			corpus = DatasetLoader
-					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 		}
 
 		AnnotatedDocument doc = corpus.getDocuments().get(0);
@@ -52,7 +52,7 @@ public class TestTemplates {
 				Log.d("\tFactor %s for Entity: %s", i, factor.getEntity()
 						.toDetailedString());
 				Vector v = factor.getFeatureVector();
-				for (String f : v.getFeatures()) {
+				for (String f : v.getFeatureNames()) {
 					Log.d("\t%s:\t%s", EvaluationUtil.featureWeightFormat
 							.format(v.getValueOfFeature(f)), f);
 				}

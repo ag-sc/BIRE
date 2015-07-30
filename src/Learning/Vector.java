@@ -29,7 +29,7 @@ public class Vector implements Serializable{
 
 	public double dotProduct(Vector weights) {
 		double result = 0;
-		for (String feature : this.getFeatures()) {
+		for (String feature : this.getFeatureNames()) {
 			result += this.getValueOfFeature(feature)
 					* weights.getValueOfFeature(feature);
 		}
@@ -89,7 +89,11 @@ public class Vector implements Serializable{
 
 	}
 
-	public Set<String> getFeatures() {
+	public HashMap<String, Double> getFeatures() {
+		return features;
+	}
+
+	public Set<String> getFeatureNames() {
 		return features.keySet();
 	}
 
@@ -115,5 +119,4 @@ public class Vector implements Serializable{
 	public String toString() {
 		return features.toString();
 	}
-
 }

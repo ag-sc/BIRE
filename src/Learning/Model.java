@@ -94,7 +94,7 @@ public class Model implements Serializable {
 			builder.append(template.getClass().getSimpleName());
 			builder.append("\n");
 			builder.append("\t#Features: ");
-			builder.append(template.getWeightVector().getFeatures().size());
+			builder.append(template.getWeightVector().getFeatureNames().size());
 			builder.append("\n");
 		}
 		return builder.toString();
@@ -105,10 +105,10 @@ public class Model implements Serializable {
 		for (Template template : templates) {
 			builder.append(template.getClass().getSimpleName());
 			builder.append(" (#Features: ");
-			builder.append(template.getWeightVector().getFeatures().size());
+			builder.append(template.getWeightVector().getFeatureNames().size());
 			builder.append(")");
 			builder.append("\n");
-			for (String weight : template.getWeightVector().getFeatures()) {
+			for (String weight : template.getWeightVector().getFeatureNames()) {
 				builder.append("\t");
 				builder.append(weight);
 				builder.append(" : ");

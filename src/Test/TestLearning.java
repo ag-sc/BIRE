@@ -32,17 +32,17 @@ public class TestLearning {
 			break;
 		case 1:
 			corpus = DatasetLoader
-					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			break;
 		case 2:
 			try {
 				corpus = DatasetLoader
-						.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+						.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
 				corpus = DatasetLoader
-						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			}
 			break;
 		default:

@@ -26,12 +26,15 @@ public abstract class Template implements Serializable {
 	 */
 	private transient Map<String, List<Factor>> factors = new HashMap<String, List<Factor>>();
 
+	public transient Vector featureWeightUpdates = new Vector();
+
 	public void update(Factor factor, double alpha) {
 		// TODO adjusting the learning step according to each individual
 		// feature's contribution the the computed score could improve the
 		// learning procedure
-		for (String feature : factor.getFeatureVector().getFeatures()) {
+		for (String feature : factor.getFeatureVector().getFeatureNames()) {
 			weights.update(feature, alpha);
+			featureWeightUpdates.update(feature, alpha);
 		}
 	}
 
@@ -118,6 +121,7 @@ public abstract class Template implements Serializable {
 
 	public void clean() {
 		factors.clear();
+		featureWeightUpdates = new Vector();
 	}
 
 	public Collection<Factor> getAllFactors() {

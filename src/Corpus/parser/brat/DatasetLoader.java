@@ -26,7 +26,7 @@ import Logging.Log;
 public class DatasetLoader {
 
 	public static void main(String[] args) {
-		convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+		convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 	}
 
 	public static Corpus loadDatasetFromBinaries(String srcFilepath)

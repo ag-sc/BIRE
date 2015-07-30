@@ -39,4 +39,21 @@ public class BratCorpus implements Corpus {
 				+ documents.size() + "]";
 	}
 
+	public String toDetailedString() {
+		StringBuilder builder = new StringBuilder();
+		for (AnnotatedDocument doc : documents) {
+			builder.append(doc.getName());
+			builder.append("\n\t");
+			builder.append(doc.getContent());
+			builder.append("\n\t");
+			builder.append(doc.getTokens());
+			builder.append("\n\t");
+			builder.append(doc.getGoldState());
+			builder.append("\n");
+		}
+		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents="
+				+ documents.size() + ", documents=\n" + builder.toString()
+				+ "]";
+	}
+
 }

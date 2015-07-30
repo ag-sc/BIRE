@@ -11,6 +11,7 @@ import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.parser.brat.DatasetLoader;
+import Corpus.parser.usage.UsageLoader;
 import Learning.Model;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
@@ -22,23 +23,43 @@ import Templates.ContextTemplate;
 import Templates.MorphologicalTemplate;
 import Templates.RelationTemplate;
 import Templates.Template;
-import evaluation.SamplingProcedureRecord.SamplingStepRecord;
 
 public class BioNLPLearning {
+
+	public static final int USAGE = 0;
+	public static final int BIONLP = 1;
 
 	public static void main(String[] args) {
 		File modelDir = new File("res/bionlp/models");
 		File evalDir = new File("res/bionlp/eval");
 		Corpus corpus = null;
 
-		try {
-			corpus = DatasetLoader
-					.loadDatasetFromBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-			corpus = DatasetLoader
-					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_CORPUS_FILEPATH);
+		int corpusID = USAGE;
+		switch (corpusID) {
+		case USAGE:
+			try {
+				corpus = UsageLoader
+						.loadDatasetFromBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+			} catch (Exception e) {
+				e.printStackTrace();
+				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
+				corpus = UsageLoader
+						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+			}
+			break;
+		case BIONLP:
+			try {
+				corpus = DatasetLoader
+						.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+			} catch (Exception e) {
+				e.printStackTrace();
+				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
+				corpus = DatasetLoader
+						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+			}
+			break;
+		default:
+			break;
 		}
 
 		Log.d("Corpus:\n%s", corpus);
@@ -148,10 +169,10 @@ public class BioNLPLearning {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				 learner.test(test, numberOfSamplingSteps);
+				learner.test(test, numberOfSamplingSteps);
 				// learner.test(split.getTest().subList(0, 2), 10);
 
-				 testRecords.add(learner.getTestRecord());
+				testRecords.add(learner.getTestRecord());
 				// SamplingProcedureRecord testRecord = learner.getTestRecord();
 				// Plots.plotScore(trainRecord);
 				// plotScore(testRecord);

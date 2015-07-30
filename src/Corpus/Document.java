@@ -10,10 +10,25 @@ public class Document implements Serializable {
 	protected String content;
 	protected List<Token> tokens;
 
+	public Document() {
+	}
+
 	public Document(String name, String content, List<Token> tokens) {
 		super();
 		this.name = name;
 		this.content = content;
+		this.tokens = tokens;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public void setTokens(List<Token> tokens) {
 		this.tokens = tokens;
 	}
 

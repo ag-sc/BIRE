@@ -109,11 +109,15 @@ public class EvaluationUtil {
 		Map<String, Double> allWeights = new HashMap<String, Double>();
 		for (Template t : learner.getModel().getTemplates()) {
 			Vector weights = t.getWeightVector();
-			for (String f : weights.getFeatures()) {
+			for (String f : weights.getFeatureNames()) {
 				allWeights.put(f, weights.getValueOfFeature(f));
 			}
 		}
 
+		printWeightsSorted(allWeights);
+	}
+
+	public static void printWeightsSorted(Map<String, Double> allWeights) {
 		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(
 				allWeights.entrySet());
 		features.sort(featureWeightComparator);

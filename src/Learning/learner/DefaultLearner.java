@@ -1,5 +1,7 @@
 package Learning.learner;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,9 @@ import Learning.Scorer;
 import Logging.Log;
 import Sampling.Sampler;
 import Sampling.SamplingHelper;
+import Templates.Template;
 import Variables.State;
+import evaluation.EvaluationUtil;
 import evaluation.SamplingProcedureRecord;
 
 public class DefaultLearner implements Learner {
@@ -91,10 +95,10 @@ public class DefaultLearner implements Learner {
 						Log.d("Step: %s/%s", s + 1, steps);
 						Log.d("Alpha: %s; Omega: %s", currentAlpha,
 								currentOmega);
-						Log.d("Current model:\n%s", model.toString());
 						Log.d("Sampler: %s", sampler.getClass().getSimpleName());
 						List<State> nextStates = sampler.getNextStates(
 								currentState, scorer);
+						Log.d("Current model:\n%s", model.toString());
 
 						Log.d("Score:");
 						scorer.unroll(currentState);
@@ -113,9 +117,8 @@ public class DefaultLearner implements Learner {
 						Log.d("Update model with %s states and alpha=%s",
 								nextStates.size(), currentAlpha);
 						for (State state : nextStates) {
-							updateModelForState(
-									currentAlpha / nextStates.size(),
-									goldState, currentState, state);
+							updateModelForState(currentAlpha, goldState,
+									currentState, state);
 						}
 
 						Log.d("Rescore:");
@@ -135,6 +138,13 @@ public class DefaultLearner implements Learner {
 
 						currentState = selectNextState(nextStates, currentOmega);
 
+						// for (Template t : model.getTemplates()) {
+						// Log.d("Weight updates of template %s:", t
+						// .getClass().getSimpleName());
+						// EvaluationUtil
+						// .printWeightsSorted(t.featureWeightUpdates
+						// .getFeatures());
+						// }
 						/*
 						 * Log and record this sampling step
 						 */
@@ -145,11 +155,19 @@ public class DefaultLearner implements Learner {
 						trainRecord.recordSamplingStep(d, s, sampler,
 								nextStates, currentState);
 
+						// try {
+						// Log.d("PAUSE: Wait for input...");
+						// System.in.read();
+						// } catch (IOException e1) {
+						// e1.printStackTrace();
+						// }
 						/*
-						 * Clean the model of all generated states. The
-						 * state-to-factor relations are not used anymore
+						 * Clean the model of all generated states and deletes
+						 * the temporarily stored feature weight updates. The
+						 * state-to-factor relations are not used anymore.
 						 */
 						model.clean();
+
 					}
 					currentOmega -= omegaStep;
 					currentAlpha -= alphaStep;
