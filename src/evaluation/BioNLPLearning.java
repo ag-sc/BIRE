@@ -79,7 +79,7 @@ public class BioNLPLearning {
 			AnnotatedDocument doc = allDocuments.get(i);
 			Log.d("%s: %s", i, doc.getGoldState());
 		}
-//		allDocuments = allDocuments.subList(137, 147);
+		// allDocuments = allDocuments.subList(137, 147);
 
 		List<SamplingProcedureRecord> trainRecords = new ArrayList<SamplingProcedureRecord>();
 		List<SamplingProcedureRecord> testRecords = new ArrayList<SamplingProcedureRecord>();
@@ -178,7 +178,7 @@ public class BioNLPLearning {
 				// Plots.plotScore(trainRecord);
 				// plotScore(testRecord);
 				Log.d("Learned weights of cross-validation %s/%s:", i, n);
-				EvaluationUtil.printWeights(learner);
+				EvaluationUtil.printWeights(learner, 10e-7);
 			}
 		}
 

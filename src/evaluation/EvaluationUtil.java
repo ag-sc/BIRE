@@ -105,12 +105,22 @@ public class EvaluationUtil {
 	public static DecimalFormat featureWeightFormat = new DecimalFormat(
 			"0.000000");
 
-	public static void printWeights(DefaultLearner learner) {
+	/**
+	 * Prints all weights of the learners model in descending order, discarding
+	 * all weights with an absolute value smaller than minAbsValue. To print all
+	 * values set minAbsValue <= 0
+	 * 
+	 * @param learner
+	 * @param minAbsValue
+	 */
+	public static void printWeights(DefaultLearner learner, double minAbsValue) {
 		Map<String, Double> allWeights = new HashMap<String, Double>();
 		for (Template t : learner.getModel().getTemplates()) {
 			Vector weights = t.getWeightVector();
 			for (String f : weights.getFeatureNames()) {
-				allWeights.put(f, weights.getValueOfFeature(f));
+				double value = weights.getValueOfFeature(f);
+				if (minAbsValue <= 0 || Math.abs(value) >= minAbsValue)
+					allWeights.put(f, value);
 			}
 		}
 
