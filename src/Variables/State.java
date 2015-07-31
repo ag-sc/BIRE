@@ -57,7 +57,7 @@ public class State implements Serializable {
 	public State goldState;
 
 	private double modelScore = 1;
-	private Score objectiveFunctionScore;
+	private Score objectiveFunctionScore = new Score();
 
 	public State() {
 		this.id = generateStateID();
@@ -269,6 +269,11 @@ public class State implements Serializable {
 		builder.append(id);
 		builder.append(" [");
 		builder.append(scoreFormat.format(modelScore));
+		builder.append("]: ");
+		builder.append(" [");
+		builder.append(scoreFormat
+				.format(objectiveFunctionScore != null ? objectiveFunctionScore.score
+						: 0));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<String> entities = getAnnotationsForToken(t);

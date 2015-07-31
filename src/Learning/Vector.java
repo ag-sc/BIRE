@@ -2,11 +2,14 @@ package Learning;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import Logging.Log;
 
-public class Vector implements Serializable{
+public class Vector implements Serializable {
 
 	{
 		Log.off();
@@ -81,15 +84,15 @@ public class Vector implements Serializable{
 		} else {
 			// TODO default values should not be defined here
 			double initialWeight = DEFAULT_VALUE;
-//			Log.w("Feature %s does not exist. Insert default value %s",
-//					feature, initialWeight);
+			// Log.w("Feature %s does not exist. Insert default value %s",
+			// feature, initialWeight);
 			features.put(feature, initialWeight);
 			return initialWeight;
 		}
 
 	}
 
-	public HashMap<String, Double> getFeatures() {
+	public Map<String, Double> getFeatures() {
 		return features;
 	}
 
@@ -97,7 +100,7 @@ public class Vector implements Serializable{
 		return features.keySet();
 	}
 
-	public void update(String feature, double alpha) {
+	public void addToValue(String feature, double alpha) {
 		double featureValue = getValueOfFeature(feature);
 		featureValue += alpha;
 		features.put(feature, featureValue);
@@ -118,5 +121,22 @@ public class Vector implements Serializable{
 	@Override
 	public String toString() {
 		return features.toString();
+	}
+
+	public static Vector substract(Vector v1, Vector v2) {
+		Set<String> allFeatures = new HashSet<String>();
+		allFeatures.addAll(v1.getFeatureNames());
+		allFeatures.addAll(v2.getFeatureNames());
+		Vector sub = new Vector();
+		for (String f : allFeatures) {
+			sub.set(f, v1.getValueOfFeature(f) - v2.getValueOfFeature(f));
+		}
+		return sub;
+	}
+
+	public void add(Vector v) {
+		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
+			addToValue(feature.getKey(), feature.getValue());
+		}
 	}
 }

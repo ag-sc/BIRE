@@ -1,6 +1,7 @@
 package Corpus;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +12,8 @@ public class AnnotationConfig implements Serializable {
 
 	private Map<String, EntityType> entityTypes = new HashMap<String, EntityType>();
 
-	public Collection<EntityType> getEntitiyTypes() {
-		return entityTypes.values();
+	public Collection<EntityType> getEntityTypes() {
+		return new ArrayList<EntityType>(entityTypes.values());
 	}
 
 	public void addEntityType(EntityType entityType) {

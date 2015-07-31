@@ -139,7 +139,7 @@ public class SamplingHelper {
 		}
 	}
 
-	public static void changeBoundaries(EntityAnnotation tokenAnnotation,
+	public static boolean changeBoundaries(EntityAnnotation tokenAnnotation,
 			State state) {
 		// the boundaries of annotations are on token level!
 		switch (sampleBoundaryChange(tokenAnnotation)) {
@@ -147,27 +147,27 @@ public class SamplingHelper {
 			Log.d("\texpand left");
 			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
 					.getBeginTokenIndex() - 1);
-			break;
+			return true;
 		case CONTRACT_LEFT:
 			Log.d("\tcontract left");
 			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
 					.getBeginTokenIndex() + 1);
-			break;
+			return true;
 		case EXPAND_RIGHT:
 			Log.d("\texpand right");
 			tokenAnnotation
 					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
-			break;
+			return true;
 		case CONTRACT_RIGHT:
 			Log.d("\tcontract right");
 			tokenAnnotation
 					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
-			break;
+			return true;
 		case DO_NOTHING:
 			Log.d("Do not change entity boundary");
 		default:
-			break;
 		}
+		return false;
 	}
 
 	/**
@@ -180,7 +180,7 @@ public class SamplingHelper {
 	 */
 	public static EntityType sampleEntityType(State state) {
 		List<EntityType> possibleEntityTypes = new ArrayList<EntityType>(state
-				.getDocument().getCorpus().getCorpusConfig().getEntitiyTypes());
+				.getDocument().getCorpus().getCorpusConfig().getEntityTypes());
 
 		EntityType randomType = possibleEntityTypes
 				.get((int) (Math.random() * possibleEntityTypes.size()));

@@ -16,6 +16,7 @@ import Learning.Model;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Sampling.BoundarySampler;
+import Sampling.ExhaustiveBoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
 import Sampling.RelationSampler;
 import Sampling.Sampler;
@@ -34,7 +35,7 @@ public class BioNLPLearning {
 		File evalDir = new File("res/bionlp/eval");
 		Corpus corpus = null;
 
-		int corpusID = USAGE;
+		int corpusID = BIONLP;
 		switch (corpusID) {
 		case USAGE:
 			try {
@@ -66,7 +67,7 @@ public class BioNLPLearning {
 
 		List<Sampler> samplers = new ArrayList<Sampler>();
 		samplers.add(new ExhaustiveEntitySampler());
-		samplers.add(new BoundarySampler(20));
+		samplers.add(new ExhaustiveBoundarySampler());
 		samplers.add(new RelationSampler(20));
 
 		// templates.add(new CheatingTemplate());
@@ -78,13 +79,13 @@ public class BioNLPLearning {
 			AnnotatedDocument doc = allDocuments.get(i);
 			Log.d("%s: %s", i, doc.getGoldState());
 		}
-		allDocuments = allDocuments.subList(143, 147);
+		allDocuments = allDocuments.subList(137, 147);
 
 		List<SamplingProcedureRecord> trainRecords = new ArrayList<SamplingProcedureRecord>();
 		List<SamplingProcedureRecord> testRecords = new ArrayList<SamplingProcedureRecord>();
 
 		int numberOfSamplingSteps = 10;
-		int numberOfEpochs = 2;
+		int numberOfEpochs = 5;
 		boolean leaveOneOut = false;
 		if (leaveOneOut) {
 			// Leave-One-Out evaluation

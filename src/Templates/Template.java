@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import Factors.Factor;
@@ -28,13 +29,17 @@ public abstract class Template implements Serializable {
 
 	public transient Vector featureWeightUpdates = new Vector();
 
+	public void update(String feature, double alpha) {
+		weights.addToValue(feature, alpha);
+		featureWeightUpdates.addToValue(feature, alpha);
+	}
+
 	public void update(Factor factor, double alpha) {
 		// TODO adjusting the learning step according to each individual
 		// feature's contribution the the computed score could improve the
 		// learning procedure
 		for (String feature : factor.getFeatureVector().getFeatureNames()) {
-			weights.update(feature, alpha);
-			featureWeightUpdates.update(feature, alpha);
+			update(feature, alpha);
 		}
 	}
 
@@ -130,5 +135,20 @@ public abstract class Template implements Serializable {
 			allFactors.addAll(list);
 		}
 		return allFactors;
+	}
+
+	/**
+	 * Returns a vector that contains the sum of all feature vectors for all
+	 * factors that are associated with the given state.
+	 * 
+	 * @param state
+	 * @return
+	 */
+	public Vector getJointFeatures(State state) {
+		Vector sum = new Vector();
+		for (Factor f : getFactors(state)) {
+			sum.add(f.getFeatureVector());
+		}
+		return sum;
 	}
 }

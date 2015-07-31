@@ -17,7 +17,7 @@ import Variables.State;
 public class ExhaustiveEntitySampler implements Sampler {
 
 	{
-		Log.off();
+		// Log.off();
 	}
 	private int numberOfStates;
 
@@ -56,27 +56,35 @@ public class ExhaustiveEntitySampler implements Sampler {
 	private Set<State> generateNextStates(State previousState, Scorer scorer) {
 		Set<State> generatedStates = new HashSet<State>();
 		List<Token> tokens = previousState.getDocument().getTokens();
+		// Add new entities to empty tokens
 		for (Token token : tokens) {
+
 			if (!previousState.tokenHasAnnotation(token)) {
 				// Assign new entity to empty token
 				Collection<EntityType> entityTypes = previousState
 						.getDocument().getCorpus().getCorpusConfig()
-						.getEntitiyTypes();
+						.getEntityTypes();
 				for (EntityType entityType : entityTypes) {
 					State generatedState = new State(previousState);
-					EntityAnnotation tokenAnnotation = generatedState
-							.getNewEntityInstanceForState();
+					EntityAnnotation tokenAnnotation = new EntityAnnotation(
+							generatedState);
 					tokenAnnotation.init(entityType, token.getIndex(),
 							token.getIndex());
 					generatedState.addEntityAnnotation(tokenAnnotation);
 					generatedStates.add(generatedState);
 				}
 			}
+
 		}
-		Set<String> entities = previousState.getEntityIDs();
-		for (String entityID : entities) {
+		// Modify existing entities
+		Set<String> previousStatesEntityIDs = previousState.getEntityIDs();
+		for (String entityID : previousStatesEntityIDs) {
+			EntityAnnotation previousStatesEntity = previousState
+					.getEntity(entityID);
 			Collection<EntityType> entityTypes = previousState.getDocument()
-					.getCorpus().getCorpusConfig().getEntitiyTypes();
+					.getCorpus().getCorpusConfig().getEntityTypes();
+			// remove the type that this entity already has assigned
+			entityTypes.remove(previousStatesEntity.getType());
 			// change Type of every entity to every possible type
 			for (EntityType entityType : entityTypes) {
 				State generatedState = new State(previousState);
@@ -90,6 +98,9 @@ public class ExhaustiveEntitySampler implements Sampler {
 			generatedState.removeEntityAnnotation(entity);
 			generatedStates.add(generatedState);
 		}
+		// // add an unchanged state
+		State generatedState = new State(previousState);
+		generatedStates.add(generatedState);
 		return generatedStates;
 	}
 }

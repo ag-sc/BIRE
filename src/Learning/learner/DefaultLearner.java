@@ -1,9 +1,13 @@
 package Learning.learner;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.lucene.search.Weight;
 
 import Corpus.AnnotatedDocument;
 import Learning.Learner;
@@ -11,6 +15,7 @@ import Learning.Model;
 import Learning.ObjectiveFunction;
 import Learning.Score;
 import Learning.Scorer;
+import Learning.Vector;
 import Logging.Log;
 import Sampling.Sampler;
 import Sampling.SamplingHelper;
@@ -131,12 +136,11 @@ public class DefaultLearner implements Learner {
 							// weights
 							scorer.score(state);
 						}
-						nextStates.sort(State.modelScoreComparator);
+
+						currentState = selectNextState(nextStates, currentOmega);
 						for (int k = 0; k < nextStates.size(); k++) {
 							Log.d("%s: %s", k, nextStates.get(k));
 						}
-
-						currentState = selectNextState(nextStates, currentOmega);
 
 						// for (Template t : model.getTemplates()) {
 						// Log.d("Weight updates of template %s:", t
@@ -156,7 +160,11 @@ public class DefaultLearner implements Learner {
 								nextStates, currentState);
 
 						// try {
-						// Log.d("PAUSE: Wait for input...");
+						// Log.d("Model after update:\n%s",
+						// model.toDetailedString());
+						// Log.d("########################");
+						// Log.d("PAUSE: Wait for ENTER...");
+						// Log.d("########################");
 						// System.in.read();
 						// } catch (IOException e1) {
 						// e1.printStackTrace();
@@ -180,70 +188,123 @@ public class DefaultLearner implements Learner {
 
 	private void updateModelForState(double alpha, State goldState,
 			State currentState, State possibleNextState) {
+		Log.methodOff();
+		if (false) {
+			double On = objective.score(possibleNextState, goldState).score;
+			double Oc = objective.score(currentState, goldState).score;
 
-		double On = objective.score(possibleNextState, goldState).score;
-		double Oc = objective.score(currentState, goldState).score;
+			double Mn = possibleNextState.getModelScore();
+			double Mc = currentState.getModelScore();
 
-		double Mn = possibleNextState.getModelScore();
-		double Mc = currentState.getModelScore();
+			Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
+					possibleNextState.getID(), Oc, On, Mc, Mn);
 
-		Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
-				possibleNextState.getID(), Oc, On, Mc, Mn);
+			/*-
+			 * On/Oc   Mn/Mc
+			 * 2 * (0.9 - 0.8)/(0.9 + 0.8) = 0.2/1.7
+			 * 2 * (2.5 - 1.5)/(2.5 + 1.5) = 1/4
+			 */
+			// double learningSignal = 2 * (On - Oc) / (On + Oc) * 2 * (Mn - Mc)
+			// /
+			// (Mn + Mc) / 2;
+			// double learningSignal = Math.signum((On - Oc) * (Mn - Mc));
+			// double mr = (Mn - Mc) / Math.max(Mn, Mc);
+			// double or = (On - Oc) / Math.max(On, Oc);
+			// double l = (mr - or) / Math.max(mr, or);
 
-		/*-
-		 * On/Oc   Mn/Mc
-		 * 2 * (0.9 - 0.8)/(0.9 + 0.8) = 0.2/1.7
-		 * 2 * (2.5 - 1.5)/(2.5 + 1.5) = 1/4
-		 */
-		// double learningSignal = 2 * (On - Oc) / (On + Oc) * 2 * (Mn - Mc) /
-		// (Mn + Mc) / 2;
-		// double learningSignal = Math.signum((On - Oc) * (Mn - Mc));
-		// double mr = (Mn - Mc) / Math.max(Mn, Mc);
-		// double or = (On - Oc) / Math.max(On, Oc);
-		// double l = (mr - or) / Math.max(mr, or);
-
-		double learningSignal = 1;
-		double learningStep = alpha * learningSignal;
-		if (On > Oc) { // On-Oc > 0
-			if (Mn <= Mc) { // Mn-Mc < 0
-				Log.d("Model: DECREASE current; INCREASE next");
-				model.update(currentState, -learningStep);
-				model.update(possibleNextState, +learningStep);
+			double learningSignal = 1;
+			double learningStep = alpha * learningSignal;
+			if (On > Oc) { // On-Oc > 0
+				if (Mn <= Mc) { // Mn-Mc < 0
+					Log.d("Model: DECREASE current; INCREASE next");
+					model.update(currentState, -learningStep);
+					model.update(possibleNextState, +learningStep);
+				}
+			} else if (On < Oc) { // On-Oc < 0
+				if (Mn >= Mc) { // Mn-Mc > 0
+					Log.d("Model: INCREASE current; DECREASE next");
+					model.update(currentState, +learningStep);
+					model.update(possibleNextState, -learningStep);
+				}
+			} else if (On == Oc) {
+				// if (Mn > Mc) { // Mn-Mc > 0
+				// Log.d("Model: DECREASE next; INCREASE current");
+				// model.update(currentState, -learningStep);
+				// model.update(possibleNextState, +learningStep);
+				// } else if (Mn < Mc) { // Mn-Mc > 0
+				// Log.d("Model: INCREASE next; DECREASE current");
+				// model.update(currentState, +learningStep);
+				// model.update(possibleNextState, -learningStep);
+				// }
+				// Log.d("Current state %s and next State %s are euqally good. Do nothing.",
+				// currentState.getID(), possibleNextState.getID());
 			}
-		} else if (On < Oc) { // On-Oc < 0
-			if (Mn >= Mc) { // Mn-Mc > 0
-				Log.d("Model: INCREASE current; DECREASE next");
-				model.update(currentState, +learningStep);
-				model.update(possibleNextState, -learningStep);
+		} else {
+
+			double weightsXdifferences = 0;
+			Map<Template, Vector> featureDifferences = new HashMap<Template, Vector>();
+			for (Template t : model.getTemplates()) {
+				Vector allNextFeatures = t.getJointFeatures(possibleNextState);
+				Vector allCurrentFeatures = t.getJointFeatures(currentState);
+				Vector differences = Vector.substract(allNextFeatures,
+						allCurrentFeatures);
+				featureDifferences.put(t, differences);
+				weightsXdifferences += differences.dotProduct(t
+						.getWeightVector());
 			}
-		} else if (On == Oc) {
-			// if (Mn > Mc) { // Mn-Mc > 0
-			// Log.d("Model: DECREASE next; INCREASE current");
-			// model.update(currentState, -learningStep);
-			// model.update(possibleNextState, +learningStep);
-			// } else if (Mn < Mc) { // Mn-Mc > 0
-			// Log.d("Model: INCREASE next; DECREASE current");
-			// model.update(currentState, +learningStep);
-			// model.update(possibleNextState, -learningStep);
-			// }
-			// Log.d("Current state %s and next State %s are euqally good. Do nothing.",
-			// currentState.getID(), possibleNextState.getID());
+
+			if (weightsXdifferences > 0
+					&& P(currentState, possibleNextState, goldState)) {
+				Log.d("Next:\t%s", possibleNextState);
+				Log.d("Current:\t%s", currentState);
+				updateFeatures(featureDifferences, -alpha);
+			} else if (weightsXdifferences <= 0
+					&& P(possibleNextState, currentState, goldState)) {
+				Log.d("Next:\t%s", possibleNextState);
+				Log.d("Current:\t%s", currentState);
+				updateFeatures(featureDifferences, +alpha);
+			}
 		}
-
 	}
 
-	public State selectNextState(List<State> statesOrderedByModel,
-			double objectiveDrivenProbability) {
-		List<State> statesOrderedByObjective = new ArrayList<State>(
-				statesOrderedByModel);
+	private void updateFeatures(Map<Template, Vector> featureDifferences,
+			double learningDirection) {
+		Log.methodOff();
+		Log.d("UPDATE: learning direction: %s", learningDirection);
+		for (Template t : model.getTemplates()) {
+			Log.d("Template: %s", t.getClass().getSimpleName());
+			Vector features = featureDifferences.get(t);
+			for (Entry<String, Double> featureDifference : features
+					.getFeatures().entrySet()) {
+				// only update for real differences
+				if (featureDifference.getValue() != 0) {
+					double learningStep = learningDirection
+							* featureDifference.getValue();
+					Log.d("\t%s -> %s:\t%s", featureDifference.getValue(),
+							learningStep, featureDifference.getKey());
+					t.update(featureDifference.getKey(), learningStep);
+				}
+			}
+		}
+	}
 
+	private boolean P(State state1, State state2, State goldState) {
+
+		double O1 = objective.score(state1, goldState).score;
+		double O2 = objective.score(state2, goldState).score;
+		return O1 > O2;
+	}
+
+	public State selectNextState(List<State> states,
+			double objectiveDrivenProbability) {
 		if (Math.random() < objectiveDrivenProbability) {
 			Log.d("Next state: Best by OBJECTIVE");
-			statesOrderedByObjective.sort(State.objectiveScoreComparator);
-			return statesOrderedByObjective.get(0);
+			states.sort(State.objectiveScoreComparator);
+			return states.get(0);
 		} else {
 			Log.d("Next state: Best by MODEL");
-			return statesOrderedByModel.get(0);
+			states.sort(State.modelScoreComparator);
+			return states.get(0);
 		}
 	}
 
