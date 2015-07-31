@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -130,7 +131,7 @@ public class EvaluationUtil {
 	public static void printWeightsSorted(Map<String, Double> allWeights) {
 		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(
 				allWeights.entrySet());
-		features.sort(featureWeightComparator);
+		Collections.sort(features,featureWeightComparator);
 		for (Entry<String, Double> e : features) {
 			Log.d("%s: %s", featureWeightFormat.format(e.getValue()),
 					e.getKey());

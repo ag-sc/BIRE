@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public class Brat2BIREConverter {
 				eventAnnotations.add((BratEventAnnotation) ann);
 			}
 		}
-		textAnnotations.sort(textBoundAnnotationComparator);
+		Collections.sort(textAnnotations,textBoundAnnotationComparator);
 
 		for (Tokenization tokenization : tokenizations) {
 			Log.d("Tokens: %s", tokenization.tokens);

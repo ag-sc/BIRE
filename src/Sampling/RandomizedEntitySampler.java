@@ -1,6 +1,7 @@
 package Sampling;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class RandomizedEntitySampler implements Sampler {
 		Set<State> nextStates = generateNextStates(state, numberOfStates,
 				scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
-		nextStatesSorted.sort(State.modelScoreComparator);
+		Collections.sort(nextStatesSorted, State.modelScoreComparator);
 		Log.d("generated states:");
 		for (State s : nextStatesSorted) {
 			Log.d("%s", s);

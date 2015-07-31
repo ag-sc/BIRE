@@ -1,11 +1,11 @@
 package Sampling;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import Changes.BoundaryChange;
 import Changes.StateChange;
@@ -235,7 +235,7 @@ public class SamplingHelper {
 
 	public static List<State> getBest(List<State> states, int n, boolean sort) {
 		if (sort)
-			states.sort(State.modelScoreComparator);
+			Collections.sort(states, State.modelScoreComparator);
 		return getBest(states, n);
 	}
 

@@ -2,6 +2,7 @@ package Learning.learner;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -299,11 +300,11 @@ public class DefaultLearner implements Learner {
 			double objectiveDrivenProbability) {
 		if (Math.random() < objectiveDrivenProbability) {
 			Log.d("Next state: Best by OBJECTIVE");
-			states.sort(State.objectiveScoreComparator);
+			Collections.sort(states,State.objectiveScoreComparator);
 			return states.get(0);
 		} else {
 			Log.d("Next state: Best by MODEL");
-			states.sort(State.modelScoreComparator);
+			Collections.sort(states,State.modelScoreComparator);
 			return states.get(0);
 		}
 	}
@@ -335,7 +336,7 @@ public class DefaultLearner implements Learner {
 						scorer.unroll(state);
 						scorer.score(state);
 					}
-					nextStates.sort(State.modelScoreComparator);
+					Collections.sort(nextStates,State.modelScoreComparator);
 					for (State state : nextStates) {
 						Log.d("%s", state);
 					}
