@@ -79,13 +79,13 @@ public class BioNLPLearning {
 			AnnotatedDocument doc = allDocuments.get(i);
 			Log.d("%s: %s", i, doc.getGoldState());
 		}
-		allDocuments = allDocuments.subList(137, 147);
+//		allDocuments = allDocuments.subList(137, 147);
 
 		List<SamplingProcedureRecord> trainRecords = new ArrayList<SamplingProcedureRecord>();
 		List<SamplingProcedureRecord> testRecords = new ArrayList<SamplingProcedureRecord>();
 
 		int numberOfSamplingSteps = 10;
-		int numberOfEpochs = 5;
+		int numberOfEpochs = 1;
 		boolean leaveOneOut = false;
 		if (leaveOneOut) {
 			// Leave-One-Out evaluation

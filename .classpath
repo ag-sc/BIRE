@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="src/|Variables/RelationAnnotation.java|Variables/RelationType.java|Variables/AbstractState.java|Learning/learner/TwoStepLearner.java|Learning/FeatureVector.java|evaluation/Plots.java" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="libs/JTBDv1.6-extendend-api.jar"/>
+	<classpathentry kind="lib" path="libs/mallet-deps.jar"/>
+	<classpathentry kind="lib" path="libs/mallet-optimized.jar"/>
+	<classpathentry kind="lib" path="libs/mallet-troveless-0.4.jar"/>
+	<classpathentry kind="lib" path="libs/trove-1.1b5.jar"/>
+	<classpathentry kind="lib" path="libs/jcommon-1.0.23.jar"/>
+	<classpathentry kind="lib" path="libs/jfreechart-1.0.19.jar"/>
+	<classpathentry kind="lib" path="libs/JSBDv1.6-extendend-api.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
