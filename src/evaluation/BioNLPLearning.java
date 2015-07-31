@@ -177,6 +177,7 @@ public class BioNLPLearning {
 				// SamplingProcedureRecord testRecord = learner.getTestRecord();
 				// Plots.plotScore(trainRecord);
 				// plotScore(testRecord);
+				Log.d("Learned weights of cross-validation %s/%s:", i, n);
 				EvaluationUtil.printWeights(learner);
 			}
 		}
@@ -203,6 +204,7 @@ public class BioNLPLearning {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		Log.d("Overall performance:");
 		EvaluationUtil.printPerformance(testRecords);
 	}
 }

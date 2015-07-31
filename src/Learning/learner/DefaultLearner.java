@@ -27,7 +27,7 @@ import evaluation.SamplingProcedureRecord;
 public class DefaultLearner implements Learner {
 
 	{
-		// Log.off();
+//		 Log.off();
 	}
 	private int steps;
 	private double initialAlpha;
@@ -77,7 +77,6 @@ public class DefaultLearner implements Learner {
 		double alphaStep = (initialAlpha - finalAlpha)
 				/ (steps * documents.size() * numberOfEpochs - 1);
 		double currentAlpha = initialAlpha;
-
 		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs,
 				documents.size(), steps);
 		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega,
@@ -93,6 +92,7 @@ public class DefaultLearner implements Learner {
 				for (int s = 0; s < steps; s++) {
 
 					for (Sampler sampler : samplers) {
+						Log.d("############################################");
 						Log.d("Epoch: %s/%s", e + 1, numberOfEpochs);
 						Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1,
 								documents.size(), document.getContent(),
@@ -138,9 +138,9 @@ public class DefaultLearner implements Learner {
 						}
 
 						currentState = selectNextState(nextStates, currentOmega);
-						for (int k = 0; k < nextStates.size(); k++) {
-							Log.d("%s: %s", k, nextStates.get(k));
-						}
+//						for (int k = 0; k < nextStates.size(); k++) {
+//							Log.d("%s: %s", k, nextStates.get(k));
+//						}
 
 						// for (Template t : model.getTemplates()) {
 						// Log.d("Weight updates of template %s:", t
