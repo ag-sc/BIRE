@@ -7,8 +7,6 @@
 	<classpathentry kind="lib" path="libs/mallet-optimized.jar"/>
 	<classpathentry kind="lib" path="libs/mallet-troveless-0.4.jar"/>
 	<classpathentry kind="lib" path="libs/trove-1.1b5.jar"/>
-	<classpathentry kind="lib" path="libs/jcommon-1.0.23.jar"/>
-	<classpathentry kind="lib" path="libs/jfreechart-1.0.19.jar"/>
 	<classpathentry kind="lib" path="libs/JSBDv1.6-extendend-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
