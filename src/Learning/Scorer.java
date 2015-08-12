@@ -62,7 +62,7 @@ public class Scorer {
 		 * templates would not need to safe the factors for every state. Still,
 		 * templates would need to safe some kind of information to allow for
 		 * the update of specific factors when the learner tries to update
-		 * weights. However
+		 * weights.
 		 */
 		for (Template t : model.getTemplates()) {
 			t.applyTo(state);

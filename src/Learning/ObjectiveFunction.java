@@ -8,7 +8,6 @@ import Variables.EntityAnnotation;
 import Variables.State;
 
 public class ObjectiveFunction {
-	
 
 	{
 		Log.off();
@@ -21,57 +20,61 @@ public class ObjectiveFunction {
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
 		// Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
-		double precision = 0.0;
-		for (EntityAnnotation entity : entities) {
-			double max = 0.0;
-			for (EntityAnnotation goldEntity : goldEntities) {
-				if (typeMatches(entity, goldEntity)) {
-					double overlapScore = overlap(entity, goldEntity);
-					if (overlapScore > max) {
-						max = overlapScore * argumentScore(entity, goldEntity);
-					}
-				}
-			}
-			precision += max;
-		}
-
-		double recall = 0.0;
-		for (EntityAnnotation goldEntity : goldEntities) {
-			double max = 0.0;
-			for (EntityAnnotation entity : entities) {
-				if (typeMatches(goldEntity, entity)) {
-					double overlapScore = overlap(goldEntity, entity);
-					if (overlapScore > max) {
-						max = overlapScore * argumentScore(goldEntity, entity);
-					}
-				}
-			}
-			recall += max;
-		}
-		// Log.d("Precision: %s/%s, Recall: %s/%s", precision, entities.size(),
-		// recall, goldEntities.size());
-		// TODO score = 0 only because precision/recall = 0
 		Score score;
-		if ((precision == 0 && recall == 0) || entities.size() == 0
-				|| goldEntities.size() == 0) {
-			// Log.d("Score: %s", 0);
-			score = new Score();
+		if (goldEntities.size() == 0 && entities.size() == 0) {
+			score = new Score(1, 1, 1);
 		} else {
-			precision /= entities.size();
-			recall /= goldEntities.size();
+			double precision = 0.0;
+			for (EntityAnnotation entity : entities) {
+				double max = 0.0;
+				for (EntityAnnotation goldEntity : goldEntities) {
+					if (typeMatches(entity, goldEntity)) {
+						double overlapScore = overlap(entity, goldEntity);
+						if (overlapScore > max) {
+							max = overlapScore * argumentScore(entity, goldEntity);
+						}
+					}
+				}
+				precision += max;
+			}
 
-			double f1 = 2 * (precision * recall) / (precision + recall);
-			// Log.d("Score: %s\t\t(Precision: %s, Recall: %s)", f1, precision,
-			// recall);
-			score = new Score(precision, recall, f1);
+			double recall = 0.0;
+			for (EntityAnnotation goldEntity : goldEntities) {
+				double max = 0.0;
+				for (EntityAnnotation entity : entities) {
+					if (typeMatches(goldEntity, entity)) {
+						double overlapScore = overlap(goldEntity, entity);
+						if (overlapScore > max) {
+							max = overlapScore * argumentScore(goldEntity, entity);
+						}
+					}
+				}
+				recall += max;
+			}
+			// Log.d("Precision: %s/%s, Recall: %s/%s", precision,
+			// entities.size(),
+			// recall, goldEntities.size());
+			// TODO score = 0 only because precision/recall = 0
+			if ((precision == 0 && recall == 0) || entities.size() == 0 || goldEntities.size() == 0) {
+				// Log.d("Score: %s", 0);
+				score = new Score();
+			} else {
+				precision /= entities.size();
+				recall /= goldEntities.size();
+
+				double f1 = 2 * (precision * recall) / (precision + recall);
+				// Log.d("Score: %s\t\t(Precision: %s, Recall: %s)", f1,
+				// precision,
+				// recall);
+				score = new Score(precision, recall, f1);
+			}
 		}
 		// TODO not the cleanest way to make the score accessible everywhere
 		state.setObjectiveFunctionScore(score);
 		return score;
 	}
 
-	private double argumentScore(EntityAnnotation entity1,
-			EntityAnnotation entity2) {
+	private double argumentScore(EntityAnnotation entity1, EntityAnnotation entity2) {
 
 		Map<String, String> arguments1 = entity1.getArguments();
 		Map<String, String> arguments2 = entity2.getArguments();
@@ -83,11 +86,9 @@ public class ObjectiveFunction {
 
 		for (String role : arguments1.keySet()) {
 			// TODO check if entity for id actually exists!
-			EntityAnnotation argEntity1 = entity1.getEntity(arguments1
-					.get(role));
+			EntityAnnotation argEntity1 = entity1.getEntity(arguments1.get(role));
 			if (arguments2.containsKey(role)) {
-				EntityAnnotation argEntity2 = entity2.getEntity(arguments2
-						.get(role));
+				EntityAnnotation argEntity2 = entity2.getEntity(arguments2.get(role));
 				if (overlap(argEntity1, argEntity2) > 0) {
 					matchingRoles++;
 				}
@@ -98,8 +99,7 @@ public class ObjectiveFunction {
 
 	}
 
-	private static double overlap(EntityAnnotation entity,
-			EntityAnnotation goldEntity) {
+	private static double overlap(EntityAnnotation entity, EntityAnnotation goldEntity) {
 		Log.methodOff();
 		int a = entity.getBeginTokenIndex();
 		int b = entity.getEndTokenIndex();
@@ -112,8 +112,7 @@ public class ObjectiveFunction {
 		return overlapScore;
 	}
 
-	private boolean typeMatches(EntityAnnotation entity,
-			EntityAnnotation goldEntity) {
+	private boolean typeMatches(EntityAnnotation entity, EntityAnnotation goldEntity) {
 		return entity.getType().equals(goldEntity.getType());
 	}
 

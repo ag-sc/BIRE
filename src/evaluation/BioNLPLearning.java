@@ -31,33 +31,35 @@ public class BioNLPLearning {
 	public static final int BIONLP = 1;
 
 	public static void main(String[] args) {
-		File modelDir = new File("res/bionlp/models");
-		File evalDir = new File("res/bionlp/eval");
+		File modelDir = null;
+		File evalDir = null;
 		Corpus corpus = null;
 
 		int corpusID = BIONLP;
 		switch (corpusID) {
 		case USAGE:
 			try {
-				corpus = UsageLoader
-						.loadDatasetFromBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+				corpus = UsageLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = UsageLoader
-						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+				corpus = UsageLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
 			}
 			break;
 		case BIONLP:
 			try {
-				corpus = DatasetLoader
-						.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = DatasetLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = DatasetLoader
-						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = DatasetLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			}
+			modelDir = new File("res/bionlp/models");
+			if (!modelDir.exists())
+				modelDir.mkdirs();
+			evalDir = new File("res/bionlp/eval");
+			if (!evalDir.exists())
+				evalDir.mkdirs();
 			break;
 		default:
 			break;
@@ -85,15 +87,14 @@ public class BioNLPLearning {
 		List<SamplingProcedureRecord> testRecords = new ArrayList<SamplingProcedureRecord>();
 
 		int numberOfSamplingSteps = 10;
-		int numberOfEpochs = 1;
+		int numberOfEpochs = 5;
 		boolean leaveOneOut = false;
 		if (leaveOneOut) {
 			// Leave-One-Out evaluation
 			for (int k = 0; k < allDocuments.size(); k++) {
 				AnnotatedDocument document = allDocuments.get(k);
 				Log.d("Leave-One-Out: %s/%s", k + 1, allDocuments.size());
-				List<AnnotatedDocument> train = new ArrayList<AnnotatedDocument>(
-						allDocuments);
+				List<AnnotatedDocument> train = new ArrayList<AnnotatedDocument>(allDocuments);
 				train.remove(document);
 				List<AnnotatedDocument> test = Arrays.asList(document);
 
@@ -102,17 +103,24 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers,
-						numberOfSamplingSteps, 0.1, 0.001, false);
-
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.1, 0.01, 1, 1);
 				// DataSplit split = new DataSplit(corpus, 0.7, 1);
-				// Log.d("Train/test split:\n\tsplit: %s => #train: %s, #test: %s",
+				// Log.d("Train/test split:\n\tsplit: %s => #train: %s, #test:
+				// %s",
 				// split.getSplit(), split.getTrain().size(), split.getTest()
 				// .size());
 				Log.d("####################");
 				Log.d("####################");
 				Log.d("Start learning");
 				learner.train(train, numberOfEpochs);
+				try {
+					model.saveModelToFile(
+							new File(modelDir, EvaluationUtil.generateFilenameForModel(train.size())).getPath());
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				trainRecords.add(learner.getTrainRecord());
 				// learner.train(split.getTrain().subList(0, 5));
 				Log.d("###############");
@@ -125,19 +133,16 @@ public class BioNLPLearning {
 				// SamplingProcedureRecord testRecord = learner.getTestRecord();
 				// Plots.plotScore(trainRecord);
 				// plotScore(testRecord);
-				try {
-					model.saveModelToFile(new File(modelDir, EvaluationUtil
-							.generateFilenameForModel(train.size())).getPath());
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+
+				Log.d("Learned weights of leave-one-out %s/%s:", k, allDocuments.size());
+				EvaluationUtil.printWeights(learner, 10e-7);
 			}
 		} else {
 			// N-Fold cross validation
 			int n = 1;
 			for (int i = 0; i < n; i++) {
+				Log.d("############################");
+				Log.d("############################");
 				Log.d("Cross Validation: %s/%s", i + 1, n);
 				DataSplit split = new DataSplit(allDocuments, 0.8);
 				List<AnnotatedDocument> train = split.getTrain();
@@ -148,12 +153,9 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers,
-						numberOfSamplingSteps, 0.01, 0.001, false);
-				Log.d("Train/test split: %s => #train: %s, #test: %s",
-						split.getSplit(), train.size(), test.size());
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 1, 1);
+				Log.d("Train/test split: %s => #train: %s, #test: %s", split.getSplit(), train.size(), test.size());
 
-				Log.d("####################");
 				Log.d("####################");
 				Log.d("Start learning");
 				learner.train(train, numberOfEpochs);
@@ -163,8 +165,8 @@ public class BioNLPLearning {
 				Log.d("Trained Model:\n%s", model.toDetailedString());
 				Log.d("###############");
 				try {
-					model.saveModelToFile(new File(modelDir, EvaluationUtil
-							.generateFilenameForModel(train.size())).getPath());
+					model.saveModelToFile(
+							new File(modelDir, EvaluationUtil.generateFilenameForModel(train.size())).getPath());
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -177,28 +179,20 @@ public class BioNLPLearning {
 				// SamplingProcedureRecord testRecord = learner.getTestRecord();
 				// Plots.plotScore(trainRecord);
 				// plotScore(testRecord);
-				Log.d("Learned weights of cross-validation %s/%s:", i, n);
-				EvaluationUtil.printWeights(learner, 10e-7);
+				// Log.d("Learned weights of cross-validation %s/%s:", i, n);
+				// EvaluationUtil.printWeights(learner, 10e-7);
 			}
 		}
 
 		try {
-			EvaluationUtil.storeRecords(
-					testRecords,
-					new File(evalDir, EvaluationUtil
-							.generateFilenameForRecords(true,
-									testRecords.size())));
+			EvaluationUtil.storeRecords(testRecords, evalDir);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		try {
-			EvaluationUtil.storeRecords(
-					trainRecords,
-					new File(evalDir, EvaluationUtil
-							.generateFilenameForRecords(false,
-									trainRecords.size())));
+			EvaluationUtil.storeRecords(trainRecords, evalDir);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -206,5 +200,6 @@ public class BioNLPLearning {
 		}
 		Log.d("Overall performance:");
 		EvaluationUtil.printPerformance(testRecords);
+		TaggedTimer.printTimings();
 	}
 }

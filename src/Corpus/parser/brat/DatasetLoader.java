@@ -15,7 +15,6 @@ import java.util.Set;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Constants;
 import Corpus.Corpus;

@@ -1,4 +1,4 @@
-package Corpus;
+package Corpus.parser.brat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import Corpus.AnnotationConfig;
 import Logging.Log;
 import Variables.Argument;
 import Variables.EntityType;

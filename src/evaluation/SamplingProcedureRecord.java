@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import Corpus.Document;
 import Learning.Score;
 import Sampling.Sampler;
 import Variables.State;
@@ -32,9 +33,10 @@ public class SamplingProcedureRecord implements Serializable {
 		}
 	}
 
-	public void recordSamplingStep(int d, int s, Sampler sampler,
+	public void recordSamplingStep(Document document, int d, int s, Sampler sampler,
 			List<State> nextStates, State currentState) {
 		SamplingStepRecord record = new SamplingStepRecord();
+		record.document = document;
 		record.documentIndex = d;
 		record.samplingStep = s;
 		record.samplerClass = sampler.getClass();
@@ -54,7 +56,7 @@ public class SamplingProcedureRecord implements Serializable {
 		public Class<? extends Sampler> samplerClass;
 		public List<StateRecord> generatedStates;
 		public StateRecord acceptedState;
-
+		public Document document;
 	}
 
 	public class StateRecord implements Serializable {

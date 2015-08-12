@@ -21,8 +21,7 @@ public class Score implements Serializable {
 
 	@Override
 	public String toString() {
-		return "[precision=" + precision + ", recall=" + recall + ", score="
-				+ score + "]";
+		return "[precision=" + precision + ",\trecall=" + recall + ",\tscore=" + score + "]";
 	}
 
 }

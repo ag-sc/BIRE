@@ -8,5 +8,11 @@
 	<classpathentry kind="lib" path="libs/mallet-troveless-0.4.jar"/>
 	<classpathentry kind="lib" path="libs/trove-1.1b5.jar"/>
 	<classpathentry kind="lib" path="libs/JSBDv1.6-extendend-api.jar"/>
+	<classpathentry kind="lib" path="/homes/sjebbara/programs/stanford-parser-full-2015-04-20/stanford-parser.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/homes/sjebbara/programs/stanford-parser-full-2015-04-20/stanford-parser-3.5.2-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/homes/sjebbara/programs/stanford-parser-full-2015-04-20/stanford-parser-3.5.2-models.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

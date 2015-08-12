@@ -27,11 +27,11 @@ public abstract class Template implements Serializable {
 	 */
 	private transient Map<String, List<Factor>> factors = new HashMap<String, List<Factor>>();
 
-	public transient Vector featureWeightUpdates = new Vector();
+//	public transient Vector featureWeightUpdates = new Vector();
 
 	public void update(String feature, double alpha) {
 		weights.addToValue(feature, alpha);
-		featureWeightUpdates.addToValue(feature, alpha);
+//		featureWeightUpdates.addToValue(feature, alpha);
 	}
 
 	public void update(Factor factor, double alpha) {
@@ -126,7 +126,7 @@ public abstract class Template implements Serializable {
 
 	public void clean() {
 		factors.clear();
-		featureWeightUpdates = new Vector();
+//		featureWeightUpdates = new Vector();
 	}
 
 	public Collection<Factor> getAllFactors() {

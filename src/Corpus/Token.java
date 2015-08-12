@@ -8,7 +8,7 @@ public class Token implements Serializable{
 	int index;
 	int from, to;
 	String text;
-
+		
 	public Token(int index, int start, int stop, String text) {
 		super();
 		this.index = index;

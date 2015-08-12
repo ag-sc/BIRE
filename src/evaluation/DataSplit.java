@@ -20,7 +20,7 @@ public class DataSplit {
 
 		this.all = new ArrayList<AnnotatedDocument>(all);
 
-		// Collections.shuffle(all, new Random(seed));
+		Collections.shuffle(all);
 
 		int n = all.size();
 		int splitIndex = (int) (split * n);

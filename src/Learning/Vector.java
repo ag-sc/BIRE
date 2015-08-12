@@ -14,6 +14,7 @@ public class Vector implements Serializable {
 	{
 		Log.off();
 	}
+
 	private static final double DEFAULT_VALUE = 0;
 	private HashMap<String, Double> features;
 
@@ -33,8 +34,7 @@ public class Vector implements Serializable {
 	public double dotProduct(Vector weights) {
 		double result = 0;
 		for (String feature : this.getFeatureNames()) {
-			result += this.getValueOfFeature(feature)
-					* weights.getValueOfFeature(feature);
+			result += this.getValueOfFeature(feature) * weights.getValueOfFeature(feature);
 		}
 		return result;
 	}
@@ -83,11 +83,12 @@ public class Vector implements Serializable {
 			return features.get(feature);
 		} else {
 			// TODO default values should not be defined here
-			double initialWeight = DEFAULT_VALUE;
-			// Log.w("Feature %s does not exist. Insert default value %s",
-			// feature, initialWeight);
-			features.put(feature, initialWeight);
-			return initialWeight;
+			// double initialWeight = DEFAULT_VALUE;
+			// // Log.w("Feature %s does not exist. Insert default value %s",
+			// // feature, initialWeight);
+			// features.put(feature, initialWeight);
+			// return initialWeight;
+			return DEFAULT_VALUE;
 		}
 
 	}

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import Learning.Score;
 import Learning.Vector;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
@@ -25,46 +26,71 @@ import evaluation.SamplingProcedureRecord.SamplingStepRecord;
 
 public class EvaluationUtil {
 
-	private static final String MODEL_NAME_PATTERN = "Model_N=%s_%s-%s-%s_%s-%s-%s";
-	private static final String RECORD_NAME_PATTERN = "%s-Records_N=%s_%s-%s-%s_%s-%s-%s";
+	private static final String MODEL_NAME_PATTERN = "Model_%s_%s-%s-%s_%s-%s-%s";
+	private static final String RECORDS_NAME_PATTERN = "%s-Records_N=%s_%s-%s-%s_%s-%s-%s";
+	private static final String RECORD_NAME_PATTERN = "Record_%s_%s-%s-%s_%s-%s-%s";
 
 	public static String generateFilenameForModel(int numberOfTrainingSamples) {
 		Calendar now = Calendar.getInstance();
-		return String.format(MODEL_NAME_PATTERN, numberOfTrainingSamples,
-				now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
-				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
+		return String.format(MODEL_NAME_PATTERN, numberOfTrainingSamples, now.get(Calendar.YEAR),
+				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
 				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
 	}
 
-	public static String generateFilenameForRecords(boolean isTest,
-			int numberOfRecords) {
+	public static String generateFilenameForModel(String name) {
 		Calendar now = Calendar.getInstance();
-		return String.format(RECORD_NAME_PATTERN, isTest ? "Test" : "Train",
-				numberOfRecords, now.get(Calendar.YEAR),
-				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
-				now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+		return String.format(MODEL_NAME_PATTERN, name, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
+				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
 				now.get(Calendar.SECOND));
 	}
 
-	public static void storeRecords(List<SamplingProcedureRecord> records,
-			File file) throws FileNotFoundException, IOException {
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
-				file));
+	public static String generateFilenameForRecords(boolean isTest, int numberOfRecords) {
+		Calendar now = Calendar.getInstance();
+		return String.format(RECORDS_NAME_PATTERN, isTest ? "Test" : "Train", numberOfRecords, now.get(Calendar.YEAR),
+				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
+				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
+	}
+
+	public static void storeRecords(List<SamplingProcedureRecord> records, File dir)
+			throws FileNotFoundException, IOException {
+		if (!dir.exists()) {
+			dir.mkdirs();
+		}
+		File file = new File(dir, EvaluationUtil.generateFilenameForRecords(true, records.size()));
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
 		out.writeObject(records);
+		out.close();
+	}
+
+	public static void storeRecord(SamplingProcedureRecord record, File dir, String name) throws IOException {
+		Calendar now = Calendar.getInstance();
+		String finalName = String.format(RECORD_NAME_PATTERN, name, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
+				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+				now.get(Calendar.SECOND));
+
+		File file = new File(dir, finalName);
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+		out.writeObject(record);
 		out.close();
 	}
 
 	public static List<SamplingProcedureRecord> loadRecords(String file)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		List<SamplingProcedureRecord> records = (List<SamplingProcedureRecord>) in
-				.readObject();
+		List<SamplingProcedureRecord> records = (List<SamplingProcedureRecord>) in.readObject();
 		in.close();
 		return records;
 	}
 
-	public static void printPerformance(
-			List<SamplingProcedureRecord> testRecords) {
+	public static SamplingProcedureRecord loadRecord(String file)
+			throws FileNotFoundException, IOException, ClassNotFoundException {
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
+		SamplingProcedureRecord record = (SamplingProcedureRecord) in.readObject();
+		in.close();
+		return record;
+	}
+
+	public static void printPerformance(List<SamplingProcedureRecord> testRecords) {
 		double meanModelScore = 0;
 		double meanPrecision = 0;
 		double meanRecall = 0;
@@ -72,17 +98,15 @@ public class EvaluationUtil {
 		int count = 0;
 		for (SamplingProcedureRecord r : testRecords) {
 			for (int d = 0; d < r.numberOfDocuments; d++) {
-				SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1]
-						.get(r.numberOfSamplers - 1);
+				SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1].get(r.numberOfSamplers - 1);
 
 				meanModelScore += step.acceptedState.modelScore;
 				meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
 				meanRecall += step.acceptedState.objectiveFunctionScore.recall;
 				meanOFScore += step.acceptedState.objectiveFunctionScore.score;
 
-				Log.d("Document: %s; model=%s; precision=%s, recall=%s, score=%s",
-						d, step.acceptedState.modelScore,
-						step.acceptedState.objectiveFunctionScore.precision,
+				Log.d("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s", d, step.document.getName(),
+						step.acceptedState.modelScore, step.acceptedState.objectiveFunctionScore.precision,
 						step.acceptedState.objectiveFunctionScore.recall,
 						step.acceptedState.objectiveFunctionScore.score);
 				count++;
@@ -92,8 +116,48 @@ public class EvaluationUtil {
 		meanPrecision /= count;
 		meanRecall /= count;
 		meanOFScore /= count;
-		Log.d("Mean:\nmodel=%s; precision=%s, recall=%s, score=%s",
-				meanModelScore, meanPrecision, meanRecall, meanOFScore);
+		Log.d("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s", count, meanModelScore, meanPrecision,
+				meanRecall, meanOFScore);
+	}
+
+	public static Score mean(SamplingProcedureRecord r) {
+		double meanPrecision = 0;
+		double meanRecall = 0;
+		double meanOFScore = 0;
+		for (int d = 0; d < r.numberOfDocuments; d++) {
+			SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1].get(r.numberOfSamplers - 1);
+
+			meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
+			meanRecall += step.acceptedState.objectiveFunctionScore.recall;
+			meanOFScore += step.acceptedState.objectiveFunctionScore.score;
+
+			// Log.d("Document %s: %s; model=%s; precision=%s, recall=%s,
+			// score=%s", d, step.document.getName(),
+			// step.acceptedState.modelScore,
+			// step.acceptedState.objectiveFunctionScore.precision,
+			// step.acceptedState.objectiveFunctionScore.recall,
+			// step.acceptedState.objectiveFunctionScore.score);
+		}
+		meanPrecision /= r.numberOfDocuments;
+		meanRecall /= r.numberOfDocuments;
+		meanOFScore /= r.numberOfDocuments;
+		return new Score(meanPrecision, meanRecall, meanOFScore);
+	}
+
+	public static Score mean(List<Score> scores) {
+
+		double precision = 0;
+		double recall = 0;
+		double score = 0;
+		for (Score s : scores) {
+			precision += s.precision;
+			recall += s.recall;
+			score += s.score;
+		}
+		precision /= scores.size();
+		recall /= scores.size();
+		score /= scores.size();
+		return new Score(precision, recall, score);
 	}
 
 	public static Comparator<Entry<String, Double>> featureWeightComparator = new Comparator<Map.Entry<String, Double>>() {
@@ -103,8 +167,7 @@ public class EvaluationUtil {
 		}
 	};
 
-	public static DecimalFormat featureWeightFormat = new DecimalFormat(
-			"0.000000");
+	public static DecimalFormat featureWeightFormat = new DecimalFormat("0.000000");
 
 	/**
 	 * Prints all weights of the learners model in descending order, discarding
@@ -129,27 +192,19 @@ public class EvaluationUtil {
 	}
 
 	public static void printWeightsSorted(Map<String, Double> allWeights) {
-		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(
-				allWeights.entrySet());
-		Collections.sort(features,featureWeightComparator);
+		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(allWeights.entrySet());
+		Collections.sort(features, featureWeightComparator);
 		for (Entry<String, Double> e : features) {
-			Log.d("%s: %s", featureWeightFormat.format(e.getValue()),
-					e.getKey());
+			Log.d("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
 		}
 	}
 
-	static class FeatureWeightComparator implements Comparator<String> {
+	public static DecimalFormat SCORE_FORMAT = new DecimalFormat("0.0000");
 
-		private Map<String, Double> weights;
-
-		public FeatureWeightComparator(Map<String, Double> weights) {
-			this.weights = weights;
+	public static void printScores(List<Score> scores) {
+		for (Score score : scores) {
+			Log.d("P=%s\t|\tR=%s\t|\tF1=%s", SCORE_FORMAT.format(score.precision), SCORE_FORMAT.format(score.recall),
+					SCORE_FORMAT.format(score.score));
 		}
-
-		@Override
-		public int compare(String o1, String o2) {
-			return (int) Math.signum(weights.get(o1) - weights.get(o2));
-		}
-
 	}
 }

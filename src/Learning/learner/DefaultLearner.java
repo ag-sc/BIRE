@@ -24,15 +24,24 @@ import Templates.Template;
 import Variables.State;
 import evaluation.EvaluationUtil;
 import evaluation.SamplingProcedureRecord;
+import evaluation.TaggedTimer;
 
 public class DefaultLearner implements Learner {
 
 	{
-//		 Log.off();
+		// Log.off();
 	}
+
+	enum LearningProcedure {
+		SAMPLE_RANK, PERCEPTRON;
+	}
+
+	private LearningProcedure learningProcedure = LearningProcedure.SAMPLE_RANK;
 	private int steps;
 	private double initialAlpha;
 	private double finalAlpha;
+	private double initialOmega = 1;
+	private double finalOmega = 0;
 
 	private Model model;
 	// TODO Scorer should be part of the model
@@ -43,23 +52,36 @@ public class DefaultLearner implements Learner {
 	private SamplingProcedureRecord trainRecord;
 	private SamplingProcedureRecord testRecord;
 
-	public DefaultLearner(Model model, List<Sampler> samplers, int steps,
-			double initialAlpha, double finalAlpha, boolean sampleNextState) {
+	public DefaultLearner(Model model, List<Sampler> samplers, int steps, double initialAlpha, double finalAlpha,
+			double initialOmega, double finalOmega) {
+		this.model = model;
+		this.samplers = samplers;
+		this.steps = steps;
+		this.initialAlpha = initialAlpha;
+		this.finalAlpha = finalAlpha;
+		this.initialOmega = initialOmega;
+		this.finalOmega = finalOmega;
+		this.scorer = new Scorer(model);
+		this.objective = new ObjectiveFunction();
+	}
+
+	public DefaultLearner(Model model, List<Sampler> samplers, int steps, double initialAlpha, double finalAlpha,
+			boolean sampleNextState) {
 		this.model = model;
 		this.steps = steps;
 		this.initialAlpha = initialAlpha;
 		this.finalAlpha = finalAlpha;
 		this.samplers = samplers;
 		this.sampleNextState = sampleNextState;
-
 		this.scorer = new Scorer(model);
 		this.objective = new ObjectiveFunction();
+
 	}
 
 	@Override
 	public void train(List<AnnotatedDocument> documents, int numberOfEpochs) {
-		trainRecord = new SamplingProcedureRecord(documents.size(), steps,
-				samplers.size(), initialAlpha);
+		int hack = 0;
+		trainRecord = new SamplingProcedureRecord(documents.size(), steps, samplers.size(), initialAlpha);
 
 		/**
 		 * This variable represents the probability for the learner to select
@@ -69,49 +91,48 @@ public class DefaultLearner implements Learner {
 		 * and decreases to 0, so that the learner, in the end, favors the
 		 * decisions of the model.
 		 */
-		double initialOmega = 1;
-		double finalOmega = 0;
-		double omegaStep = (initialOmega - finalOmega)
-				/ (steps * documents.size() * numberOfEpochs - 1);
+		double omegaStep = (initialOmega - finalOmega) / (steps * documents.size() * numberOfEpochs - 1);
 		double currentOmega = initialOmega;
 
-		double alphaStep = (initialAlpha - finalAlpha)
-				/ (steps * documents.size() * numberOfEpochs - 1);
+		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
 		double currentAlpha = initialAlpha;
-		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs,
-				documents.size(), steps);
-		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega,
-				finalOmega, omegaStep, initialAlpha, finalAlpha, alphaStep);
+		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
+		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha, finalAlpha,
+				alphaStep);
 		for (int e = 0; e < numberOfEpochs; e++) {
 			for (int d = 0; d < documents.size(); d++) {
 				AnnotatedDocument document = documents.get(d);
 				State goldState = document.getGoldState();
 
-				State currentState = generateInitialAnnotations(document,
-						goldState);
+				State currentState = generateInitialAnnotations(document, goldState);
 
 				for (int s = 0; s < steps; s++) {
 
 					for (Sampler sampler : samplers) {
 						Log.d("############################################");
 						Log.d("Epoch: %s/%s", e + 1, numberOfEpochs);
-						Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1,
-								documents.size(), document.getContent(),
+						Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(),
 								goldState);
 						Log.d("Step: %s/%s", s + 1, steps);
-						Log.d("Alpha: %s; Omega: %s", currentAlpha,
-								currentOmega);
+						Log.d("Alpha: %s; Omega: %s", currentAlpha, currentOmega);
 						Log.d("Sampler: %s", sampler.getClass().getSimpleName());
-						List<State> nextStates = sampler.getNextStates(
-								currentState, scorer);
+						long genID = TaggedTimer.start("GEN");
+						List<State> nextStates = sampler.getNextStates(currentState, scorer);
+						TaggedTimer.stop(genID);
 						Log.d("Current model:\n%s", model.toString());
 
 						Log.d("Score:");
 						scorer.unroll(currentState);
 						scorer.score(currentState);
 						for (State state : nextStates) {
+
+							long unrollID = TaggedTimer.start("SC-UNROLL");
 							scorer.unroll(state);
+							TaggedTimer.stop(unrollID);
+
+							long scID = TaggedTimer.start("SC-SCORE");
 							scorer.score(state);
+							TaggedTimer.stop(scID);
 						}
 
 						// nextStates.sort(State.modelScoreComparator);
@@ -120,13 +141,12 @@ public class DefaultLearner implements Learner {
 						// Log.d("%s: %s", k, nextStates.get(k));
 						// }
 
-						Log.d("Update model with %s states and alpha=%s",
-								nextStates.size(), currentAlpha);
+						Log.d("Update model with %s states and alpha=%s", nextStates.size(), currentAlpha);
 						for (State state : nextStates) {
-							updateModelForState(currentAlpha, goldState,
-									currentState, state);
+							atomicUpdate(currentAlpha, goldState, currentState, state);
 						}
 
+						
 						Log.d("Rescore:");
 						scorer.score(currentState);
 						for (State state : nextStates) {
@@ -139,9 +159,9 @@ public class DefaultLearner implements Learner {
 						}
 
 						currentState = selectNextState(nextStates, currentOmega);
-//						for (int k = 0; k < nextStates.size(); k++) {
-//							Log.d("%s: %s", k, nextStates.get(k));
-//						}
+						// for (int k = 0; k < nextStates.size(); k++) {
+						// Log.d("%s: %s", k, nextStates.get(k));
+						// }
 
 						// for (Template t : model.getTemplates()) {
 						// Log.d("Weight updates of template %s:", t
@@ -153,12 +173,9 @@ public class DefaultLearner implements Learner {
 						/*
 						 * Log and record this sampling step
 						 */
-						Score objectiveFunctionScore = objective.score(
-								currentState, goldState);
-						Log.d("Next state: %s\n\tObjective funtion score = %s",
-								currentState, objectiveFunctionScore);
-						trainRecord.recordSamplingStep(d, s, sampler,
-								nextStates, currentState);
+						Score objectiveFunctionScore = objective.score(currentState, goldState);
+						Log.d("Next state: %s\n\tObjective funtion score = %s", currentState, objectiveFunctionScore);
+						trainRecord.recordSamplingStep(document, d, s, sampler, nextStates, currentState);
 
 						// try {
 						// Log.d("Model after update:\n%s",
@@ -176,42 +193,72 @@ public class DefaultLearner implements Learner {
 						 * state-to-factor relations are not used anymore.
 						 */
 						model.clean();
+						hack++;
+						if (hack > 1000) {
+							hack = 0;
+							TaggedTimer.printTimings();
+							try {
+								Log.d("PAUSE: Wait for ENTER...");
+								System.in.read();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+						}
 
 					}
 					currentOmega -= omegaStep;
 					currentAlpha -= alphaStep;
 				}
-				Log.d("Final, sampled state:\n\t%s\nObjective funtion score = %s",
-						currentState, currentState.getObjectiveFunctionScore());
+				Log.d("Final, sampled state:\n\t%s\nObjective funtion score = %s", currentState,
+						currentState.getObjectiveFunctionScore());
 			}
 		}
 	}
 
-	private void updateModelForState(double alpha, State goldState,
-			State currentState, State possibleNextState) {
+	private void atomicUpdate(double alpha, State goldState, State currentState, State possibleNextState) {
 		Log.methodOff();
-		if (false) {
+		switch (learningProcedure) {
+		case SAMPLE_RANK: {
+			double weightedDifferences = 0;
+			/*
+			 * Collect differences of features for both states and remember
+			 * respective template
+			 */
+
+			long diffID = TaggedTimer.start("UP-DIFF");
+			Map<Template, Vector> featureDifferences = new HashMap<Template, Vector>();
+			for (Template t : model.getTemplates()) {
+				Vector allNextFeatures = t.getJointFeatures(possibleNextState);
+				Vector allCurrentFeatures = t.getJointFeatures(currentState);
+				Vector differences = Vector.substract(allNextFeatures, allCurrentFeatures);
+				featureDifferences.put(t, differences);
+				weightedDifferences += differences.dotProduct(t.getWeightVector());
+			}
+
+			TaggedTimer.stop(diffID);
+
+			long upID = TaggedTimer.start("UP-UPDATE");
+			if (weightedDifferences > 0 && preference(currentState, possibleNextState, goldState)) {
+				Log.d("Next:\t%s", possibleNextState);
+				Log.d("Current:\t%s", currentState);
+				updateFeatures(featureDifferences, -alpha);
+			} else if (weightedDifferences <= 0 && preference(possibleNextState, currentState, goldState)) {
+				Log.d("Next:\t%s", possibleNextState);
+				Log.d("Current:\t%s", currentState);
+				updateFeatures(featureDifferences, +alpha);
+			} else {
+			}
+			TaggedTimer.stop(upID);
+			break;
+		}
+		case PERCEPTRON: {
 			double On = objective.score(possibleNextState, goldState).score;
 			double Oc = objective.score(currentState, goldState).score;
 
 			double Mn = possibleNextState.getModelScore();
 			double Mc = currentState.getModelScore();
 
-			Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
-					possibleNextState.getID(), Oc, On, Mc, Mn);
-
-			/*-
-			 * On/Oc   Mn/Mc
-			 * 2 * (0.9 - 0.8)/(0.9 + 0.8) = 0.2/1.7
-			 * 2 * (2.5 - 1.5)/(2.5 + 1.5) = 1/4
-			 */
-			// double learningSignal = 2 * (On - Oc) / (On + Oc) * 2 * (Mn - Mc)
-			// /
-			// (Mn + Mc) / 2;
-			// double learningSignal = Math.signum((On - Oc) * (Mn - Mc));
-			// double mr = (Mn - Mc) / Math.max(Mn, Mc);
-			// double or = (On - Oc) / Math.max(On, Oc);
-			// double l = (mr - or) / Math.max(mr, or);
+			Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s", possibleNextState.getID(), Oc, On, Mc, Mn);
 
 			double learningSignal = 1;
 			double learningStep = alpha * learningSignal;
@@ -237,81 +284,54 @@ public class DefaultLearner implements Learner {
 				// model.update(currentState, +learningStep);
 				// model.update(possibleNextState, -learningStep);
 				// }
-				// Log.d("Current state %s and next State %s are euqally good. Do nothing.",
+				// Log.d("Current state %s and next State %s are euqally good.
+				// Do nothing.",
 				// currentState.getID(), possibleNextState.getID());
 			}
-		} else {
-
-			double weightsXdifferences = 0;
-			Map<Template, Vector> featureDifferences = new HashMap<Template, Vector>();
-			for (Template t : model.getTemplates()) {
-				Vector allNextFeatures = t.getJointFeatures(possibleNextState);
-				Vector allCurrentFeatures = t.getJointFeatures(currentState);
-				Vector differences = Vector.substract(allNextFeatures,
-						allCurrentFeatures);
-				featureDifferences.put(t, differences);
-				weightsXdifferences += differences.dotProduct(t
-						.getWeightVector());
-			}
-
-			if (weightsXdifferences > 0
-					&& P(currentState, possibleNextState, goldState)) {
-				Log.d("Next:\t%s", possibleNextState);
-				Log.d("Current:\t%s", currentState);
-				updateFeatures(featureDifferences, -alpha);
-			} else if (weightsXdifferences <= 0
-					&& P(possibleNextState, currentState, goldState)) {
-				Log.d("Next:\t%s", possibleNextState);
-				Log.d("Current:\t%s", currentState);
-				updateFeatures(featureDifferences, +alpha);
-			}
+			break;
 		}
+		}
+
 	}
 
-	private void updateFeatures(Map<Template, Vector> featureDifferences,
-			double learningDirection) {
+	private void updateFeatures(Map<Template, Vector> featureDifferences, double learningDirection) {
 		Log.methodOff();
 		Log.d("UPDATE: learning direction: %s", learningDirection);
 		for (Template t : model.getTemplates()) {
 			Log.d("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
-			for (Entry<String, Double> featureDifference : features
-					.getFeatures().entrySet()) {
+			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				// only update for real differences
 				if (featureDifference.getValue() != 0) {
-					double learningStep = learningDirection
-							* featureDifference.getValue();
-					Log.d("\t%s -> %s:\t%s", featureDifference.getValue(),
-							learningStep, featureDifference.getKey());
+					double learningStep = learningDirection * featureDifference.getValue();
+					Log.d("\t%s -> %s:\t%s", featureDifference.getValue(), learningStep, featureDifference.getKey());
 					t.update(featureDifference.getKey(), learningStep);
 				}
 			}
 		}
 	}
 
-	private boolean P(State state1, State state2, State goldState) {
+	private boolean preference(State state1, State state2, State goldState) {
 
 		double O1 = objective.score(state1, goldState).score;
 		double O2 = objective.score(state2, goldState).score;
 		return O1 > O2;
 	}
 
-	public State selectNextState(List<State> states,
-			double objectiveDrivenProbability) {
+	public State selectNextState(List<State> states, double objectiveDrivenProbability) {
 		if (Math.random() < objectiveDrivenProbability) {
 			Log.d("Next state: Best by OBJECTIVE");
-			Collections.sort(states,State.objectiveScoreComparator);
+			Collections.sort(states, State.objectiveScoreComparator);
 			return states.get(0);
 		} else {
 			Log.d("Next state: Best by MODEL");
-			Collections.sort(states,State.modelScoreComparator);
+			Collections.sort(states, State.modelScoreComparator);
 			return states.get(0);
 		}
 	}
 
 	public void test(List<AnnotatedDocument> documents, int samplingSteps) {
-		testRecord = new SamplingProcedureRecord(documents.size(),
-				samplingSteps, samplers.size(), -1);
+		testRecord = new SamplingProcedureRecord(documents.size(), samplingSteps, samplers.size(), -1);
 
 		for (int d = 0; d < documents.size(); d++) {
 			AnnotatedDocument document = documents.get(d);
@@ -321,13 +341,11 @@ public class DefaultLearner implements Learner {
 
 			for (int s = 0; s < samplingSteps; s++) {
 				for (Sampler sampler : samplers) {
-					Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1,
-							documents.size(), document.getContent(), goldState);
+					Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(), goldState);
 					Log.d("Step: %s/%s", s + 1, steps);
 					Log.d("Current model:\n%s", model.toString());
 					Log.d("Sampler: %s", sampler.getClass().getSimpleName());
-					List<State> nextStates = sampler.getNextStates(
-							currentState, scorer);
+					List<State> nextStates = sampler.getNextStates(currentState, scorer);
 
 					Log.d("Score:");
 					scorer.unroll(currentState);
@@ -336,14 +354,13 @@ public class DefaultLearner implements Learner {
 						scorer.unroll(state);
 						scorer.score(state);
 					}
-					Collections.sort(nextStates,State.modelScoreComparator);
-					for (State state : nextStates) {
-						Log.d("%s", state);
-					}
+					Collections.sort(nextStates, State.modelScoreComparator);
+					// for (State state : nextStates) {
+					// Log.d("%s", state);
+					// }
 
 					if (sampleNextState) {
-						currentState = SamplingHelper
-								.drawRandomlyFrom(nextStates);
+						currentState = SamplingHelper.drawRandomlyFrom(nextStates);
 					} else {
 						currentState = nextStates.get(0);
 					}
@@ -351,12 +368,9 @@ public class DefaultLearner implements Learner {
 					/*
 					 * Log and record this sampling step
 					 */
-					Score objectiveFunctionScore = objective.score(
-							currentState, goldState);
-					Log.d("Next state: %s\n\tObjective funtion score = %s",
-							currentState, objectiveFunctionScore);
-					testRecord.recordSamplingStep(d, s, sampler, nextStates,
-							currentState);
+					Score objectiveFunctionScore = objective.score(currentState, goldState);
+					Log.d("Next state: %s\n\tObjective funtion score = %s", currentState, objectiveFunctionScore);
+					testRecord.recordSamplingStep(document, d, s, sampler, nextStates, currentState);
 
 					/*
 					 * Clean the model of all generated states. The
@@ -369,8 +383,7 @@ public class DefaultLearner implements Learner {
 
 	}
 
-	private State generateInitialAnnotations(AnnotatedDocument document,
-			State goldState) {
+	private State generateInitialAnnotations(AnnotatedDocument document, State goldState) {
 		State state = new State(document);
 		state.goldState = goldState;
 		return state;

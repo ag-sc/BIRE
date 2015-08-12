@@ -35,16 +35,15 @@ public class ContextTemplate extends Template implements Serializable {
 				Token first = tokens.get(0);
 				Token last = tokens.get(tokens.size() - 1);
 
-				// TODO Maybe include Type/Name in feature name
 				String entityType = "ENTITY_TYPE=" + e.getType().getName()
 						+ "_";
 				featureVector.set("FIRST_TOKEN_EQUALS=" + first.getText(), 1.0);
 				featureVector.set("LAST_TOKEN_EQUALS=" + last.getText(), 1.0);
 				featureVector.set(
-						"entityType + FIRST_TOKEN_EQUALS=" + first.getText(),
+						entityType + "FIRST_TOKEN_EQUALS=" + first.getText(),
 						1.0);
 				featureVector
-						.set("entityType + LAST_TOKEN_EQUALS=" + last.getText(),
+						.set(entityType + "LAST_TOKEN_EQUALS=" + last.getText(),
 								1.0);
 
 				int[] tokenOffsets = { -2, -1, 1, 2 };

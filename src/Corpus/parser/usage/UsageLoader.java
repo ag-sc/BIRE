@@ -15,12 +15,12 @@ import java.util.Set;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.julie.JavaSentenceSplitter;
 import Corpus.julie.Tokenization;
+import Corpus.parser.brat.BratConfigReader;
 import Logging.Log;
 
 public class UsageLoader {
@@ -39,7 +39,7 @@ public class UsageLoader {
 	}
 
 	public static Corpus convertDatasetToJavaBinaries(String destFilepath) {
-		File annDir = new File("res/usage/de");
+		File annDir = new File("/homes/sjebbara/datasets/USAGE-corpus-with-text/files/de");
 		Corpus corpus = UsageParser.parseCorpus(annDir);
 		try {
 			System.out.println("store");

@@ -8,10 +8,10 @@ import java.util.regex.Pattern;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratConfigReader;
 import Corpus.BratCorpus;
 import Corpus.Corpus;
 import Corpus.Token;
+import Corpus.parser.brat.BratConfigReader;
 import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
