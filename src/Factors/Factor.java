@@ -3,65 +3,51 @@ package Factors;
 import Learning.Vector;
 import Logging.Log;
 import Templates.Template;
-import Variables.EntityAnnotation;
+import utility.FactorID;
 
 public class Factor {
+
+	private static final String FACTOR_ID_PATTERN = "%s-F%s";
 
 	{
 		Log.off();
 	}
-	private Template template;
 
+	private static int factorIDIndex;
+	private Template template;
+	private FactorID factorID;
 	private Vector features;
-	private EntityAnnotation entity;
+
+	private Factor() {
+		this.factorID = generateFactorID();
+	}
 
 	public Factor(Template template) {
+		this();
 		this.template = template;
 	}
 
-	// public double score() {
-	// Vector weights = template.getWeightVector();
-	// // Log.d("Score factor:");
-	// // Set<String> allFeatures = new
-	// // HashSet<String>(features.getFeatures());
-	// // allFeatures.addAll(weights.getFeatures());
-	// // for (String feature : allFeatures) {
-	// // Log.d("\t%s:\t\t%s * %s", feature,
-	// // features.getValueOfFeature(feature),
-	// // weights.getValueOfFeature(feature));
-	// // }
-	// double factorScore = Math.exp(features.dotProduct(weights));
-	// return factorScore;
-	// }
-
-	// public Template getTemplate() {
-	// return template;
-	// }
+	private FactorID generateFactorID() {
+		String id = String.valueOf(factorIDIndex);
+		factorIDIndex++;
+		return new FactorID(id);
+	}
 
 	public Vector getFeatureVector() {
 		return features;
 	}
 
-	// public void setTemplate(Template template) {
-	// this.template = template;
-	// }
+	public FactorID getID() {
+		return factorID;
+	}
 
 	public void setFeatures(Vector features) {
 		this.features = features;
 	}
 
-	public EntityAnnotation getEntity() {
-		return entity;
-	}
-
-	public void setEntity(EntityAnnotation entity) {
-		this.entity = entity;
-	}
-
 	@Override
 	public String toString() {
-		return "Factor [template=" + template + ",\n" + "features=" + features
-				+ "]";
+		return "Factor [template=" + template + ",\n" + "features=" + features + "]";
 	}
 
 }

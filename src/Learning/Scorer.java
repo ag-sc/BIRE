@@ -1,17 +1,19 @@
 package Learning;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 import Factors.Factor;
 import Logging.Log;
 import Templates.Template;
 import Variables.State;
+import evaluation.TaggedTimer;
 
 public class Scorer {
 	{
 		Log.off();
 	}
+
 	private Model model;
 
 	public Scorer(Model model) {
@@ -27,6 +29,7 @@ public class Scorer {
 	 * @return
 	 */
 	public double score(State state) {
+		long scID = TaggedTimer.start("SC-SCORE");
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -39,23 +42,24 @@ public class Scorer {
 		for (Template template : templates) {
 			// Log.d("\tTemplate %s", template.getClass().getSimpleName());
 			Vector weightVector = template.getWeightVector();
-			List<Factor> factors = template.getFactors(state);
+			Set<Factor> factors = template.getFactors(state);
 			for (Factor factor : factors) {
 				// Log.d("\t\tFactor Features:\n\t\t%s",
 				// factor.getFeatureVector());
 				Vector featureVector = factor.getFeatureVector();
-				double factorScore = Math.exp(featureVector
-						.dotProduct(weightVector));
+				double factorScore = Math.exp(featureVector.dotProduct(weightVector));
 				score *= factorScore;
 				// factorsApplied = true;
 				// Log.d("\t\tfactor with score = %s applied", factorScore);
 			}
 		}
 		state.setModelScore(score);
+		TaggedTimer.stop(scID);
 		return score;
 	}
 
 	public void unroll(State state) {
+		long unrollID = TaggedTimer.start("SC-UNROLL");
 		/*
 		 * TODO to safe some RAM this function could return the generated
 		 * factors directly. This would safe some unnecessary loops and the
@@ -67,6 +71,7 @@ public class Scorer {
 		for (Template t : model.getTemplates()) {
 			t.applyTo(state);
 		}
+		TaggedTimer.stop(unrollID);
 	}
 
 	public Model getModel() {

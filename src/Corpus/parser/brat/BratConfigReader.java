@@ -16,6 +16,7 @@ import java.util.StringTokenizer;
 import Corpus.AnnotationConfig;
 import Logging.Log;
 import Variables.Argument;
+import Variables.ArgumentRole;
 import Variables.EntityType;
 
 public class BratConfigReader {
@@ -155,8 +156,8 @@ public class BratConfigReader {
 		String argsSplit[] = args.split("\\s");
 		Log.i("argsSplit: " + arrayToString(argsSplit));
 
-		Map<String, Argument> coreArguments = new HashMap<String, Argument>();
-		Map<String, Argument> optionalArguments = new HashMap<String, Argument>();
+		Map<ArgumentRole, Argument> coreArguments = new HashMap<ArgumentRole, Argument>();
+		Map<ArgumentRole, Argument> optionalArguments = new HashMap<ArgumentRole, Argument>();
 
 		for (int i = 0; i < argsSplit.length; i++) {
 			String argString = argsSplit[i].replace(",", "");

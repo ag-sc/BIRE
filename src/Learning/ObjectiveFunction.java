@@ -4,8 +4,11 @@ import java.util.Collection;
 import java.util.Map;
 
 import Logging.Log;
+import Variables.ArgumentRole;
 import Variables.EntityAnnotation;
 import Variables.State;
+import evaluation.TaggedTimer;
+import utility.EntityID;
 
 public class ObjectiveFunction {
 
@@ -17,6 +20,7 @@ public class ObjectiveFunction {
 	}
 
 	public Score score(State state, State goldState) {
+		long scoreTimer = TaggedTimer.start("OBJ-SCORE");
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
 		// Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
@@ -71,20 +75,21 @@ public class ObjectiveFunction {
 		}
 		// TODO not the cleanest way to make the score accessible everywhere
 		state.setObjectiveFunctionScore(score);
+		TaggedTimer.stop(scoreTimer);
 		return score;
 	}
 
 	private double argumentScore(EntityAnnotation entity1, EntityAnnotation entity2) {
 
-		Map<String, String> arguments1 = entity1.getArguments();
-		Map<String, String> arguments2 = entity2.getArguments();
+		Map<ArgumentRole, EntityID> arguments1 = entity1.getArguments();
+		Map<ArgumentRole, EntityID> arguments2 = entity2.getArguments();
 
 		if (arguments1.keySet().size() == 0)
 			return 1;
 
 		int matchingRoles = 0;
 
-		for (String role : arguments1.keySet()) {
+		for (ArgumentRole role : arguments1.keySet()) {
 			// TODO check if entity for id actually exists!
 			EntityAnnotation argEntity1 = entity1.getEntity(arguments1.get(role));
 			if (arguments2.containsKey(role)) {

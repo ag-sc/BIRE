@@ -1,43 +1,19 @@
 package Variables;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import Changes.StateChange;
 import Corpus.Token;
-import Factors.Factor;
-import Templates.Template;
+import utility.EntityID;
 
 public class EntityAnnotation extends AbstractAnnotation {
 
-	// private Map<Template, List<Factor>> factors = new HashMap<Template,
-	// List<Factor>>();
-
-	private StateChange change;
-
-	// public void propagateChange() {
-	// if (change != null) {
-	// for (Factor factor : factors.values()) {
-	// factor.propagateChange(this);
-	// }
-	// }
-	// change = null;
-	// }
-
-	// public Collection<Factor> getFactors() {
-	// Collection<Factor> allFactors = new HashSet<Factor>();
-	// for (List<Factor> list : factors.values()) {
-	// allFactors.addAll(list);
-	// }
-	// return allFactors;
-	// }
-
 	private State state;
-	private String id;
+	private EntityID id;
 	/**
 	 * This number specifies the token index (!! not character offset) of the
 	 * first token that this annotation references.
@@ -49,7 +25,6 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 */
 	private int endTokenIndex;
 
-	// String text;
 	private EntityType type;
 
 	/**
@@ -58,70 +33,56 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 * training phase of the model. The state in which this entity lives offers
 	 * methods to resolve this weak reference.
 	 */
-	private Map<String, String> arguments;
-
-	public EntityAnnotation(State state) {
-		this(state, state.generateEntityID());
-	}
-
-	public EntityAnnotation(State state, String id) {
-		this.state = state;
-		this.id = id;
-	}
+	private Map<ArgumentRole, EntityID> arguments;
 
 	/**
-	 * This method should only be used by the managing EntityManger during a
-	 * clone process of a state. The cloned Entity is added to the given
-	 * EnityManagers Collection of entities.
+	 * This method should only be used by the managing State during a cloning
+	 * process of a state.
 	 * 
 	 * @param state
 	 * @param entityAnnotation
 	 */
 	protected EntityAnnotation(State state, EntityAnnotation entityAnnotation) {
-		this.state = state;
-		this.id = entityAnnotation.id;
-		this.beginTokenIndex = entityAnnotation.beginTokenIndex;
-		this.endTokenIndex = entityAnnotation.endTokenIndex;
-		// this.text = entityAnnotation.text;
-		this.type = entityAnnotation.type;
-		this.arguments = new HashMap<String, String>(entityAnnotation.arguments);
+		this(state, entityAnnotation.id, entityAnnotation.type,
+				new HashMap<ArgumentRole, EntityID>(entityAnnotation.arguments), entityAnnotation.beginTokenIndex,
+				entityAnnotation.endTokenIndex);
 	}
 
-	/**
-	 * This method is needed in the process of parsing/creating the annotations.
-	 * 
-	 * @param entityType
-	 * @param start
-	 * @param end
-	 * @param text
-	 */
-	public void init(EntityType entityType, int start, int end) {
-		init(entityType, new HashMap<String, String>(), start, end);
-	}
-
-	/**
-	 * This method is needed in the process of parsing/creating the annotations.
-	 * 
-	 * @param entityType
-	 * @param start
-	 * @param end
-	 * @param text
-	 */
-	public void init(EntityType entityType, Map<String, String> arguments,
+	public EntityAnnotation(State state, EntityID id, EntityType entityType, Map<ArgumentRole, EntityID> arguments,
 			int start, int end) {
+		this.state = state;
+		this.id = id;
 		this.type = entityType;
 		this.arguments = arguments;
 		this.beginTokenIndex = start;
 		this.endTokenIndex = end;
-		// this.text = text;
 	}
 
-	public String getID() {
+	public EntityAnnotation(State state, EntityType entityType, Map<ArgumentRole, EntityID> arguments, int start,
+			int end) {
+		this(state, state.generateEntityID(), entityType, arguments, start, end);
+	}
+
+	public EntityAnnotation(State state, String id, EntityType entityType, Map<ArgumentRole, EntityID> arguments,
+			int start, int end) {
+		this(state, new EntityID(id), entityType, arguments, start, end);
+	}
+
+	public EntityAnnotation(State state, EntityType entityType, int start, int end) {
+		this(state, state.generateEntityID(), entityType, new HashMap<ArgumentRole, EntityID>(), start, end);
+	}
+
+	public EntityAnnotation(State state, String id, EntityType entityType, int start, int end) {
+		this(state, new EntityID(id), entityType, new HashMap<ArgumentRole, EntityID>(), start, end);
+	}
+
+	public EntityID getID() {
 		return id;
 	}
 
 	public void setType(EntityType type) {
 		this.type = type;
+		state.onEntityChanged(this, StateChange.CHANGE_TYPE);
 	}
 
 	public EntityType getType() {
@@ -142,7 +103,7 @@ public class EntityAnnotation extends AbstractAnnotation {
 		state.removeFromTokenToEntityMapping(this);
 		this.beginTokenIndex = beginTokenIndex;
 		state.addToTokenToEntityMapping(this);
-		change = StateChange.CHANGE_BOUNDRARIES;
+		state.onEntityChanged(this, StateChange.CHANGE_BOUNDARIES);
 	}
 
 	public int getEndTokenIndex() {
@@ -156,32 +117,21 @@ public class EntityAnnotation extends AbstractAnnotation {
 		state.removeFromTokenToEntityMapping(this);
 		this.endTokenIndex = endTokenIndex;
 		state.addToTokenToEntityMapping(this);
-		change = StateChange.CHANGE_BOUNDRARIES;
+		state.onEntityChanged(this, StateChange.CHANGE_BOUNDARIES);
 	}
 
-	public Map<String, String> getArguments() {
-		return arguments;
+	public Map<ArgumentRole, EntityID> getArguments() {
+		return new HashMap<>(arguments);
 	}
 
-	public String addArgument(String role, String entityID) {
-		return arguments.put(role, entityID);
+	public void addArgument(ArgumentRole role, EntityID entityID) {
+		arguments.put(role, entityID);
+		state.onEntityChanged(this, StateChange.ADD_ARGUMENT);
 	}
 
-	public void removeArgument(String role) {
+	public void removeArgument(ArgumentRole role) {
 		arguments.remove(role);
-	}
-
-	@Override
-	public String toString() {
-		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
-				+ ", end=" + endTokenIndex + ", type=" + type.getName()
-				+ ", arguments=" + arguments + "]";
-	}
-
-	public String toDetailedString() {
-		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex
-				+ ", end=" + endTokenIndex + " => \"" + getText() + "\", type="
-				+ type.getName() + ", arguments=" + arguments + "]";
+		state.onEntityChanged(this, StateChange.REMOVE_ARGUMENT);
 	}
 
 	/**
@@ -191,16 +141,8 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 * @param id
 	 * @return
 	 */
-	public EntityAnnotation getEntity(String id) {
+	public EntityAnnotation getEntity(EntityID id) {
 		return state.getEntity(id);
-	}
-
-	// public void addFactors(Template template, List<Factor> factors) {
-	// this.factors.put(template, factors);
-	// }
-
-	public boolean isChanged() {
-		return true;
 	}
 
 	public List<Token> getTokens() {
@@ -221,5 +163,16 @@ public class EntityAnnotation extends AbstractAnnotation {
 			}
 		}
 		return builder.toString();
+	}
+
+	@Override
+	public String toString() {
+		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex + ", end=" + endTokenIndex + ", type="
+				+ type.getName() + ", arguments=" + arguments + "]";
+	}
+
+	public String toDetailedString() {
+		return "EntityAnnotation [id=" + id + ", begin=" + beginTokenIndex + ", end=" + endTokenIndex + " => \""
+				+ getText() + "\", type=" + type.getName() + ", arguments=" + arguments + "]";
 	}
 }

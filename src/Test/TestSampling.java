@@ -20,7 +20,6 @@ public class TestSampling {
 		AnnotatedDocument doc = documents.get(0);
 		State goldState = doc.getGoldState();
 		State initialState = new State(doc);
-		initialState.goldState = goldState;
 		System.out.println("initialState: " + initialState);
 		Model model = new Model(new CheatingTemplate());
 		Scorer scorer = new Scorer(model);

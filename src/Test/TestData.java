@@ -20,29 +20,24 @@ public class TestData {
 
 	public static Corpus getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
-		AnnotationConfig originalConfig = configReader.readConfig(new File(
-				"res/bionlp/annotation.conf"));
+		AnnotationConfig originalConfig = configReader.readConfig(new File("res/bionlp/annotation.conf"));
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
 		simplifiedConfig.addEntityType(originalConfig.getEntityType("Protein"));
 
 		String content = "a critical role for tumor necrosis factor and interleukin-7";
 		List<Token> tokens = extractTokens(content);
 		Log.d("Tokens for dummy data: %s", tokens);
-		State goldState = new State();
 
-		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1");
-		e1.init(simplifiedConfig.getEntityType("Protein"), 4, 6);
+		BratCorpus corpus = new BratCorpus(simplifiedConfig);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens);
+		State goldState = new State(doc);
+		doc.setGoldState(goldState);
+
+		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1", simplifiedConfig.getEntityType("Protein"), 4, 6);
 		goldState.addEntityAnnotation(e1);
-		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2");
-		e2.init(simplifiedConfig.getEntityType("Protein"), 8, 8);
+		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2", simplifiedConfig.getEntityType("Protein"), 8, 8);
 		goldState.addEntityAnnotation(e2);
 
-		
-		
-		BratCorpus corpus = new BratCorpus(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument("DummyDocument", content,
-				tokens, goldState);
-		doc.setCorpus(corpus);
 		corpus.addDocument(doc);
 
 		return corpus;

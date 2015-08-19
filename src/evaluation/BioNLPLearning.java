@@ -15,7 +15,6 @@ import Corpus.parser.usage.UsageLoader;
 import Learning.Model;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
-import Sampling.BoundarySampler;
 import Sampling.ExhaustiveBoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
 import Sampling.RelationSampler;
@@ -103,7 +102,7 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.1, 0.01, 1, 1);
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.1, 0.01, 1, 0.5);
 				// DataSplit split = new DataSplit(corpus, 0.7, 1);
 				// Log.d("Train/test split:\n\tsplit: %s => #train: %s, #test:
 				// %s",
@@ -139,7 +138,7 @@ public class BioNLPLearning {
 			}
 		} else {
 			// N-Fold cross validation
-			int n = 1;
+			int n = 3;
 			for (int i = 0; i < n; i++) {
 				Log.d("############################");
 				Log.d("############################");
@@ -153,7 +152,8 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 1, 1);
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 1,
+						0.5);
 				Log.d("Train/test split: %s => #train: %s, #test: %s", split.getSplit(), train.size(), test.size());
 
 				Log.d("####################");

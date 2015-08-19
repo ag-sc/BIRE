@@ -2,17 +2,23 @@ package Templates;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import Changes.StateChange;
 import Factors.Factor;
 import Learning.Vector;
 import Logging.Log;
+import Templates.variablesets.EntityAndArgumentVariableSet;
+import Templates.variablesets.VariableSet;
+import Variables.ArgumentRole;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
+import utility.EntityID;
 
 public class RelationTemplate extends Template implements Serializable {
 	{
@@ -20,73 +26,76 @@ public class RelationTemplate extends Template implements Serializable {
 	}
 
 	@Override
-	public List<Factor> generateFactors(State state) {
-		List<Factor> factors = new ArrayList<Factor>();
-		for (EntityAnnotation e : state.getEntities()) {
-			// TODO this function has to consider that that some entities need
-			// to be updated when other entities change, since the computation
-			// of some features does not solely rely on this particualr entity
-			if (e.isChanged()) {
-				Log.d("Add features to entity %s (\"%s\"):", e.getID(),
-						e.getText());
-				Factor factor = new Factor(this);
-				factor.setEntity(e);
-				factors.add(factor);
-				Vector featureVector = new Vector();
-				factor.setFeatures(featureVector);
+	public Factor generateFactor(State state, VariableSet genericVariables) {
+		// TODO features on unannotated tokens (thus, type/name = "null") might
+		// be useful
+		if (genericVariables instanceof EntityAndArgumentVariableSet) {
+			EntityAndArgumentVariableSet variables = (EntityAndArgumentVariableSet) genericVariables;
+			EntityAnnotation mainEntity = state.getEntity(variables.mainEntityID);
+			EntityAnnotation argEntity = state.getEntity(variables.argumentEntityID);
 
-				EntityType entityType = e.getType();
-				String entityAsText = e.getText();
-				Map<String, String> arguments = e.getArguments();
-				for (Entry<String, String> a : arguments.entrySet()) {
-
-					String argRole = a.getKey();
-					EntityAnnotation argEntity = state.getEntity(a.getValue());
-					EntityType argType = argEntity.getType();
-
-					// TODO the next few features are (partly) unnecessary due
-					// to CorpusConfig specification
-					/*
-					 * The next few features are always present for each
-					 * individual token, thus, they always have a value of 1
-					 */
-					featureVector.set("ENTITY_TYPE=" + entityType.getName()
-							+ " & ARG_TYPE=" + argType.getName(), 1.0);
-					featureVector.set("ENTITY_TYPE=" + entityType.getName()
-							+ " & ARG_ROLE=" + argRole, 1.0);
-					featureVector.set("ENTITY_TYPE=" + entityType.getName()
-							+ " & ARG_TYPE=" + argType.getName()
-							+ " & ARG_ROLE=" + argRole, 1.0);
-
-					for (int i = 0; i < 4; i++) {
-						double distanceFeatureValue = Math.abs(distance(e,
-								argEntity)) > i ? 1 : 0;
-						featureVector.set("DISTANCE_FROM_ENTITY="
-								+ entityAsText + "_TO_ARGUMENT_ROLE=" + argRole
-								+ ">" + i, distanceFeatureValue);
-						// featureVector.set(
-						// "DISTANCE_FROM_ENTITY_TO_ARGUMENT_ROLE="
-						// + argRole + ">" + i,
-						// distanceFeatureValue);
-					}
-
-					featureVector.set("ENTITY=" + entityAsText
-							+ "_BEFORE_ARGUMENT_ROLE=" + argRole,
-							isBefore(e, argEntity));
-					featureVector.set("ENTITY_BEFORE_ARGUMENT_ROLE=" + argRole,
-							isBefore(e, argEntity));
-
-					featureVector.set("ENTITY=" + entityAsText
-							+ "_AFTER_ARGUMENT_ROLE=" + argRole,
-							isAfter(e, argEntity));
-					featureVector.set("ENTITY_AFTER_ARGUMENT_ROLE=" + argRole,
-							isAfter(e, argEntity));
+			// find the role for the supposed argument entity
+			/*
+			 * TODO only works if an entity cannot serve as argument in
+			 * different roles simultaneously for a given "parent" entity
+			 */
+			List<ArgumentRole> roles = new ArrayList<>();
+			for (Entry<ArgumentRole, EntityID> e : mainEntity.getArguments().entrySet()) {
+				if (argEntity.getID().equals(e.getValue())) {
+					roles.add(e.getKey());
 				}
-				Log.d("Features for entity %s (\"%s\"): %s", e.getID(),
-						e.getText(), featureVector);
+			}
+			Log.w("Template %s: Generating factor for VariableSet %s and State %s. In entity %s, argument %s serves in multiple roles: %s",
+					this.getClass().getSimpleName(), variables, state.getID(), mainEntity, argEntity.getID(), roles);
+			// TODO what if multiple roles exist? Factor for each single one?
+			if (!roles.isEmpty()) {
+				ArgumentRole argRole = roles.get(0);
+				EntityType argType = argEntity.getType();
+
+				Log.d("Add features to entity %s (\"%s\"):", mainEntity.getID(), mainEntity.getText());
+
+				Vector featureVector = new Vector();
+
+				EntityType entityType = mainEntity.getType();
+				String entityAsText = mainEntity.getText();
+
+				// TODO the next few features are (partly) unnecessary due
+				// to CorpusConfig specification
+				/*
+				 * The next few features are always present for each individual
+				 * token, thus, they always have a value of 1
+				 */
+				featureVector.set("ENTITY_TYPE=" + entityType.getName() + " & ARG_TYPE=" + argType.getName(), 1.0);
+				featureVector.set("ENTITY_TYPE=" + entityType.getName() + " & ARG_ROLE=" + argRole, 1.0);
+				featureVector.set("ENTITY_TYPE=" + entityType.getName() + " & ARG_TYPE=" + argType.getName()
+						+ " & ARG_ROLE=" + argRole, 1.0);
+
+				for (int i = 0; i < 4; i++) {
+					double distanceFeatureValue = Math.abs(distance(mainEntity, argEntity)) > i ? 1 : 0;
+					featureVector.set("DISTANCE_FROM_ENTITY=" + entityAsText + "_TO_ARGUMENT_ROLE=" + argRole + ">" + i,
+							distanceFeatureValue);
+					// featureVector.set(
+					// "DISTANCE_FROM_ENTITY_TO_ARGUMENT_ROLE="
+					// + argRole + ">" + i,
+					// distanceFeatureValue);
+				}
+
+				featureVector.set("ENTITY=" + entityAsText + "_BEFORE_ARGUMENT_ROLE=" + argRole,
+						isBefore(mainEntity, argEntity));
+				featureVector.set("ENTITY_BEFORE_ARGUMENT_ROLE=" + argRole, isBefore(mainEntity, argEntity));
+
+				featureVector.set("ENTITY=" + entityAsText + "_AFTER_ARGUMENT_ROLE=" + argRole,
+						isAfter(mainEntity, argEntity));
+				featureVector.set("ENTITY_AFTER_ARGUMENT_ROLE=" + argRole, isAfter(mainEntity, argEntity));
+
+				Log.d("Features for entity %s (\"%s\"): %s", mainEntity.getID(), mainEntity.getText(), featureVector);
+				Factor factor = new Factor(this);
+				factor.setFeatures(featureVector);
+				return factor;
 			}
 		}
-		return factors;
+		return null;
+
 	}
 
 	private double isBefore(EntityAnnotation e1, EntityAnnotation e2) {
@@ -101,5 +110,29 @@ public class RelationTemplate extends Template implements Serializable {
 		// TODO test implementation of entity distance
 		return Math.max(e2.getBeginTokenIndex() - e1.getEndTokenIndex(),
 				e1.getBeginTokenIndex() - e2.getEndTokenIndex());
+	}
+
+	@Override
+	protected boolean isRelevantChange(StateChange value) {
+		return true;
+	}
+
+	@Override
+	protected Set<VariableSet> getVariableSets(State state) {
+		Set<VariableSet> variableSets = new HashSet<>();
+		for (EntityAnnotation entity : state.getEntities()) {
+			Map<ArgumentRole, EntityID> arguments = entity.getArguments();
+			for (Entry<ArgumentRole, EntityID> a : arguments.entrySet()) {
+				/*
+				 * TODO if it is possible, that an entity serves as multiple
+				 * arguments for a single entity (but with different roles e.g.
+				 * as theme and cause simultaneously), then this set of variable
+				 * set won't cover all configurations (since it neglects the
+				 * role)
+				 */
+				variableSets.add(new EntityAndArgumentVariableSet(this, entity.getID(), a.getValue()));
+			}
+		}
+		return variableSets;
 	}
 }

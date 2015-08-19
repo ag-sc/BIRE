@@ -15,7 +15,20 @@ public class TaggedTimer {
 	private static Map<Long, Long> jobStarts = new HashMap<>();
 
 	private static Random random = new Random();
+	private static long first = 0;
+	private static long last = 0;
 
+	static {
+		first = System.currentTimeMillis();
+	}
+
+	/**
+	 * This will start a new timing job for the given tag that can be stopped by
+	 * the returned long-ID
+	 * 
+	 * @param tag
+	 * @return
+	 */
 	public static long start(String tag) {
 		long id = random.nextLong();
 		jobCategories.put(id, tag);
@@ -24,8 +37,14 @@ public class TaggedTimer {
 		return id;
 	}
 
+	/**
+	 * Stops the previously started timing job with the given tag.
+	 * 
+	 * @param id
+	 */
 	public static void stop(long id) {
-		long time = System.currentTimeMillis() - jobStarts.get(id);
+		long stop = System.currentTimeMillis();
+		long time = stop - jobStarts.get(id);
 		String tag = jobCategories.get(id);
 		long oldTime = 0;
 		if (categoryTimings.containsKey(tag))
@@ -35,16 +54,19 @@ public class TaggedTimer {
 
 		jobCategories.remove(id);
 		jobStarts.remove(id);
+		last = stop;
 	}
 
 	public static void printTimings() {
-		long totalTime = 0;
-		for (String tag : categoryTimings.keySet()) {
-			totalTime += categoryTimings.get(tag);
-		}
+		// long summedTime = 0;
+		long totalTime = last - first;
+		// for (String tag : categoryTimings.keySet()) {
+		// summedTime += categoryTimings.get(tag);
+		// }
+		Log.d("Total: %s", totalTime);
 		for (String tag : categoryTimings.keySet()) {
 			long t = categoryTimings.get(tag);
-			Log.d("%s:\ttotal: %s,\trel: %s", tag, t, ((double) t) / ((double) totalTime));
+			Log.d("%s:\ttotal: %s,\trel: %s,", tag, t, ((double) t) / ((double) totalTime));
 		}
 	}
 

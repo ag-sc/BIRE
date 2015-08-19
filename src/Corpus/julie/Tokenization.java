@@ -22,13 +22,11 @@ public class Tokenization {
 	public int absoluteStartOffset;
 	public int absoluteEndOffset;
 
-	public Tokenization(List<Token> tokens, String originalSentence,
-			int absoluteStartOffset) {
+	public Tokenization(List<Token> tokens, String originalSentence, int absoluteStartOffset) {
 		this.tokens = tokens;
 		this.originalSentence = originalSentence;
 		this.absoluteStartOffset = absoluteStartOffset;
-		this.absoluteEndOffset = absoluteStartOffset
-				+ originalSentence.length();
+		this.absoluteEndOffset = absoluteStartOffset + originalSentence.length();
 	}
 
 	/**
@@ -45,14 +43,11 @@ public class Tokenization {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public static List<Tokenization> extractAndStoreTokens(String documentName,
-			String tokenizationDirPath, String sentencesFilepath,
-			String julieModelFilepath) throws FileNotFoundException,
-			IOException {
+	public static List<Tokenization> extractAndStoreTokens(String documentName, String tokenizationDirPath,
+			String sentencesFilepath, String julieModelFilepath) throws FileNotFoundException, IOException {
 		Log.d("tokenize with julie:");
 		List<TokenizedSentence> tokenizedSentences = null;
-		tokenizedSentences = JTBDExtendedAPI.tokenize(sentencesFilepath,
-				julieModelFilepath);
+		tokenizedSentences = JTBDExtendedAPI.tokenize(sentencesFilepath, julieModelFilepath);
 		List<String> sentences = Utils.readLines(sentencesFilepath);
 		saveTokenization(tokenizedSentences, documentName, tokenizationDirPath);
 		Log.d("julie-tokenized sentences:");
@@ -61,8 +56,7 @@ public class Tokenization {
 		for (int i = 0; i < tokenizedSentences.size(); i++) {
 			List<Token> tokens = new ArrayList<Token>();
 			TokenizedSentence ts = tokenizedSentences.get(i);
-			Log.d("%s (#characters: %s)", ts.getOriginalSentence(), ts
-					.getOriginalSentence().length());
+			Log.d("%s (#characters: %s)", ts.getOriginalSentence(), ts.getOriginalSentence().length());
 			Log.d("\t%s", ts.getTokens());
 			int index = 0;
 			for (Unit u : ts.getTokens()) {
@@ -72,8 +66,7 @@ public class Tokenization {
 				tokens.add(new Token(index, from, to, text));
 				index++;
 			}
-			tokenizations.add(new Tokenization(tokens, sentences.get(i),
-					accumulatedSentenceLength));
+			tokenizations.add(new Tokenization(tokens, sentences.get(i), accumulatedSentenceLength));
 			accumulatedSentenceLength += sentences.get(i).length() + 1;
 		}
 		return tokenizations;
@@ -112,8 +105,7 @@ public class Tokenization {
 	// return tokens;
 	// }
 
-	private static void saveTokenization(
-			List<TokenizedSentence> tokenizedSentences, String documentName,
+	private static void saveTokenization(List<TokenizedSentence> tokenizedSentences, String documentName,
 			String tokenizationDirPath) {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < tokenizedSentences.size(); i++) {
@@ -123,8 +115,7 @@ public class Tokenization {
 				builder.append("\n");
 		}
 		try {
-			File tokenizationFile = new File(tokenizationDirPath, documentName
-					+ TOKENIZATION_FILE_SUFFIX);
+			File tokenizationFile = new File(tokenizationDirPath, documentName + TOKENIZATION_FILE_SUFFIX);
 			Utils.writeFile(tokenizationFile, builder.toString());
 		} catch (IOException e) {
 			e.printStackTrace();

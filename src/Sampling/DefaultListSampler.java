@@ -14,6 +14,7 @@ import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
+import utility.EntityID;
 
 public class DefaultListSampler implements Sampler {
 
@@ -68,7 +69,7 @@ public class DefaultListSampler implements Sampler {
 						.addRandomAnnotation(sampledToken, generatedState);
 			} else {
 				// Tokens may be referenced/annotated by different entities
-				List<String> linkedEntities = new ArrayList<String>(
+				List<EntityID> linkedEntities = new ArrayList<EntityID>(
 						generatedState.getAnnotationsForToken(sampledToken));
 				// pick one at random
 				EntityAnnotation tokenAnnotation = generatedState
@@ -78,7 +79,7 @@ public class DefaultListSampler implements Sampler {
 				// choose a way to alter the state
 				StateChange stateChange = SamplingHelper.sampleStateChange();
 				switch (stateChange) {
-				case DELETE_ANNOTATION:
+				case REMOVE_ANNOTATION:
 					Log.d("%s: delete annotation.", generatedState.getID());
 					generatedState.removeEntityAnnotation(tokenAnnotation);
 					break;
@@ -99,7 +100,7 @@ public class DefaultListSampler implements Sampler {
 							generatedState.getID());
 					SamplingHelper.removeRandomArgument(tokenAnnotation);
 					break;
-				case CHANGE_BOUNDRARIES:
+				case CHANGE_BOUNDARIES:
 					Log.d("%s: change annotation boundaries.",
 							generatedState.getID());
 					SamplingHelper.changeBoundaries(tokenAnnotation,

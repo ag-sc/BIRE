@@ -5,11 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import Changes.BoundaryChange;
 import Learning.Scorer;
 import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
+import utility.EntityID;
 
 public class ExhaustiveBoundarySampler implements Sampler {
 
@@ -33,10 +33,9 @@ public class ExhaustiveBoundarySampler implements Sampler {
 
 	private Set<State> generateNextStates(State previousState, Scorer scorer) {
 		Set<State> generatedStates = new HashSet<State>();
-		Set<String> entities = previousState.getEntityIDs();
-		for (String entityID : entities) {
-			EntityAnnotation previousStatesEntity = previousState
-					.getEntity(entityID);
+		Set<EntityID> entities = previousState.getEntityIDs();
+		for (EntityID entityID : entities) {
+			EntityAnnotation previousStatesEntity = previousState.getEntity(entityID);
 			int from = previousStatesEntity.getBeginTokenIndex();
 			int to = previousStatesEntity.getEndTokenIndex();
 			if (from > 0) {
@@ -46,8 +45,7 @@ public class ExhaustiveBoundarySampler implements Sampler {
 				entity.setBeginTokenIndex(from - 1);
 				generatedStates.add(generatedState);
 			}
-			if (to < previousStatesEntity.getState().getDocument().getTokens()
-					.size() - 1) {
+			if (to < previousStatesEntity.getState().getDocument().getTokens().size() - 1) {
 				// Expand right
 				State generatedState = new State(previousState);
 				EntityAnnotation entity = generatedState.getEntity(entityID);
@@ -63,16 +61,14 @@ public class ExhaustiveBoundarySampler implements Sampler {
 				{
 					// Contract left
 					State generatedState = new State(previousState);
-					EntityAnnotation entity = generatedState
-							.getEntity(entityID);
+					EntityAnnotation entity = generatedState.getEntity(entityID);
 					entity.setBeginTokenIndex(from + 1);
 					generatedStates.add(generatedState);
 				}
 				{
 					// Contract right
 					State generatedState = new State(previousState);
-					EntityAnnotation entity = generatedState
-							.getEntity(entityID);
+					EntityAnnotation entity = generatedState.getEntity(entityID);
 					entity.setEndTokenIndex(to - 1);
 					generatedStates.add(generatedState);
 				}

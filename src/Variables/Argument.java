@@ -3,17 +3,21 @@ package Variables;
 import java.io.Serializable;
 import java.util.List;
 
-public class Argument implements Serializable{
+public class Argument implements Serializable {
 
-	String role;
-	List<String> types;
+	private ArgumentRole role;
+	private List<String> types;
 
 	public Argument(String role, List<String> types) {
+		this(new ArgumentRole(role), types);
+	}
+
+	public Argument(ArgumentRole role, List<String> types) {
 		this.role = role;
 		this.types = types;
 	}
 
-	public String getRole() {
+	public ArgumentRole getRole() {
 		return role;
 	}
 
@@ -25,5 +29,5 @@ public class Argument implements Serializable{
 	public String toString() {
 		return "Argument [role=" + role + ", types=" + types + "]";
 	}
-	
+
 }

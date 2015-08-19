@@ -57,9 +57,9 @@ public class BoundarySampler implements Sampler {
 				// choose a way to alter the state
 				// TODO consider merging entities
 				StateChange stateChange = SamplingHelper.sampleStateChange(
-						StateChange.CHANGE_BOUNDRARIES, StateChange.DO_NOTHING);
+						StateChange.CHANGE_BOUNDARIES, StateChange.DO_NOTHING);
 				switch (stateChange) {
-				case CHANGE_BOUNDRARIES:
+				case CHANGE_BOUNDARIES:
 					Log.d("%s: change annotation boundaries.",
 							generatedState.getID());
 					SamplingHelper.changeBoundaries(sampledEntity,

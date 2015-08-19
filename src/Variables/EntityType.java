@@ -4,21 +4,21 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EntityType implements Serializable{
+public class EntityType implements Serializable {
 
 	private String type;
-	private Map<String, Argument> coreArguments;
+	private Map<ArgumentRole, Argument> coreArguments;
 
-	private Map<String, Argument> optionalArguments;
+	private Map<ArgumentRole, Argument> optionalArguments;
 
 	public EntityType(String type) {
 		this.type = type;
-		this.coreArguments = new HashMap<String, Argument>();
-		this.optionalArguments = new HashMap<String, Argument>();
+		this.coreArguments = new HashMap<ArgumentRole, Argument>();
+		this.optionalArguments = new HashMap<ArgumentRole, Argument>();
 	}
 
-	public EntityType(String type, Map<String, Argument> coreArguments,
-			Map<String, Argument> optionalArguments) {
+	public EntityType(String type, Map<ArgumentRole, Argument> coreArguments,
+			Map<ArgumentRole, Argument> optionalArguments) {
 		this.type = type;
 		this.coreArguments = coreArguments;
 		this.optionalArguments = optionalArguments;
@@ -28,18 +28,18 @@ public class EntityType implements Serializable{
 		return type;
 	}
 
-	public Map<String, Argument> getCoreArguments() {
+	public Map<ArgumentRole, Argument> getCoreArguments() {
 		return coreArguments;
 	}
 
-	public Map<String, Argument> getOptionalArguments() {
+	public Map<ArgumentRole, Argument> getOptionalArguments() {
 		return optionalArguments;
 	}
 
 	@Override
 	public String toString() {
-		return "EntityType [type=" + type + ", coreArguments=" + coreArguments.values()
-				+ ", optionalArguments=" + optionalArguments.values() + "]";
+		return "EntityType [type=" + type + ", coreArguments=" + coreArguments.values() + ", optionalArguments="
+				+ optionalArguments.values() + "]";
 	}
 
 }

@@ -19,6 +19,12 @@ public class Score implements Serializable {
 		this.score = score;
 	}
 
+	public Score(Score score) {
+		this.precision = score.precision;
+		this.recall = score.recall;
+		this.score = score.score;
+	}
+
 	@Override
 	public String toString() {
 		return "[precision=" + precision + ",\trecall=" + recall + ",\tscore=" + score + "]";

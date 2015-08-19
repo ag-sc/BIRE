@@ -11,9 +11,11 @@ import Changes.BoundaryChange;
 import Changes.StateChange;
 import Corpus.Token;
 import Logging.Log;
+import Variables.ArgumentRole;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
+import utility.EntityID;
 
 public class SamplingHelper {
 	static {
@@ -29,8 +31,7 @@ public class SamplingHelper {
 	}
 
 	public static State drawRandomlyFrom(Map<State, Double> nextStates) {
-		List<Entry<State, Double>> listOfStates = new ArrayList<Map.Entry<State, Double>>(
-				nextStates.entrySet());
+		List<Entry<State, Double>> listOfStates = new ArrayList<Map.Entry<State, Double>>(nextStates.entrySet());
 
 		// compute total sum of scores
 		double totalSum = 0;
@@ -47,8 +48,7 @@ public class SamplingHelper {
 		return listOfStates.get(Math.max(0, i - 1)).getKey();
 	}
 
-	public static boolean accept(State nextState, State state,
-			double acceptanceFactor) {
+	public static boolean accept(State nextState, State state, double acceptanceFactor) {
 		if (nextState.getModelScore() > state.getModelScore()) {
 			// if new state is better, always accept
 			return true;
@@ -57,8 +57,7 @@ public class SamplingHelper {
 			 * if new state is worse, accept with probability p(accept).
 			 * p(accept) = exp(-(scoreNew - scoreOld)/acceptanceFactor)
 			 */
-			double pNext = Math.exp(-(nextState.getModelScore() - state
-					.getModelScore() / acceptanceFactor));
+			double pNext = Math.exp(-(nextState.getModelScore() - state.getModelScore() / acceptanceFactor));
 			if (Math.random() < pNext)
 				return true;
 			else
@@ -67,10 +66,9 @@ public class SamplingHelper {
 	}
 
 	public static void addRandomAnnotation(Token sampledToken, State state) {
-		EntityAnnotation tokenAnnotation = state.getNewEntityInstanceForState();
 
 		EntityType sampledType = sampleEntityType(state);
-		tokenAnnotation.init(sampledType, sampledToken.getIndex(),
+		EntityAnnotation tokenAnnotation = new EntityAnnotation(state, sampledType, sampledToken.getIndex(),
 				sampledToken.getIndex());
 		state.addEntityAnnotation(tokenAnnotation);
 	}
@@ -85,32 +83,26 @@ public class SamplingHelper {
 	 */
 	public static void addRandomArgument(EntityAnnotation entity, State state) {
 		// get all possible argument (roles)
-		List<EntityAnnotation> entities = new ArrayList<EntityAnnotation>(
-				state.getEntities());
+		List<EntityAnnotation> entities = new ArrayList<>(state.getEntities());
 		entities.remove(entity);
 		if (!entities.isEmpty()) {
-			List<String> unassignedRoles = new ArrayList<String>();
-			unassignedRoles
-					.addAll(entity.getType().getCoreArguments().keySet());
-			unassignedRoles.addAll(entity.getType().getOptionalArguments()
-					.keySet());
+			List<ArgumentRole> unassignedRoles = new ArrayList<>();
+			unassignedRoles.addAll(entity.getType().getCoreArguments().keySet());
+			unassignedRoles.addAll(entity.getType().getOptionalArguments().keySet());
 			// remove already assigned roles
 			unassignedRoles.removeAll(entity.getArguments().keySet());
 
 			if (!unassignedRoles.isEmpty()) {
-				String sampledRole = getRandomElement(unassignedRoles);
+				ArgumentRole sampledRole = getRandomElement(unassignedRoles);
 
 				EntityAnnotation sampledEntity = getRandomElement(entities);
 				entity.addArgument(sampledRole, sampledEntity.getID());
-				Log.d("\t%s + %s:%s", entity.getID(), sampledRole,
-						sampledEntity.getID());
+				Log.d("\t%s + %s:%s", entity.getID(), sampledRole, sampledEntity.getID());
 			} else {
-				Log.d("\t%s (%s): No unassigned arguments left",
-						entity.getID(), entity.getType().getName());
+				Log.d("\t%s (%s): No unassigned arguments left", entity.getID(), entity.getType().getName());
 			}
 		} else {
-			Log.d("\t%s (%s): No entities for argument existing",
-					entity.getID(), entity.getType().getName());
+			Log.d("\t%s (%s): No entities for argument existing", entity.getID(), entity.getType().getName());
 		}
 	}
 
@@ -123,45 +115,39 @@ public class SamplingHelper {
 	 */
 	public static void removeRandomArgument(EntityAnnotation tokenAnnotation) {
 		if (!tokenAnnotation.getArguments().isEmpty()) {
-			Map<String, String> arguments = tokenAnnotation.getArguments();
-			List<String> roles = new ArrayList<String>(arguments.keySet());
+			Map<ArgumentRole, EntityID> arguments = tokenAnnotation.getArguments();
+			List<ArgumentRole> roles = new ArrayList<>(arguments.keySet());
 			if (!roles.isEmpty()) {
-				String sampledRole = getRandomElement(roles);
+				ArgumentRole sampledRole = getRandomElement(roles);
 				tokenAnnotation.removeArgument(sampledRole);
 				Log.d("\t%s: (%s): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)",
-						tokenAnnotation.getID(), tokenAnnotation.getType()
-								.getName());
-				assert (false);
+						tokenAnnotation.getID(), tokenAnnotation.getType().getName());
+				assert(false);
 			}
 		} else {
-			Log.d("\t%s (%s): No arguments assigned, yet", tokenAnnotation
-					.getID(), tokenAnnotation.getType().getName());
+			Log.d("\t%s (%s): No arguments assigned, yet", tokenAnnotation.getID(),
+					tokenAnnotation.getType().getName());
 		}
 	}
 
-	public static boolean changeBoundaries(EntityAnnotation tokenAnnotation,
-			State state) {
+	public static boolean changeBoundaries(EntityAnnotation tokenAnnotation, State state) {
 		// the boundaries of annotations are on token level!
 		switch (sampleBoundaryChange(tokenAnnotation)) {
 		case EXPAND_LEFT:
 			Log.d("\texpand left");
-			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
-					.getBeginTokenIndex() - 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() - 1);
 			return true;
 		case CONTRACT_LEFT:
 			Log.d("\tcontract left");
-			tokenAnnotation.setBeginTokenIndex(tokenAnnotation
-					.getBeginTokenIndex() + 1);
+			tokenAnnotation.setBeginTokenIndex(tokenAnnotation.getBeginTokenIndex() + 1);
 			return true;
 		case EXPAND_RIGHT:
 			Log.d("\texpand right");
-			tokenAnnotation
-					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
+			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() + 1);
 			return true;
 		case CONTRACT_RIGHT:
 			Log.d("\tcontract right");
-			tokenAnnotation
-					.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
+			tokenAnnotation.setEndTokenIndex(tokenAnnotation.getEndTokenIndex() - 1);
 			return true;
 		case DO_NOTHING:
 			Log.d("Do not change entity boundary");
@@ -179,11 +165,10 @@ public class SamplingHelper {
 	 * @return
 	 */
 	public static EntityType sampleEntityType(State state) {
-		List<EntityType> possibleEntityTypes = new ArrayList<EntityType>(state
-				.getDocument().getCorpus().getCorpusConfig().getEntityTypes());
+		List<EntityType> possibleEntityTypes = new ArrayList<EntityType>(
+				state.getDocument().getCorpus().getCorpusConfig().getEntityTypes());
 
-		EntityType randomType = possibleEntityTypes
-				.get((int) (Math.random() * possibleEntityTypes.size()));
+		EntityType randomType = possibleEntityTypes.get((int) (Math.random() * possibleEntityTypes.size()));
 		return randomType;
 	}
 
@@ -206,8 +191,7 @@ public class SamplingHelper {
 		// possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
 		if (entity.getBeginTokenIndex() > 0)
 			possibleBoundaryChanges.add(BoundaryChange.EXPAND_LEFT);
-		if (entity.getEndTokenIndex() < entity.getState().getDocument()
-				.getTokens().size() - 1)
+		if (entity.getEndTokenIndex() < entity.getState().getDocument().getTokens().size() - 1)
 			possibleBoundaryChanges.add(BoundaryChange.EXPAND_RIGHT);
 		if (entity.getEndTokenIndex() - entity.getBeginTokenIndex() > 0) {
 			possibleBoundaryChanges.add(BoundaryChange.CONTRACT_LEFT);
@@ -239,67 +223,59 @@ public class SamplingHelper {
 		return getBest(states, n);
 	}
 
-	public static void changeRandomArgumentRole(EntityAnnotation entity,
-			State state) {
-		List<String> possibleNewRoles = new ArrayList<String>();
+	public static void changeRandomArgumentRole(EntityAnnotation entity, State state) {
+		List<ArgumentRole> possibleNewRoles = new ArrayList<>();
 		possibleNewRoles.addAll(entity.getType().getCoreArguments().keySet());
-		possibleNewRoles.addAll(entity.getType().getOptionalArguments()
-				.keySet());
+		possibleNewRoles.addAll(entity.getType().getOptionalArguments().keySet());
 
-		List<String> assignedRoles = new ArrayList<String>(entity
-				.getArguments().keySet());
+		List<ArgumentRole> assignedRoles = new ArrayList<>(entity.getArguments().keySet());
 		if (!assignedRoles.isEmpty()) {
 			// select random existing argument by role
-			String argumentRoleToChange = getRandomElement(assignedRoles);
-			String argumentEntityID = entity.getArguments().get(
-					argumentRoleToChange);
+			ArgumentRole argumentRoleToChange = getRandomElement(assignedRoles);
+			EntityID argumentEntityID = entity.getArguments().get(argumentRoleToChange);
 			// remove current role from possible alternatives
 			possibleNewRoles.remove(argumentRoleToChange);
 			// sample from alternatives
-			String sampledNewRole = getRandomElement(possibleNewRoles);
+			ArgumentRole sampledNewRole = getRandomElement(possibleNewRoles);
 			// remove already assigned roles
 			// unassignedRoles.removeAll(entity.getArguments().keySet());
 
 			if (!possibleNewRoles.isEmpty()) {
 				entity.removeArgument(argumentRoleToChange);
 				entity.addArgument(sampledNewRole, argumentEntityID);
-				Log.d("\tChange role from %s to %s for argument entity %s",
-						argumentRoleToChange, sampledNewRole, argumentEntityID);
+				Log.d("\tChange role from %s to %s for argument entity %s", argumentRoleToChange, sampledNewRole,
+						argumentEntityID);
 			} else {
 
-				Log.d("\t%s (%s): No unassigned arguments left",
-						entity.getID(), entity.getType().getName());
+				Log.d("\t%s (%s): No unassigned arguments left", entity.getID(), entity.getType().getName());
 			}
 		} else {
 			Log.d("\tEntity has no arguments assigned, yet.");
 		}
 	}
 
-	public static void changeRandomArgumentEntity(EntityAnnotation entity,
-			State state) {
-		List<String> assignedRoles = new ArrayList<String>(entity
-				.getArguments().keySet());
+	public static void changeRandomArgumentEntity(EntityAnnotation entity, State state) {
+		List<ArgumentRole> assignedRoles = new ArrayList<>(entity.getArguments().keySet());
 		if (!assignedRoles.isEmpty()) {
 			// select random existing argument by role
-			String roleOfArgumentToChange = getRandomElement(assignedRoles);
-			String argumentToChange = entity.getArguments().get(
-					roleOfArgumentToChange);
+			ArgumentRole roleOfArgumentToChange = getRandomElement(assignedRoles);
+			EntityID argumentToChange = entity.getArguments().get(roleOfArgumentToChange);
 
 			// list alternative argument entities
-			List<String> entityIDs = new ArrayList<String>(state.getEntityIDs());
+			List<EntityID> entityIDs = new ArrayList<EntityID>(state.getEntityIDs());
 
 			entityIDs.remove(entity.getID());
 			entityIDs.remove(argumentToChange);
 
 			if (!entityIDs.isEmpty()) {
-				String newArgumentID = getRandomElement(entityIDs);
+				EntityID newArgumentID = getRandomElement(entityIDs);
+				// replaces the previous entity with the new one
 				entity.addArgument(roleOfArgumentToChange, newArgumentID);
-				Log.d("\tChange entity of argument %s from entity %s to %s",
-						roleOfArgumentToChange, argumentToChange, newArgumentID);
+				Log.d("\tChange entity of argument %s from entity %s to %s", roleOfArgumentToChange, argumentToChange,
+						newArgumentID);
 			} else {
 
-				Log.d("\t%s (%s): No entities for argument existing",
-						entity.getID(), entity.getType().getName());
+				Log.d("\t%s (%s): No entities for argument existing", entity.getID(), entity.getType().getName());
 			}
 		} else {
 			Log.d("\tEntity has no arguments assigned, yet.");

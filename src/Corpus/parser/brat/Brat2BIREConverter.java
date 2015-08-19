@@ -23,9 +23,11 @@ import Corpus.parser.brat.annotations.BratEventAnnotation;
 import Corpus.parser.brat.annotations.BratRelationAnnotation;
 import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 import Logging.Log;
+import Variables.ArgumentRole;
 import Variables.EntityAnnotation;
 import Variables.EntityType;
 import Variables.State;
+import utility.EntityID;
 
 public class Brat2BIREConverter {
 
@@ -71,7 +73,9 @@ public class Brat2BIREConverter {
 		for (Tokenization tokenization : tokenizations) {
 			Log.d("Tokens: %s", tokenization.tokens);
 			String content = tokenization.originalSentence;
-			State state = new State();
+			AnnotatedDocument doc = new AnnotatedDocument(corpus, bratDoc.getTextFilename() + "-" + sentenceNumber,
+					content, tokenization.tokens);
+			State state = new State(doc);
 
 			for (BratTextBoundAnnotation tann : textAnnotations) {
 				if (isInSentence(tann, tokenization))
@@ -83,9 +87,7 @@ public class Brat2BIREConverter {
 			}
 
 			if (checkConsistency(state)) {
-				AnnotatedDocument doc = new AnnotatedDocument(bratDoc.getTextFilename() + "-" + sentenceNumber, content,
-						tokenization.tokens, state);
-				doc.setCorpus(corpus);
+				doc.setGoldState(state);
 				documents.add(doc);
 			} else {
 				Log.w("Skip inconsistent document \"%s\"", bratDoc.getAnnotationFilename());
@@ -138,9 +140,9 @@ public class Brat2BIREConverter {
 
 	private static boolean checkConsistency(State state) {
 		boolean isConsistent = true;
-		Set<String> existingEntities = state.getEntityIDs();
+		Set<EntityID> existingEntities = state.getEntityIDs();
 		for (EntityAnnotation e : state.getEntities()) {
-			for (String id : e.getArguments().values()) {
+			for (EntityID id : e.getArguments().values()) {
 				if (!existingEntities.contains(id)) {
 					Log.w("Entity %s references missing entity %s", e.getID(), id);
 					isConsistent = false;
@@ -182,8 +184,7 @@ public class Brat2BIREConverter {
 			total += tokenization.tokens.get(i).getText() + " ";
 		}
 		Log.d("\t# %s | %s", t.getText(), total);
-		EntityAnnotation entity = new EntityAnnotation(state, t.getID());
-		entity.init(entityType, fromTokenIndex, toTokenIndex);
+		EntityAnnotation entity = new EntityAnnotation(state, t.getID(), entityType, fromTokenIndex, toTokenIndex);
 		state.addEntityAnnotation(entity);
 		// } else {
 		// Log.d("Skipping annotation %s (\"%s\")", t.getID(), t.getText());
@@ -192,12 +193,12 @@ public class Brat2BIREConverter {
 
 	private static void convertEventAnnotation(State state, AnnotationConfig config, Tokenization tokenization,
 			BratEventAnnotation e) {
-		Map<String, String> arguments = new HashMap<String, String>();
+		Map<ArgumentRole, EntityID> arguments = new HashMap<>();
 		for (Entry<String, BratAnnotation> entry : e.getArguments().entrySet()) {
 			BratAnnotation ann = entry.getValue();
 			// Entities in the BIRE annotation implementation only keep weak
 			// references (IDs) to other entities.
-			arguments.put(entry.getKey(), ann.getID());
+			arguments.put(new ArgumentRole(entry.getKey()), new EntityID(ann.getID()));
 		}
 
 		EntityType entityType = config.getEntityType(e.getRole());
@@ -227,25 +228,24 @@ public class Brat2BIREConverter {
 		// }
 		// entities.clear();
 		// }
-		EntityAnnotation entity = new EntityAnnotation(state, e.getID());
-		entity.init(entityType, arguments, fromTokenIndex, toTokenIndex);
+		EntityAnnotation entity = new EntityAnnotation(state, e.getID(), entityType, arguments, fromTokenIndex,
+				toTokenIndex);
 		state.addEntityAnnotation(entity);
 	}
 
 	private static void convertRelationAnnotation(State state, AnnotationConfig config, BratRelationAnnotation t) {
-		Map<String, String> arguments = new HashMap<String, String>();
+		Map<ArgumentRole, EntityID> arguments = new HashMap<>();
 		for (Entry<String, BratAnnotation> entry : t.getArguments().entrySet()) {
 			BratAnnotation ann = entry.getValue();
-			arguments.put(entry.getKey(), ann.getID());
+			arguments.put(new ArgumentRole(entry.getKey()), new EntityID(ann.getID()));
 		}
-		EntityAnnotation entity = new EntityAnnotation(state, t.getID());
 		EntityType entityType = config.getEntityType(t.getRole());
 		/*
 		 * TODO relations are not motivated by tokens in the text and thus have
 		 * no start, end and text attribute. Here, these values are filled with
 		 * placeholder values
 		 */
-		entity.init(entityType, arguments, -1, -1);
+		EntityAnnotation entity = new EntityAnnotation(state, t.getID(), entityType, arguments, -1, -1);
 		state.addEntityAnnotation(entity);
 	}
 

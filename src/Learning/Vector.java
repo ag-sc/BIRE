@@ -11,10 +11,6 @@ import Logging.Log;
 
 public class Vector implements Serializable {
 
-	{
-		Log.off();
-	}
-
 	private static final double DEFAULT_VALUE = 0;
 	private HashMap<String, Double> features;
 
@@ -33,43 +29,11 @@ public class Vector implements Serializable {
 
 	public double dotProduct(Vector weights) {
 		double result = 0;
-		for (String feature : this.getFeatureNames()) {
-			result += this.getValueOfFeature(feature) * weights.getValueOfFeature(feature);
+		for (Entry<String, Double> e : features.entrySet()) {
+			result += e.getValue() * weights.getValueOfFeature(e.getKey());
 		}
 		return result;
 	}
-
-	// public Vector add(Vector vector) {
-	// Vector vec = new Vector();
-	//
-	// HashMap<String, Double> map = vector.getFeatureMap();
-	//
-	// for (String feature : features.keySet()) {
-	// if (map.containsKey(feature)) {
-	// vec.put(feature, features.get(feature) + map.get(feature));
-	// } else {
-	// vec.put(feature, features.get(feature));
-	// }
-	// }
-	//
-	// for (String feature : map.keySet()) {
-	// if (!features.containsKey(feature)) {
-	// vec.put(feature, map.get(feature));
-	// }
-	// }
-	//
-	// return vec;
-	//
-	// }
-	//
-	// private void put(String feature, Double d) {
-	// features.put(feature, d);
-	//
-	// }
-	//
-	// public HashMap<String, Double> getFeatureMap() {
-	// return features;
-	// }
 
 	/**
 	 * Returns the value of this feature. If this vector does not contain this
@@ -82,12 +46,6 @@ public class Vector implements Serializable {
 		if (features.containsKey(feature)) {
 			return features.get(feature);
 		} else {
-			// TODO default values should not be defined here
-			// double initialWeight = DEFAULT_VALUE;
-			// // Log.w("Feature %s does not exist. Insert default value %s",
-			// // feature, initialWeight);
-			// features.put(feature, initialWeight);
-			// return initialWeight;
 			return DEFAULT_VALUE;
 		}
 
@@ -111,17 +69,16 @@ public class Vector implements Serializable {
 		return features.containsKey(feature);
 	}
 
-	// public double getValue(String feature) {
-	// if (features.containsKey(feature)) {
-	// return features.get(feature);
-	// } else {
-	// return -9999999;
-	// }
-	// }
+	public void add(Vector v) {
+		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
+			addToValue(feature.getKey(), feature.getValue());
+		}
+	}
 
-	@Override
-	public String toString() {
-		return features.toString();
+	public void sub(Vector v) {
+		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
+			addToValue(feature.getKey(), -feature.getValue());
+		}
 	}
 
 	public static Vector substract(Vector v1, Vector v2) {
@@ -135,9 +92,9 @@ public class Vector implements Serializable {
 		return sub;
 	}
 
-	public void add(Vector v) {
-		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
-			addToValue(feature.getKey(), feature.getValue());
-		}
+	@Override
+	public String toString() {
+		return features.toString();
 	}
+
 }

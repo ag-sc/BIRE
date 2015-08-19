@@ -11,14 +11,8 @@ public class AnnotatedDocument extends Document {
 	 */
 	protected State goldState;
 
-	public AnnotatedDocument() {
-	}
-
-	public AnnotatedDocument(String name, String content, List<Token> tokens,
-			State goldState) {
-		super(name, content, tokens);
-		this.goldState = goldState;
-		this.goldState.setDocument(this);
+	public AnnotatedDocument(Corpus corpus, String name, String content, List<Token> tokens) {
+		super(corpus, name, content, tokens);
 	}
 
 	public State getGoldState() {
@@ -27,8 +21,7 @@ public class AnnotatedDocument extends Document {
 
 	@Override
 	public String toString() {
-		return "AnnotatedDocument [content=" + content + ", tokens=" + tokens
-				+ ", goldState=" + goldState + "]";
+		return "AnnotatedDocument [content=" + content + ", tokens=" + tokens + ", goldState=" + goldState + "]";
 	}
 
 	public void setGoldState(State goldState) {
