@@ -3,3 +3,12 @@ This project uses slightly modified vesions of the JULIE Token Boundary Detector
 JTBD: https://github.com/JULIELab/jules-token-ae
 
 JSBD: https://github.com/JULIELab/jules-sentence-ae
+
+The following libraries are included as dependencies of the original JTBD/JSBD projects:
+mallet-deps.jar
+mallet-optimized.jar
+mallet-troveless-0.4.jar
+trove-1.1b5.jar
+
+Guava: https://code.google.com/p/guava-libraries/
+
