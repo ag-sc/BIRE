@@ -152,8 +152,8 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 1,
-						0.5);
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 0,
+						0);
 				Log.d("Train/test split: %s => #train: %s, #test: %s", split.getSplit(), train.size(), test.size());
 
 				Log.d("####################");

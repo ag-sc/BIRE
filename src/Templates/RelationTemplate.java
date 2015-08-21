@@ -6,9 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import Changes.StateChange;
+
+import java.util.Set;
+
 import Factors.Factor;
 import Learning.Vector;
 import Logging.Log;

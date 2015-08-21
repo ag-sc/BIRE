@@ -29,7 +29,7 @@ public abstract class Template implements Serializable {
 	private Map<FactorID, Factor> factors = new HashMap<>();
 
 	public int recomputed = 0;
-
+	public int removed = 0;
 	public int all = 0;
 
 	public void update(String feature, double alpha) {
@@ -74,6 +74,10 @@ public abstract class Template implements Serializable {
 		Log.d("%s", state);
 		FactorGraph factorGraph = state.getFactorGraph();
 
+		Set<VariableSet> allPossibleNewVariablesSet = getVariableSets(state);
+		Log.d("%s possible new Variables for template: %s", allPossibleNewVariablesSet.size(),
+				allPossibleNewVariablesSet);
+
 		Multimap<EntityID, StateChange> changedEntities = state.getChangedEntities();
 
 		Log.d("Changed Entities: %s", changedEntities);
@@ -85,24 +89,22 @@ public abstract class Template implements Serializable {
 		Set<VariableSet> allChangedVariableSets = new HashSet<>();
 		for (EntityID entityID : changedEntities.keySet()) {
 			if (anyRelevantChange(changedEntities.get(entityID))) {
-				allChangedVariableSets.addAll(factorGraph.getVariableSetForEntityID(this, entityID));
+				allChangedVariableSets.addAll(factorGraph.getVariableSetsForEntityID(this, entityID));
 			}
 		}
 		Log.d("(changed) Variables to be removed: %s", allChangedVariableSets);
-		Set<VariableSet> allPossibleNewVariablesSet = getVariableSets(state);
-		Log.d("%s possible new Variables for template: %s", allPossibleNewVariablesSet.size(),
-				allPossibleNewVariablesSet);
+
 		/*
 		 * Collect all variable sets that apply to this new state that contain a
 		 * relevantly changed variable. These need to be recomputed.
 		 */
-		Set<VariableSet> invalidVariableSets = new HashSet<>();
+		Set<VariableSet> recomputeVariableSets = new HashSet<>();
 		for (VariableSet variableSet : allPossibleNewVariablesSet) {
 			if (containsChangedVariable(variableSet, changedEntities)) {
-				invalidVariableSets.add(variableSet);
+				recomputeVariableSets.add(variableSet);
 			}
 		}
-		Log.d("%s variables to be (re)computed: %s", invalidVariableSets.size(), invalidVariableSets);
+		Log.d("%s variables to be (re)computed: %s", recomputeVariableSets.size(), recomputeVariableSets);
 
 		/*
 		 * Remove old, invalidated factors for each relevant base entity. This
@@ -114,7 +116,7 @@ public abstract class Template implements Serializable {
 			factorGraph.removeFactorForVariableSet(this, variableSet);
 		}
 
-		for (VariableSet variableSet : invalidVariableSets) {
+		for (VariableSet variableSet : recomputeVariableSets) {
 			// generate factor (features) for each relevant (changed)
 			// VariableSet
 			Factor factor = generateFactor(state, variableSet);
@@ -127,7 +129,8 @@ public abstract class Template implements Serializable {
 			}
 		}
 		// Log.d("Graph:\n%s", factorGraph);
-		recomputed += invalidVariableSets.size();
+		recomputed += recomputeVariableSets.size();
+		removed += allChangedVariableSets.size();
 		all += allPossibleNewVariablesSet.size();
 	}
 
@@ -203,6 +206,7 @@ public abstract class Template implements Serializable {
 		Set<FactorID> factorsForState = state.getFactorGraph().getFactorIDs(this);
 		factors.keySet().retainAll(factorsForState);
 		recomputed = 0;
+		removed = 0;
 		all = 0;
 	}
 

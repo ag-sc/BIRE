@@ -18,7 +18,7 @@ import Templates.variablesets.VariableSet;
 import utility.EntityID;
 import utility.FactorID;
 
-public class FactorGraph implements Serializable{
+public class FactorGraph implements Serializable {
 	{
 		Log.off();
 	}
@@ -74,7 +74,7 @@ public class FactorGraph implements Serializable{
 		return variableSet2Factor.inverse().get(factorID);
 	}
 
-	public Set<VariableSet> getVariableSetForEntityID(Template template, EntityID entityID) {
+	public Set<VariableSet> getVariableSetsForEntityID(Template template, EntityID entityID) {
 		Set<FactorID> allFactorsForTemplate = new HashSet<>(template2Factors.get(template));
 		Set<VariableSet> variablesOfTemplateForEntity = new HashSet<>();
 		for (FactorID factorID : allFactorsForTemplate) {
@@ -97,13 +97,14 @@ public class FactorGraph implements Serializable{
 
 			builder.append("\n");
 		}
-//		builder.append(String.format("### Factor: Template ###"));
-//		builder.append("\n");
-//		for (FactorID f : factor2Template.keySet()) {
-//			builder.append(String.format("\t%s: %s", f, factor2Template.get(f).getClass().getSimpleName()));
-//
-//			builder.append("\n");
-//		}
+		// builder.append(String.format("### Factor: Template ###"));
+		// builder.append("\n");
+		// for (FactorID f : factor2Template.keySet()) {
+		// builder.append(String.format("\t%s: %s", f,
+		// factor2Template.get(f).getClass().getSimpleName()));
+		//
+		// builder.append("\n");
+		// }
 		builder.append(String.format("### Factor: VariableSet ###"));
 		builder.append("\n");
 		for (FactorID f : variableSet2Factor.inverse().keySet()) {
