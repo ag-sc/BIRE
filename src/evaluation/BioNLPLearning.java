@@ -10,9 +10,12 @@ import java.util.List;
 import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
+import Corpus.Document;
 import Corpus.parser.brat.DatasetLoader;
 import Corpus.parser.usage.UsageLoader;
+import Learning.Learner;
 import Learning.Model;
+import Learning.callbacks.DocumentCallback;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Sampling.ExhaustiveBoundarySampler;
@@ -139,11 +142,12 @@ public class BioNLPLearning {
 		} else {
 			// N-Fold cross validation
 			int n = 3;
+			long[] seeds = { 1234, 2345, 3456 };
 			for (int i = 0; i < n; i++) {
 				Log.d("############################");
 				Log.d("############################");
 				Log.d("Cross Validation: %s/%s", i + 1, n);
-				DataSplit split = new DataSplit(allDocuments, 0.8);
+				DataSplit split = new DataSplit(allDocuments, 0.8, seeds[i]);
 				List<AnnotatedDocument> train = split.getTrain();
 				List<AnnotatedDocument> test = split.getTest();
 
@@ -152,8 +156,33 @@ public class BioNLPLearning {
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 				Model model = new Model(templates);
-				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 0,
-						0);
+
+				long startTime = System.currentTimeMillis();
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 0, 0);
+
+				/*
+				 * Pause the learner after every few documents to display
+				 * additional information
+				 */
+				// learner.setDocumentCallback(new DocumentCallback() {
+				// @Override
+				// public void onEndDocument(Learner learner, Document document,
+				// int indexOfDocument,
+				// int numberOfDocuments) {
+				// if (indexOfDocument % 31 == 30) {
+				// TaggedTimer.printTimings();
+				// Log.d("current trainingTime: ~ %s (%s seconds)",
+				// (System.currentTimeMillis() - startTime),
+				// (System.currentTimeMillis() - startTime) / 1000);
+				// try {
+				// Log.d("PAUSE: Wait for ENTER...");
+				// System.in.read();
+				// } catch (IOException e1) {
+				// e1.printStackTrace();
+				// }
+				// }
+				// }
+				// });
 				Log.d("Train/test split: %s => #train: %s, #test: %s", split.getSplit(), train.size(), test.size());
 
 				Log.d("####################");

@@ -41,11 +41,11 @@ public class SamplingProcedureRecord implements Serializable {
 		record.samplingStep = s;
 		record.samplerClass = sampler.getClass();
 		record.acceptedState = new StateRecord(currentState.getModelScore(),
-				currentState.getObjectiveFunctionScore());
+				currentState.getObjectiveScore());
 		record.generatedStates = new ArrayList<StateRecord>();
 		for (State state : nextStates) {
 			record.generatedStates.add(new StateRecord(state.getModelScore(),
-					state.getObjectiveFunctionScore()));
+					state.getObjectiveScore()));
 		}
 		samplingSteps[d][s].add(record);
 	}

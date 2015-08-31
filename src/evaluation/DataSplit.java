@@ -15,13 +15,20 @@ public class DataSplit {
 	private List<AnnotatedDocument> train;
 	private List<AnnotatedDocument> test;
 
+	public DataSplit(List<AnnotatedDocument> all, double split, long seed) {
+		this.split = split;
+		this.all = new ArrayList<AnnotatedDocument>(all);
+		shuffleAndSplit(new Random(seed));
+	}
+
 	public DataSplit(List<AnnotatedDocument> all, double split) {
 		this.split = split;
-
 		this.all = new ArrayList<AnnotatedDocument>(all);
+		shuffleAndSplit(new Random());
+	}
 
-		Collections.shuffle(all);
-
+	private void shuffleAndSplit(Random random) {
+		Collections.shuffle(all, random);
 		int n = all.size();
 		int splitIndex = (int) (split * n);
 		train = all.subList(0, splitIndex);

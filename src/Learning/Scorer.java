@@ -29,7 +29,6 @@ public class Scorer {
 	 * @return
 	 */
 	public double score(State state) {
-		long scID = TaggedTimer.start("SC-SCORE");
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -54,12 +53,10 @@ public class Scorer {
 			}
 		}
 		state.setModelScore(score);
-		TaggedTimer.stop(scID);
 		return score;
 	}
 
 	public void unroll(State state) {
-		long unrollID = TaggedTimer.start("SC-UNROLL");
 		/*
 		 * TODO to safe some RAM this function could return the generated
 		 * factors directly. This would safe some unnecessary loops and the
@@ -71,7 +68,6 @@ public class Scorer {
 		for (Template t : model.getTemplates()) {
 			t.applyTo(state);
 		}
-		TaggedTimer.stop(unrollID);
 	}
 
 	public Model getModel() {

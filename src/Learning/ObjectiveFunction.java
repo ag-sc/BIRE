@@ -20,7 +20,6 @@ public class ObjectiveFunction {
 	}
 
 	public Score score(State state, State goldState) {
-		long scoreTimer = TaggedTimer.start("OBJ-SCORE");
 		Collection<EntityAnnotation> entities = state.getEntities();
 		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
 		// Log.d("score state:\n\t%s\n\t%s (GOLD)", state, goldState);
@@ -74,8 +73,7 @@ public class ObjectiveFunction {
 			}
 		}
 		// TODO not the cleanest way to make the score accessible everywhere
-		state.setObjectiveFunctionScore(score);
-		TaggedTimer.stop(scoreTimer);
+		state.setObjectiveScore(score);
 		return score;
 	}
 

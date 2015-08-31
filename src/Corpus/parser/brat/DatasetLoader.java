@@ -30,8 +30,7 @@ public class DatasetLoader {
 
 	public static Corpus loadDatasetFromBinaries(String srcFilepath)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream(new FileInputStream(
-				srcFilepath));
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(srcFilepath));
 		Corpus corpus = (Corpus) in.readObject();
 		in.close();
 		return corpus;
@@ -41,11 +40,9 @@ public class DatasetLoader {
 		File annDir = new File("res/bionlp/ann");
 		File textDir = new File("res/bionlp/text");
 		File sentencesDir = new File("res/bionlp/julie/sentences");
-		File tokensDir = new File("res/bionlp/julie/tokens");
-		File tokenModelFile = new File(
-				"res/bionlp/julie/models/JULIE_life-science-1.6-token.mod.gz");
-		File sentenceModelFile = new File(
-				"res/bionlp/julie/models/JULIE_life-science-1.6-sentence.mod.gz");
+		// File tokensDir = new File("res/bionlp/julie/tokens");
+		File tokenModelFile = new File("res/bionlp/julie/models/JULIE_life-science-1.6-token.mod.gz");
+		File sentenceModelFile = new File("res/bionlp/julie/models/JULIE_life-science-1.6-sentence.mod.gz");
 		File configFilepath = new File("res/bionlp/annotation.conf");
 
 		BratConfigReader confReader = new BratConfigReader();
@@ -58,21 +55,18 @@ public class DatasetLoader {
 
 		// create a set of documents for which we have both the annotations file
 		// and the raw text file.
-		Set<String> completeDocumnts = new HashSet<String>(
-				annotationFiles.keySet());
+		Set<String> completeDocumnts = new HashSet<String>(annotationFiles.keySet());
 		completeDocumnts.retainAll(textFiles.keySet());
 		// FIXME include again when sentence splitter works better
 		completeDocumnts.remove("PMID-10364260");
-		Log.d("%s documents with a given text and annotation file",
-				completeDocumnts.size());
+		Log.d("%s documents with a given text and annotation file", completeDocumnts.size());
 		Log.d("filesnames: %s", completeDocumnts);
 		Corpus corpus = new BratCorpus(config);
 		int current = 1;
 		for (String filename : completeDocumnts) {
 			Log.d("#############################");
 			Log.d("#############################");
-			Log.d("parse document \"%s\" (%s/%s)", filename, current,
-					completeDocumnts.size());
+			Log.d("parse document \"%s\" (%s/%s)", filename, current, completeDocumnts.size());
 			File annFile = annotationFiles.get(filename);
 			File textFile = textFiles.get(filename);
 			try {
@@ -81,8 +75,7 @@ public class DatasetLoader {
 				Log.d("#####################");
 				Log.d("### Brat annotations:");
 				BratAnnotationParser parser = new BratAnnotationParser();
-				BratAnnotatedDocument bratDoc = parser.parseFile(annFile,
-						textFile);
+				BratAnnotatedDocument bratDoc = parser.parseFile(annFile, textFile);
 				Log.d("%s", bratDoc);
 
 				Log.d("#####################");
@@ -91,33 +84,29 @@ public class DatasetLoader {
 				File sentFile = new File(sentencesDir, textFile.getName());
 				// JulieSentenceSplitter.extractAndStoreSentences(textFile,
 				// sentFile, sentenceModelFile);
-				JavaSentenceSplitter.extractAndStoreSentences(textFile,
-						sentFile);
+				JavaSentenceSplitter.extractAndStoreSentences(textFile, sentFile);
 				Log.d("#####################");
 				Log.d("### Tokenization of sentences:");
-				List<Tokenization> tokenizations = Tokenization
-						.extractAndStoreTokens(filename, tokensDir.getPath(),
-								sentFile.getPath(), tokenModelFile.getPath());
+				List<Tokenization> tokenizations = Tokenization.extractTokens(filename, sentFile.getPath(),
+						tokenModelFile.getPath());
 
 				Log.d("#####################");
 				Log.d("### BIRE annotations:");
-				List<AnnotatedDocument> documents = Brat2BIREConverter.convert(
-						bratDoc, corpus, tokenizations);
+				List<AnnotatedDocument> documents = Brat2BIREConverter.convert(bratDoc, corpus, tokenizations);
 				// Log.d("%s", doc.getGoldState().toDetailedString());
 				corpus.addDocuments(documents);
 				current++;
 			} catch (Exception e1) {
 				e1.printStackTrace();
-				Log.w("Parsing of files for %s not possible. Skip this instance",
-						filename);
+				Log.w("Parsing of files for %s not possible. Skip this instance", filename);
 			}
 		}
 
 		try {
 			System.out.println("store");
 			saveCorpusToFile(corpus, destFilepath);
-			Log.d("Corpus (%s documents) successfully parsed and stored to file \"%s\"",
-					corpus.getDocuments().size(), destFilepath);
+			Log.d("Corpus (%s documents) successfully parsed and stored to file \"%s\"", corpus.getDocuments().size(),
+					destFilepath);
 			System.out.println("done!");
 			return corpus;
 		} catch (FileNotFoundException e) {
@@ -128,16 +117,14 @@ public class DatasetLoader {
 		return null;
 	}
 
-	private static void saveCorpusToFile(Corpus corpus, String destFilepath)
-			throws FileNotFoundException, IOException {
+	private static void saveCorpusToFile(Corpus corpus, String destFilepath) throws FileNotFoundException, IOException {
 		File destFile = new File(destFilepath);
 		File destDir = destFile.getParentFile();
 
 		if (!destDir.exists() && !destDir.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + destDir);
 		}
-		ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(
-				destFile));
+		ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(destFile));
 		os.writeObject(corpus);
 		os.close();
 	}

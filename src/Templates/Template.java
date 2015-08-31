@@ -2,10 +2,10 @@ package Templates;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.collect.Multimap;
 
@@ -26,7 +26,13 @@ public abstract class Template implements Serializable {
 
 	protected Vector weights = new Vector();
 
-	private Map<FactorID, Factor> factors = new HashMap<>();
+	/*
+	 * The provided constructor values for the capacity and the loadFactor are
+	 * the map's default values. The concurrencyLevel should be set to the
+	 * number of concurrently accessing threads. Since the DefaultLearners
+	 * default thread pool size is 4 this value is used here as well.
+	 */
+	private Map<FactorID, Factor> factors = new ConcurrentHashMap<>(16, 0.75f, 4);
 
 	public int recomputed = 0;
 	public int removed = 0;
@@ -121,8 +127,8 @@ public abstract class Template implements Serializable {
 			// VariableSet
 			Factor factor = generateFactor(state, variableSet);
 			if (factor != null) {
-				factors.put(factor.getID(), factor);
 				factorGraph.addFactor(this, factor.getID(), variableSet);
+				factors.put(factor.getID(), factor);
 			} else {
 				Log.w("Template %s returned null-Factor for VariableSet %s and State %s",
 						this.getClass().getSimpleName(), variableSet, state.getID());

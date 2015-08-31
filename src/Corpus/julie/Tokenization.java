@@ -9,14 +9,16 @@ import java.util.List;
 import Corpus.Token;
 import Corpus.parser.brat.Utils;
 import Logging.Log;
+import de.julielab.jtbd.JTBDException;
 import de.julielab.jtbd.JTBDExtendedAPI;
 import de.julielab.jtbd.TokenizedSentence;
+import de.julielab.jtbd.Tokenizer;
 import de.julielab.jtbd.Unit;
 
 public class Tokenization {
 
 	private static final String TOKENIZATION_FILE_SUFFIX = ".tok";
-
+	private static Tokenizer tokenizer;
 	public List<Token> tokens;
 	public String originalSentence;
 	public int absoluteStartOffset;
@@ -38,39 +40,80 @@ public class Tokenization {
 	 * @param documentName
 	 * @param tokenizationDirPath
 	 * @param sentencesFilepath
-	 * @param julieModelFilepath
 	 * @return
 	 * @throws FileNotFoundException
 	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws JTBDException
 	 */
-	public static List<Tokenization> extractAndStoreTokens(String documentName, String tokenizationDirPath,
-			String sentencesFilepath, String julieModelFilepath) throws FileNotFoundException, IOException {
+	public static List<Tokenization> extractTokens(String documentName, String sentencesFilepath,
+			String julieModelFilepath) throws FileNotFoundException, IOException, ClassNotFoundException {
 		Log.d("tokenize with julie:");
-		List<TokenizedSentence> tokenizedSentences = null;
-		tokenizedSentences = JTBDExtendedAPI.tokenize(sentencesFilepath, julieModelFilepath);
+		if (tokenizer == null) {
+			tokenizer = new Tokenizer();
+			tokenizer.readModel(julieModelFilepath);
+		}
+
 		List<String> sentences = Utils.readLines(sentencesFilepath);
-		saveTokenization(tokenizedSentences, documentName, tokenizationDirPath);
 		Log.d("julie-tokenized sentences:");
 		List<Tokenization> tokenizations = new ArrayList<Tokenization>();
 		int accumulatedSentenceLength = 0;
-		for (int i = 0; i < tokenizedSentences.size(); i++) {
-			List<Token> tokens = new ArrayList<Token>();
-			TokenizedSentence ts = tokenizedSentences.get(i);
-			Log.d("%s (#characters: %s)", ts.getOriginalSentence(), ts.getOriginalSentence().length());
-			Log.d("\t%s", ts.getTokens());
-			int index = 0;
-			for (Unit u : ts.getTokens()) {
-				String text = u.rep;
-				int from = u.begin;
-				int to = u.end;
-				tokens.add(new Token(index, from, to, text));
-				index++;
+		for (String sentence : sentences) {
+			try {
+				List<Unit> units = tokenizer.predict(sentence);
+				List<Token> tokens = new ArrayList<Token>();
+				Log.d("%s (#characters: %s)", sentence, sentence.length());
+				Log.d("\t%s", units);
+				int index = 0;
+				for (Unit u : units) {
+					String text = u.rep;
+					int from = u.begin;
+					int to = u.end;
+					tokens.add(new Token(index, from, to, text));
+					index++;
+				}
+				tokenizations.add(new Tokenization(tokens, sentence, accumulatedSentenceLength));
+				accumulatedSentenceLength += sentence.length() + 1;
+			} catch (JTBDException e) {
+				e.printStackTrace();
+				Log.w("Unable to tokenize sentence with JTBD. Skip: %s", sentence);
 			}
-			tokenizations.add(new Tokenization(tokens, sentences.get(i), accumulatedSentenceLength));
-			accumulatedSentenceLength += sentences.get(i).length() + 1;
 		}
 		return tokenizations;
 	}
+	// public static List<Tokenization> extractAndStoreTokens(String
+	// documentName, String tokenizationDirPath,
+	// String sentencesFilepath, String julieModelFilepath) throws
+	// FileNotFoundException, IOException {
+	// Log.d("tokenize with julie:");
+	// List<TokenizedSentence> tokenizedSentences = null;
+	// tokenizedSentences = JTBDExtendedAPI.tokenize(sentencesFilepath,
+	// julieModelFilepath);
+	// List<String> sentences = Utils.readLines(sentencesFilepath);
+	// saveTokenization(tokenizedSentences, documentName, tokenizationDirPath);
+	// Log.d("julie-tokenized sentences:");
+	// List<Tokenization> tokenizations = new ArrayList<Tokenization>();
+	// int accumulatedSentenceLength = 0;
+	// for (int i = 0; i < tokenizedSentences.size(); i++) {
+	// List<Token> tokens = new ArrayList<Token>();
+	// TokenizedSentence ts = tokenizedSentences.get(i);
+	// Log.d("%s (#characters: %s)", ts.getOriginalSentence(),
+	// ts.getOriginalSentence().length());
+	// Log.d("\t%s", ts.getTokens());
+	// int index = 0;
+	// for (Unit u : ts.getTokens()) {
+	// String text = u.rep;
+	// int from = u.begin;
+	// int to = u.end;
+	// tokens.add(new Token(index, from, to, text));
+	// index++;
+	// }
+	// tokenizations.add(new Tokenization(tokens, sentences.get(i),
+	// accumulatedSentenceLength));
+	// accumulatedSentenceLength += sentences.get(i).length() + 1;
+	// }
+	// return tokenizations;
+	// }
 
 	// public static List<Token> extractTokens(String documentName,
 	// String tokenizationDirPath, String splittedTextFilepath,

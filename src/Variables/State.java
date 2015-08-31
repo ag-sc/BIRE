@@ -45,7 +45,7 @@ public class State implements Serializable {
 
 		@Override
 		public int compare(State s1, State s2) {
-			return (int) -Math.signum(s1.getObjectiveFunctionScore().score - s2.getObjectiveFunctionScore().score);
+			return (int) -Math.signum(s1.getObjectiveScore().score - s2.getObjectiveScore().score);
 		}
 	};
 	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
@@ -75,7 +75,7 @@ public class State implements Serializable {
 	private final StateID id;
 	private Document document;
 	private double modelScore = 1;
-	private Score objectiveFunctionScore = new Score();
+	private Score objectiveScore = new Score();
 
 	private State() {
 		this.id = generateStateID();
@@ -98,7 +98,7 @@ public class State implements Serializable {
 			this.tokenToEntities.put(e.getKey(), new HashSet<EntityID>(e.getValue()));
 		}
 		this.modelScore = state.modelScore;
-		this.objectiveFunctionScore = new Score(state.objectiveFunctionScore);
+		this.objectiveScore = new Score(state.objectiveScore);
 		this.changedEntities = HashMultimap.create(state.changedEntities);
 		this.factorGraph = new FactorGraph(state.factorGraph);
 	}
@@ -252,7 +252,7 @@ public class State implements Serializable {
 		builder.append(scoreFormat.format(modelScore));
 		builder.append("]: ");
 		builder.append(" [");
-		builder.append(scoreFormat.format(objectiveFunctionScore != null ? objectiveFunctionScore.score : 0));
+		builder.append(scoreFormat.format(objectiveScore != null ? objectiveScore.score : 0));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<EntityID> entities = getAnnotationsForToken(t);
@@ -314,12 +314,12 @@ public class State implements Serializable {
 		this.modelScore = modelScore;
 	}
 
-	public void setObjectiveFunctionScore(Score objectiveFunctionScore) {
-		this.objectiveFunctionScore = objectiveFunctionScore;
+	public void setObjectiveScore(Score objectiveScore) {
+		this.objectiveScore = objectiveScore;
 	}
 
-	public Score getObjectiveFunctionScore() {
-		return objectiveFunctionScore;
+	public Score getObjectiveScore() {
+		return objectiveScore;
 	}
 
 	public FactorGraph getFactorGraph() {

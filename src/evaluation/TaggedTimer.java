@@ -5,14 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import Logging.Log;
 
 public class TaggedTimer {
 
-	private static Map<String, Long> categoryTimings = new HashMap<>();
-	private static Map<Long, String> jobCategories = new HashMap<>();
-	private static Map<Long, Long> jobStarts = new HashMap<>();
+	private static Map<String, Long> categoryTimings = new ConcurrentHashMap<>();
+	private static Map<Long, String> jobCategories = new ConcurrentHashMap<>();
+	private static Map<Long, Long> jobStarts = new ConcurrentHashMap<>();
 
 	private static Random random = new Random();
 	private static long first = 0;
