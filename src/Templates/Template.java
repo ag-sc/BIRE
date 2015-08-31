@@ -38,10 +38,22 @@ public abstract class Template implements Serializable {
 	public int removed = 0;
 	public int all = 0;
 
+	/**
+	 * Updates the weight of the given feature by adding the given alpha value.
+	 * 
+	 * @param feature
+	 * @param alpha
+	 */
 	public void update(String feature, double alpha) {
 		weights.addToValue(feature, alpha);
 	}
 
+	/**
+	 * Updates all features of this factor.
+	 * 
+	 * @param factor
+	 * @param alpha
+	 */
 	public void update(Factor factor, double alpha) {
 		for (String feature : factor.getFeatureVector().getFeatureNames()) {
 			update(feature, alpha);
@@ -68,10 +80,10 @@ public abstract class Template implements Serializable {
 	}
 
 	/**
-	 * This function computes factors (and their features) for each annotation
-	 * in the given state that is marked as changed. Furthermore, the specific
-	 * implementation of the template interface, determines which changes are
-	 * relevant to recompute factors.
+	 * This function computes factors (and their features) for each set of
+	 * variables (annotations) in the given state that has changed and needs
+	 * (re)computation. Furthermore, the specific implementation of the template
+	 * interface, determines which changes are relevant to recompute factors.
 	 * 
 	 * @param state
 	 */
@@ -141,17 +153,33 @@ public abstract class Template implements Serializable {
 	}
 
 	/**
-	 * This method returns true if the given state change should trigger the
-	 * re-computation of all factors (of this specific template) associated with
-	 * the respective entity.
+	 * This method returns true if the given state change might demand a
+	 * (re)computation of affected factors.
 	 * 
 	 * @param value
 	 * @return
 	 */
 	protected abstract boolean isRelevantChange(StateChange value);
 
+	/**
+	 * Generates a factor for the given set of variables. The exact type
+	 * (subclass) of the provided VariableSet must match the type that is
+	 * returned via getVariableSets(State). See the implementation of this
+	 * method for the used class.
+	 * 
+	 * @param state
+	 * @param variables
+	 * @return
+	 */
 	protected abstract Factor generateFactor(State state, VariableSet variables);
 
+	/**
+	 * Returns all sets of variables that can be extracted from the given state
+	 * and which this template can use to generate factors.
+	 * 
+	 * @param state
+	 * @return
+	 */
 	protected abstract Set<VariableSet> getVariableSets(State state);
 
 	private boolean anyRelevantChange(Collection<StateChange> changes) {
@@ -183,6 +211,12 @@ public abstract class Template implements Serializable {
 		return false;
 	}
 
+	/**
+	 * Returns all factors that are associated to the provided state.
+	 * 
+	 * @param state
+	 * @return
+	 */
 	public Set<Factor> getFactors(State state) {
 		Set<FactorID> factorIDsForState = state.getFactorGraph().getFactorIDs(this);
 		Set<Factor> factorsForState = new HashSet<>();
@@ -216,33 +250,53 @@ public abstract class Template implements Serializable {
 		all = 0;
 	}
 
+	// /**
+	// * Returns a vector that contains the sum of all feature vectors for all
+	// * factors of this template that are associated with the given state.
+	// *
+	// * @param state
+	// * @return
+	// */
+	// public Vector getJointFeatures(State state) {
+	// Vector sum = new Vector();
+	// for (Factor f : getFactors(state)) {
+	// sum.add(f.getFeatureVector());
+	// }
+	// return sum;
+	// }
+
 	/**
-	 * Returns a vector that contains the sum of all feature vectors for all
-	 * factors of this template that are associated with the given state.
+	 * Returns all currently used factors of this template.
 	 * 
-	 * @param state
 	 * @return
 	 */
-	public Vector getJointFeatures(State state) {
-		Vector sum = new Vector();
-		for (Factor f : getFactors(state)) {
-			sum.add(f.getFeatureVector());
-		}
-		return sum;
-	}
-
 	public Map<FactorID, Factor> getFactors() {
 		return factors;
 	}
 
+	/**
+	 * Returns the actual factor for the specified factor id
+	 * 
+	 * @param factorID
+	 * @return
+	 */
 	public Factor getFactor(FactorID factorID) {
 		return factors.get(factorID);
 	}
 
+	/**
+	 * Computes the differences of all features of both states. For this, the
+	 * template uses features from all factors that are not associated to both
+	 * states (since these differences would be always 0).
+	 * 
+	 * @param state1
+	 * @param state2
+	 * @return
+	 */
 	public Vector getFeatureDifferences(State state1, State state2) {
 		Vector diff = new Vector();
-		Set<FactorID> factors2 = state2.getFactorGraph().getFactorIDs(this);
 		Set<FactorID> factors1 = state1.getFactorGraph().getFactorIDs(this);
+		Set<FactorID> factors2 = state2.getFactorGraph().getFactorIDs(this);
 		// Log.d("Feature differences for State %s and %s of Template %s",
 		// state1.getID(), state2.getID(),
 		// this.getClass().getSimpleName());

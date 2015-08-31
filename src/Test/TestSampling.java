@@ -5,9 +5,9 @@ import java.util.List;
 import Corpus.AnnotatedDocument;
 import Corpus.Corpus;
 import Learning.Model;
-import Learning.ObjectiveFunction;
 import Learning.Scorer;
-import Sampling.DefaultSampler;
+import Learning.objective.DefaultObjectiveFunction;
+import Learning.objective.ObjectiveFunction;
 import Sampling.ExhaustiveEntitySampler;
 import Templates.CheatingTemplate;
 import Variables.State;
@@ -34,7 +34,7 @@ public class TestSampling {
 			System.out.println(nextState.toDetailedString());
 		}
 
-		ObjectiveFunction of = new ObjectiveFunction();
+		ObjectiveFunction of = new DefaultObjectiveFunction();
 		double score = of.score(nextState, goldState).score;
 		System.out.println("Score: " + score);
 	}

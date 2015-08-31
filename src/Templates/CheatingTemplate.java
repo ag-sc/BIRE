@@ -1,17 +1,15 @@
 package Templates;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import Changes.StateChange;
 import Corpus.AnnotatedDocument;
 import Factors.Factor;
-import Factors.FactorGraph;
-import Learning.ObjectiveFunction;
 import Learning.Vector;
+import Learning.objective.DefaultObjectiveFunction;
+import Learning.objective.ObjectiveFunction;
 import Logging.Log;
 import Templates.variablesets.UnorderedEntititesVariableSet;
 import Templates.variablesets.VariableSet;
@@ -25,7 +23,7 @@ public class CheatingTemplate extends Template implements Serializable {
 
 	private static final String GOLD = "GOLD";
 
-	private ObjectiveFunction objective = new ObjectiveFunction();
+	private ObjectiveFunction objective = new DefaultObjectiveFunction();
 
 	public CheatingTemplate() {
 		// weights.set(GOLD, 1.0);

@@ -120,7 +120,7 @@ public class SamplingHelper {
 			if (!roles.isEmpty()) {
 				ArgumentRole sampledRole = getRandomElement(roles);
 				tokenAnnotation.removeArgument(sampledRole);
-				Log.d("\t%s: (%s): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)",
+				Log.w("\t%s: (%s): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)",
 						tokenAnnotation.getID(), tokenAnnotation.getType().getName());
 				assert(false);
 			}

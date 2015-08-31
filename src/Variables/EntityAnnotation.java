@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Multimap;
+
 import Changes.StateChange;
 import Corpus.Token;
 import utility.EntityID;
@@ -32,6 +34,10 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 * enable an efficient cloning of states and their entities during the
 	 * training phase of the model. The state in which this entity lives offers
 	 * methods to resolve this weak reference.
+	 */
+	/*
+	 * FIXME implement as Multimap that allows multiple values for a single key
+	 * e.g. two Theme arguments
 	 */
 	private Map<ArgumentRole, EntityID> arguments;
 

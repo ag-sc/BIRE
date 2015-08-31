@@ -1,6 +1,5 @@
 package Learning.learner;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +16,6 @@ import java.util.concurrent.Future;
 import Corpus.AnnotatedDocument;
 import Learning.Learner;
 import Learning.Model;
-import Learning.ObjectiveFunction;
 import Learning.Score;
 import Learning.Scorer;
 import Learning.Vector;
@@ -25,6 +23,8 @@ import Learning.callbacks.DocumentCallback;
 import Learning.callbacks.EpochCallback;
 import Learning.callbacks.SamplerCallback;
 import Learning.callbacks.StepCallback;
+import Learning.objective.DefaultObjectiveFunction;
+import Learning.objective.ObjectiveFunction;
 import Logging.Log;
 import Sampling.Sampler;
 import Templates.Template;
@@ -75,7 +75,7 @@ public class DefaultLearner implements Learner {
 	private int numberOfThreads = 4;
 
 	public DefaultLearner() {
-		this.objective = new ObjectiveFunction();
+		this.objective = new DefaultObjectiveFunction();
 	}
 
 	public DefaultLearner(Model model, List<Sampler> samplers, int steps, double initialAlpha, double finalAlpha,
@@ -206,6 +206,15 @@ public class DefaultLearner implements Learner {
 		}
 	}
 
+	/**
+	 * Updates the model with each of the possible next states relative to the
+	 * provided current state.
+	 * 
+	 * @param currentAlpha
+	 * @param goldState
+	 * @param currentState
+	 * @param nextStates
+	 */
 	private void update(double currentAlpha, State goldState, State currentState, List<State> nextStates) {
 		Log.d("Update model with %s states and alpha=%s", nextStates.size(), currentAlpha);
 		for (State state : nextStates) {
@@ -213,6 +222,14 @@ public class DefaultLearner implements Learner {
 		}
 	}
 
+	/**
+	 * Applies the model's template to each of the given states, thus unrolling
+	 * (computing) the features. The <i>multithreaded</i> flag determines if the
+	 * computation is performed in parallel or sequentially.
+	 * 
+	 * @param currentState
+	 * @param nextStates
+	 */
 	private void unroll(State currentState, List<State> nextStates) {
 		long unrollID = TaggedTimer.start("SC-UNROLL");
 		Log.d("Unroll features for %s states...", nextStates.size() + 1);
@@ -248,6 +265,13 @@ public class DefaultLearner implements Learner {
 		TaggedTimer.stop(unrollID);
 	}
 
+	/**
+	 * Computes the model scores for each of the given states. The
+	 * <i>multithreaded</i> flag determines if the computation is performed in
+	 * parallel or sequentially.
+	 * 
+	 * @param nextStates
+	 */
 	private void scoreWithModel(List<State> nextStates) {
 		long scID = TaggedTimer.start("MODEL-SCORE");
 		Log.d("Score %s states according to model...", nextStates.size() + 1);
@@ -280,6 +304,15 @@ public class DefaultLearner implements Learner {
 		TaggedTimer.stop(scID);
 	}
 
+	/**
+	 * Computes the objective scores for each of the given states. The
+	 * <i>multithreaded</i> flag determines if the computation is performed in
+	 * parallel or sequentially.
+	 * 
+	 * @param goldState
+	 * @param currentState
+	 * @param nextStates
+	 */
 	private void scoreWithObjective(State goldState, State currentState, List<State> nextStates) {
 		long scID = TaggedTimer.start("OBJ-SCORE");
 		Log.d("Score %s states according to objective...", nextStates.size() + 1);
@@ -314,6 +347,16 @@ public class DefaultLearner implements Learner {
 		TaggedTimer.stop(scID);
 	}
 
+	/**
+	 * Performs a model update according to a learning scheme (currently
+	 * SampleRank or our custom perceptron learning). The update step is scaled
+	 * with the provided alpha value.
+	 * 
+	 * @param alpha
+	 * @param goldState
+	 * @param currentState
+	 * @param possibleNextState
+	 */
 	private void atomicUpdate(double alpha, State goldState, State currentState, State possibleNextState) {
 		Log.methodOff();
 		switch (learningProcedure) {
@@ -387,6 +430,16 @@ public class DefaultLearner implements Learner {
 
 	}
 
+	/**
+	 * The features present in the vectors in the featureDifferences map are
+	 * update according to their respective difference and the given direction.
+	 * Since the feature difference (times the direction) is used as the update
+	 * step, differences of 0 are not applied since they do not change the
+	 * weight anyway.
+	 * 
+	 * @param featureDifferences
+	 * @param learningDirection
+	 */
 	private void updateFeatures(Map<Template, Vector> featureDifferences, double learningDirection) {
 		Log.methodOff();
 		long upID = TaggedTimer.start("UP-UPDATE");
@@ -407,6 +460,17 @@ public class DefaultLearner implements Learner {
 
 	}
 
+	/**
+	 * Compares the objective scores of the state1 and state2 using the provided
+	 * goldState to decide if state1 is preferred over state2. Note: The
+	 * objective scores are merely accessed but not recomputed. This step needs
+	 * to be done before.
+	 * 
+	 * @param state1
+	 * @param state2
+	 * @param goldState
+	 * @return
+	 */
 	private boolean preference(State state1, State state2, State goldState) {
 
 		double O1 = state1.getObjectiveScore().score;
@@ -416,6 +480,18 @@ public class DefaultLearner implements Learner {
 		return O1 > O2;
 	}
 
+	/**
+	 * Selects a successor state from the given list of states. The state with
+	 * the best score is chosen, where the objective score is used as the
+	 * measure with probability <i>p_o=objectiveDrivenProbability</i> and the
+	 * model score with <i>p_m=1-objectiveDrivenProbability</i>. The scores are
+	 * merely accessed and not recomputed. This steps needs to be performed
+	 * beforehand.
+	 * 
+	 * @param states
+	 * @param objectiveDrivenProbability
+	 * @return
+	 */
 	public State selectNextState(List<State> states, double objectiveDrivenProbability) {
 		if (Math.random() < objectiveDrivenProbability) {
 			Log.d("Next state: Best by OBJECTIVE");
