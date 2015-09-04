@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import Changes.StateChange;
@@ -39,7 +40,7 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 * FIXME implement as Multimap that allows multiple values for a single key
 	 * e.g. two Theme arguments
 	 */
-	private Map<ArgumentRole, EntityID> arguments;
+	private Multimap<ArgumentRole, EntityID> arguments;
 
 	/**
 	 * This method should only be used by the managing State during a cloning
@@ -49,12 +50,11 @@ public class EntityAnnotation extends AbstractAnnotation {
 	 * @param entityAnnotation
 	 */
 	protected EntityAnnotation(State state, EntityAnnotation entityAnnotation) {
-		this(state, entityAnnotation.id, entityAnnotation.type,
-				new HashMap<ArgumentRole, EntityID>(entityAnnotation.arguments), entityAnnotation.beginTokenIndex,
-				entityAnnotation.endTokenIndex);
+		this(state, entityAnnotation.id, entityAnnotation.type, HashMultimap.create(entityAnnotation.arguments),
+				entityAnnotation.beginTokenIndex, entityAnnotation.endTokenIndex);
 	}
 
-	public EntityAnnotation(State state, EntityID id, EntityType entityType, Map<ArgumentRole, EntityID> arguments,
+	public EntityAnnotation(State state, EntityID id, EntityType entityType, Multimap<ArgumentRole, EntityID> arguments,
 			int start, int end) {
 		this.state = state;
 		this.id = id;
@@ -64,22 +64,22 @@ public class EntityAnnotation extends AbstractAnnotation {
 		this.endTokenIndex = end;
 	}
 
-	public EntityAnnotation(State state, EntityType entityType, Map<ArgumentRole, EntityID> arguments, int start,
+	public EntityAnnotation(State state, EntityType entityType, Multimap<ArgumentRole, EntityID> arguments, int start,
 			int end) {
 		this(state, state.generateEntityID(), entityType, arguments, start, end);
 	}
 
-	public EntityAnnotation(State state, String id, EntityType entityType, Map<ArgumentRole, EntityID> arguments,
+	public EntityAnnotation(State state, String id, EntityType entityType, Multimap<ArgumentRole, EntityID> arguments,
 			int start, int end) {
 		this(state, new EntityID(id), entityType, arguments, start, end);
 	}
 
 	public EntityAnnotation(State state, EntityType entityType, int start, int end) {
-		this(state, state.generateEntityID(), entityType, new HashMap<ArgumentRole, EntityID>(), start, end);
+		this(state, state.generateEntityID(), entityType, HashMultimap.create(), start, end);
 	}
 
 	public EntityAnnotation(State state, String id, EntityType entityType, int start, int end) {
-		this(state, new EntityID(id), entityType, new HashMap<ArgumentRole, EntityID>(), start, end);
+		this(state, new EntityID(id), entityType, HashMultimap.create(), start, end);
 	}
 
 	public EntityID getID() {
@@ -126,8 +126,8 @@ public class EntityAnnotation extends AbstractAnnotation {
 		state.onEntityChanged(this, StateChange.CHANGE_BOUNDARIES);
 	}
 
-	public Map<ArgumentRole, EntityID> getArguments() {
-		return new HashMap<>(arguments);
+	public Multimap<ArgumentRole, EntityID> getArguments() {
+		return HashMultimap.create(arguments);
 	}
 
 	public void addArgument(ArgumentRole role, EntityID entityID) {
@@ -135,8 +135,8 @@ public class EntityAnnotation extends AbstractAnnotation {
 		state.onEntityChanged(this, StateChange.ADD_ARGUMENT);
 	}
 
-	public void removeArgument(ArgumentRole role) {
-		arguments.remove(role);
+	public void removeArgument(ArgumentRole role, EntityID entity) {
+		arguments.remove(role, entity);
 		state.onEntityChanged(this, StateChange.REMOVE_ARGUMENT);
 	}
 
@@ -158,13 +158,19 @@ public class EntityAnnotation extends AbstractAnnotation {
 		return tokens;
 	}
 
+	// TODO test if this implementation produces exactly the original text
 	public String getText() {
 		List<Token> tokens = getTokens();
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < tokens.size(); i++) {
 			Token token = tokens.get(i);
 			builder.append(token.getText());
-			if (i < tokens.size() - 1) {
+
+			/*
+			 * Add a whitespace if the following token does not connect directly
+			 * to this one (e.g not "interleukin" and "-")
+			 */
+			if (i < tokens.size() - 1 && tokens.get(i).getTo() < tokens.get(i + 1).getFrom()) {
 				builder.append(" ");
 			}
 		}

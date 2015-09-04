@@ -2,13 +2,23 @@ package Corpus;
 
 import java.io.Serializable;
 
+public class Token implements Serializable {
 
-public class Token implements Serializable{
+	/**
+	 * Position of this token in the list of tokens that make up the tokenized
+	 * document.
+	 */
+	private int index;
+	/**
+	 * Character position of this token in the original text.
+	 */
+	private int from, to;
+	/**
+	 * Piece of text of the original document that the token offsets (from, to)
+	 * correspond to.
+	 */
+	private String text;
 
-	int index;
-	int from, to;
-	String text;
-		
 	public Token(int index, int start, int stop, String text) {
 		super();
 		this.index = index;
@@ -35,24 +45,6 @@ public class Token implements Serializable{
 
 	@Override
 	public String toString() {
-		return "Token [" + index + ": " + text + " (" + from
-				+ "-" + to + ")]";
+		return "Token [" + index + ": " + text + " (" + from + "-" + to + ")]";
 	}
-	
-	// public EntityAnnotation getAnnotation() {
-	// return annotation;
-	// }
-	//
-	// public void setAnnotation(EntityAnnotation annotation) {
-	// this.annotation = annotation;
-	// }
-	//
-	// public void removeAnnotation() {
-	// this.annotation = null;
-	// }
-	//
-	// public boolean hasAnnotation() {
-	// return annotation != null;
-	// }
-
 }

@@ -4,13 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-
-import Changes.StateChange;
-
 import java.util.Set;
 
+import com.google.common.collect.Multimap;
+
+import Changes.StateChange;
 import Factors.Factor;
 import Learning.Vector;
 import Logging.Log;
@@ -42,19 +41,22 @@ public class RelationTemplate extends Template implements Serializable {
 			 * different roles simultaneously for a given "parent" entity
 			 */
 			List<ArgumentRole> roles = new ArrayList<>();
-			for (Entry<ArgumentRole, EntityID> e : mainEntity.getArguments().entrySet()) {
+			for (Entry<ArgumentRole, EntityID> e : mainEntity.getArguments().entries()) {
 				if (argEntity.getID().equals(e.getValue())) {
 					roles.add(e.getKey());
 				}
 			}
-			Log.w("Template %s: Generating factor for VariableSet %s and State %s. In entity %s, argument %s serves in multiple roles: %s",
-					this.getClass().getSimpleName(), variables, state.getID(), mainEntity, argEntity.getID(), roles);
+			if (roles.size() > 1)
+				Log.w("%s: Generating factor for VariableSet %s and State %s. In entity %s, argument %s serves in multiple roles: %s",
+						this.getClass().getSimpleName(), variables, state.getID(), mainEntity, argEntity.getID(),
+						roles);
 			// TODO what if multiple roles exist? Factor for each single one?
 			if (!roles.isEmpty()) {
 				ArgumentRole argRole = roles.get(0);
 				EntityType argType = argEntity.getType();
 
-				Log.d("Add features to entity %s (\"%s\"):", mainEntity.getID(), mainEntity.getText());
+				Log.d("%s: Add features to entity %s (\"%s\"):", this.getClass().getSimpleName(), mainEntity.getID(),
+						mainEntity.getText());
 
 				Vector featureVector = new Vector();
 
@@ -90,7 +92,8 @@ public class RelationTemplate extends Template implements Serializable {
 						isAfter(mainEntity, argEntity));
 				featureVector.set("ENTITY_AFTER_ARGUMENT_ROLE=" + argRole, isAfter(mainEntity, argEntity));
 
-				Log.d("Features for entity %s (\"%s\"): %s", mainEntity.getID(), mainEntity.getText(), featureVector);
+				Log.d("%s: Features for entity %s (\"%s\"): %s", this.getClass().getSimpleName(), mainEntity.getID(),
+						mainEntity.getText(), featureVector);
 				Factor factor = new Factor(this);
 				factor.setFeatures(featureVector);
 				return factor;
@@ -123,8 +126,8 @@ public class RelationTemplate extends Template implements Serializable {
 	protected Set<VariableSet> getVariableSets(State state) {
 		Set<VariableSet> variableSets = new HashSet<>();
 		for (EntityAnnotation entity : state.getEntities()) {
-			Map<ArgumentRole, EntityID> arguments = entity.getArguments();
-			for (Entry<ArgumentRole, EntityID> a : arguments.entrySet()) {
+			Multimap<ArgumentRole, EntityID> arguments = entity.getArguments();
+			for (Entry<ArgumentRole, EntityID> a : arguments.entries()) {
 				/*
 				 * TODO if it is possible, that an entity serves as multiple
 				 * arguments for a single entity (but with different roles e.g.

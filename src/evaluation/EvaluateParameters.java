@@ -5,11 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
-import Corpus.parser.brat.DatasetLoader;
+import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.usage.UsageLoader;
 import Learning.Model;
 import Learning.Score;
@@ -65,7 +66,7 @@ public class EvaluateParameters {
 
 	public static void main(String[] args) {
 		// evaluate();
-		visualize();
+		visualizeAlphaOmegaGridSearch();
 	}
 
 	public static void evaluate() {
@@ -86,11 +87,11 @@ public class EvaluateParameters {
 			break;
 		case BIONLP:
 			try {
-				corpus = DatasetLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = DatasetLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			}
 			modelDir = new File(BIONLP_MODELS_DIR_PATH);
 			if (!modelDir.exists())
@@ -121,6 +122,44 @@ public class EvaluateParameters {
 		}
 		// allDocuments = allDocuments.subList(137, 140);
 
+		alphaOmegaGridSearch(modelDir, evalDir, samplers, allDocuments);
+	}
+
+	private static void alphaOmegaGridSearch(File modelDir, File evalDir, List<Sampler> samplers,
+			List<AnnotatedDocument> allDocuments) {
+		int defaultStep = 10;
+		int defaultEpoch = 5;
+
+		List<Params> alpha = new ArrayList<>();
+		alpha.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 0, 0, samplers));
+		alpha.add(new Params(defaultStep, defaultEpoch, 0.1, 0.1, 0, 0, samplers));
+		alpha.add(new Params(defaultStep, defaultEpoch, 0.01, 0.01, 0, 0, samplers));
+
+		List<Params> omega = new ArrayList<>();
+		omega.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 1, 1, samplers));
+		omega.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 1, 0, samplers));
+		omega.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 1, 0.5, samplers));
+		omega.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 0.5, 0, samplers));
+		omega.add(new Params(defaultStep, defaultEpoch, 0.1, 0.01, 0, 0, samplers));
+
+		// N-Fold cross validation
+		int n = 5;
+		long time = System.currentTimeMillis();
+		evaluateParamConfigs(alpha, n, allDocuments, "alpha", modelDir, evalDir);
+		evaluateParamConfigs(omega, n, allDocuments, "omega", modelDir, evalDir);
+		// Log.d("Overall performance:");
+		// EvaluationUtil.printPerformance(testRecords);
+		Log.d("############################");
+		Log.d("############################");
+		Log.d("############# ALL DONE #############");
+		Log.d("Total time: %s", String.valueOf((System.currentTimeMillis() - time)));
+
+		Log.d("############################");
+		TaggedTimer.printTimings();
+	}
+
+	private static void basicParamsGridSearch(File modelDir, File evalDir, List<Sampler> samplers,
+			List<AnnotatedDocument> allDocuments) {
 		int defaultStep = 10;
 		int defaultEpoch = 5;
 		List<Params> step = new ArrayList<>();
@@ -144,7 +183,7 @@ public class EvaluateParameters {
 		omega.add(new Params(defaultStep, defaultEpoch, 0.01, 0.001, 0, 0, samplers));
 
 		// N-Fold cross validation
-		int n = 3;
+		int n = 5;
 		long time = System.currentTimeMillis();
 		evaluateParamConfigs(step, n, allDocuments, "step", modelDir, evalDir);
 		evaluateParamConfigs(alpha, n, allDocuments, "alpha", modelDir, evalDir);
@@ -163,6 +202,12 @@ public class EvaluateParameters {
 		Log.d("############################");
 		Log.d("############################");
 		Log.d("Evalutate param group: %s", descriptor);
+		Random rand = new Random(0);
+		long[] seeds = new long[nCrossValidation];
+
+		for (int i = 0; i < nCrossValidation; i++) {
+			seeds[i] = rand.nextLong();
+		}
 		for (Params params : paramsList) {
 			Log.d("############################");
 			Log.d("Evalutate param: %s", params);
@@ -193,7 +238,6 @@ public class EvaluateParameters {
 							EvaluationUtil.generateFilenameForModel(String.format(MODEL_NAME_PATTERN, descriptor, i,
 									params.numberOfSamplingSteps, params.numberOfEpochs, params.initialAlpha,
 									params.finalAlpha, params.initialOmega, params.finalOmega))).getPath());
-
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -222,7 +266,93 @@ public class EvaluateParameters {
 		}
 	}
 
-	public static void visualize() {
+	public static void visualizeAlphaOmegaGridSearch() {
+		List<String>[] alpha = new List[3];
+		alpha[0] = new ArrayList<>();
+		alpha[1] = new ArrayList<>();
+		alpha[2] = new ArrayList<>();
+
+		alpha[0].add(
+				"Record_alpha_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.01_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_19-17-23");
+		alpha[0].add(
+				"Record_alpha_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.01_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_19-30-38");
+		alpha[0].add(
+				"Record_alpha_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.01_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_19-43-28");
+
+		alpha[1].add(
+				"Record_alpha_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_17-59-32");
+		alpha[1].add(
+				"Record_alpha_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_18-12-29");
+		alpha[1].add(
+				"Record_alpha_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_18-25-20");
+
+		alpha[2].add(
+				"Record_alpha_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.1_initOmega-0.0_finalOmega_0.0)_2015-8-31_18-38-25");
+		alpha[2].add(
+				"Record_alpha_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.1_initOmega-0.0_finalOmega_0.0)_2015-8-31_18-51-15");
+		alpha[2].add(
+				"Record_alpha_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.1_initOmega-0.0_finalOmega_0.0)_2015-8-31_19-4-18");
+
+		Log.d("# Compute alpha scores...");
+		List<Score> alphaScores = computeMeanScores(alpha);
+
+		List<String>[] omega = new List[5];
+		omega[0] = new ArrayList<>();
+		omega[1] = new ArrayList<>();
+		omega[2] = new ArrayList<>();
+		omega[3] = new ArrayList<>();
+		omega[4] = new ArrayList<>();
+
+		omega[0].add(
+				"Record_omega_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_22-26-49");
+		omega[0].add(
+				"Record_omega_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_22-39-32");
+		omega[0].add(
+				"Record_omega_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.0_finalOmega_0.0)_2015-8-31_22-52-24");
+
+		omega[1].add(
+				"Record_omega_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.5_finalOmega_0.0)_2015-8-31_21-48-1");
+		omega[1].add(
+				"Record_omega_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.5_finalOmega_0.0)_2015-8-31_22-1-7");
+		omega[1].add(
+				"Record_omega_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-0.5_finalOmega_0.0)_2015-8-31_22-13-58");
+
+		omega[2].add(
+				"Record_omega_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.0)_2015-8-31_20-32-56");
+		omega[2].add(
+				"Record_omega_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.0)_2015-8-31_20-45-31");
+		omega[2].add(
+				"Record_omega_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.0)_2015-8-31_20-58-2");
+
+		omega[3].add(
+				"Record_omega_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.5)_2015-8-31_21-10-23");
+		omega[3].add(
+				"Record_omega_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.5)_2015-8-31_21-22-47");
+		omega[3].add(
+				"Record_omega_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_0.5)_2015-8-31_21-35-15");
+
+		omega[4].add(
+				"Record_omega_test_NCrossVal-0_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_1.0)_2015-8-31_19-55-39");
+		omega[4].add(
+				"Record_omega_test_NCrossVal-1_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_1.0)_2015-8-31_20-7-57");
+		omega[4].add(
+				"Record_omega_test_NCrossVal-2_(steps-10_epochs-5_initAlpha-0.1_finalAlpha-0.01_initOmega-1.0_finalOmega_1.0)_2015-8-31_20-20-28");
+
+		Log.d("# Compute omega scores...");
+		List<Score> omegaScores = computeMeanScores(omega);
+
+		Log.d("#################");
+		Log.d("##### Alpha #####");
+		Log.d("0.01->0.01, 0.1->0.01, 0.1->0.1");
+		EvaluationUtil.printScores(alphaScores);
+
+		Log.d("#################");
+		Log.d("##### Omega #####");
+		Log.d("0->0, 0.5->0, 1->0, 1->0.5, 1->1");
+		EvaluationUtil.printScores(omegaScores);
+	}
+
+	public static void visualizeBasicParamGridSearch() {
 		List<String>[] alpha = new List[3];
 		alpha[0] = new ArrayList<>();
 		alpha[1] = new ArrayList<>();

@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
 import Corpus.Corpus;
@@ -74,7 +77,7 @@ public class Brat2BIREConverter {
 			Log.d("Tokens: %s", tokenization.tokens);
 			String content = tokenization.originalSentence;
 			AnnotatedDocument doc = new AnnotatedDocument(corpus, bratDoc.getTextFilename() + "-" + sentenceNumber,
-					content, tokenization.tokens);
+					content, tokenization.tokens, tokenization.absoluteStartOffset);
 			State state = new State(doc);
 
 			for (BratTextBoundAnnotation tann : textAnnotations) {
@@ -193,7 +196,7 @@ public class Brat2BIREConverter {
 
 	private static void convertEventAnnotation(State state, AnnotationConfig config, Tokenization tokenization,
 			BratEventAnnotation e) {
-		Map<ArgumentRole, EntityID> arguments = new HashMap<>();
+		Multimap<ArgumentRole, EntityID> arguments = HashMultimap.create();
 		for (Entry<String, BratAnnotation> entry : e.getArguments().entrySet()) {
 			BratAnnotation ann = entry.getValue();
 			// Entities in the BIRE annotation implementation only keep weak
@@ -234,7 +237,7 @@ public class Brat2BIREConverter {
 	}
 
 	private static void convertRelationAnnotation(State state, AnnotationConfig config, BratRelationAnnotation t) {
-		Map<ArgumentRole, EntityID> arguments = new HashMap<>();
+		Multimap<ArgumentRole, EntityID> arguments = HashMultimap.create();
 		for (Entry<String, BratAnnotation> entry : t.getArguments().entrySet()) {
 			BratAnnotation ann = entry.getValue();
 			arguments.put(new ArgumentRole(entry.getKey()), new EntityID(ann.getID()));

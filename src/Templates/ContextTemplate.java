@@ -30,7 +30,7 @@ public class ContextTemplate extends Template implements Serializable {
 
 			SingleEntityVariableSet variables = (SingleEntityVariableSet) genericVariables;
 			EntityAnnotation entity = state.getEntity(variables.entityID);
-			Log.d("Add features to entity %s (\"%s\"):", entity.getID(), entity.getText());
+			Log.d("%s: Add features to entity %s (\"%s\"):", this.getClass().getSimpleName(), entity.getID(), entity.getText());
 
 			Vector featureVector = new Vector();
 
@@ -54,7 +54,7 @@ public class ContextTemplate extends Template implements Serializable {
 				}
 			}
 
-			Log.d("Features for entity %s (\"%s\"): %s", entity.getID(), entity.getText(), featureVector);
+			Log.d("%s: Features for entity %s (\"%s\"): %s", this.getClass().getSimpleName(),entity.getID(), entity.getText(), featureVector);
 			Factor factor = new Factor(this);
 			factor.setFeatures(featureVector);
 			return factor;

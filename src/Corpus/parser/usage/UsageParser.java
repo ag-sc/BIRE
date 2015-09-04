@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
 import Corpus.BratCorpus;
@@ -145,7 +148,7 @@ public class UsageParser {
 				List<Token> tokens = tokenize(content);
 
 				AnnotatedDocument doc = new AnnotatedDocument(corpus,
-						String.format("%s-%s-%s-%s", category, documentID, productID, reviewID), content, tokens);
+						String.format("%s-%s-%s-%s", category, documentID, productID, reviewID), content, tokens, 0);
 				doc.setGoldState(new State(doc));
 				documents.put(documentID, doc);
 			}
@@ -241,7 +244,7 @@ public class UsageParser {
 					Log.w("EnitityType \"%s\" for annotation in file %s and line %s not found in given config.",
 							entityTypeName, relationFile, lineNumber);
 				}
-				Map<ArgumentRole, EntityID> arguments = new HashMap<>();
+				Multimap<ArgumentRole, EntityID> arguments = HashMultimap.create();
 				String triggerID = null;
 				if (TARGET_SUBJECTIVE_TYPE_NAME.equals(entityTypeName)) {
 					/**

@@ -29,7 +29,7 @@ public class TestData {
 		Log.d("Tokens for dummy data: %s", tokens);
 
 		BratCorpus corpus = new BratCorpus(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens, 0);
 		State goldState = new State(doc);
 		doc.setGoldState(goldState);
 

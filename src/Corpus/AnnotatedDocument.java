@@ -11,8 +11,8 @@ public class AnnotatedDocument extends Document {
 	 */
 	protected State goldState;
 
-	public AnnotatedDocument(Corpus corpus, String name, String content, List<Token> tokens) {
-		super(corpus, name, content, tokens);
+	public AnnotatedDocument(Corpus corpus, String name, String content, List<Token> tokens, int offset) {
+		super(corpus, name, content, tokens, offset);
 	}
 
 	public State getGoldState() {

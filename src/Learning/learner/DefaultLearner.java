@@ -72,7 +72,7 @@ public class DefaultLearner implements Learner {
 
 	private ExecutorService pool;
 	private final boolean multithreaded = true;
-	private int numberOfThreads = 4;
+	private int numberOfThreads = 3;
 
 	public DefaultLearner() {
 		this.objective = new DefaultObjectiveFunction();
@@ -111,11 +111,11 @@ public class DefaultLearner implements Learner {
 		 * This probability decreases during the training, so that the learner,
 		 * in the end, favors the decisions of the model.
 		 */
-		double omegaStep = (initialOmega - finalOmega) / (steps * documents.size() * numberOfEpochs - 1);
 		double currentOmega = initialOmega;
+		double omegaStep = (initialOmega - finalOmega) / (steps * documents.size() * numberOfEpochs - 1);
 
-		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
 		double currentAlpha = initialAlpha;
+		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
 		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
 		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha, finalAlpha,
 				alphaStep);
@@ -187,7 +187,6 @@ public class DefaultLearner implements Learner {
 						Log.d("Changed: %s", currentState.getChangedEntities());
 						for (Template t : model.getTemplates()) {
 							Log.d("Templates: %s: %s", t.getClass().getSimpleName(), t.getFactors().keySet());
-
 						}
 						samplerCallback.onEndSampler(this, sampler, indexOfSampler, samplers.size(), s, steps, document,
 								d, documents.size(), e, numberOfEpochs);

@@ -11,7 +11,7 @@ import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.Document;
-import Corpus.parser.brat.DatasetLoader;
+import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.usage.UsageLoader;
 import Learning.Learner;
 import Learning.Model;
@@ -50,11 +50,11 @@ public class BioNLPLearning {
 			break;
 		case BIONLP:
 			try {
-				corpus = DatasetLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = DatasetLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			}
 			modelDir = new File("res/bionlp/models");
 			if (!modelDir.exists())
@@ -158,7 +158,7 @@ public class BioNLPLearning {
 				Model model = new Model(templates);
 
 				long startTime = System.currentTimeMillis();
-				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.001, 0, 0);
+				DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.01, 0, 0);
 
 				/*
 				 * Pause the learner after every few documents to display

@@ -18,16 +18,6 @@ public abstract class ObjectiveFunction {
 		return overlap;
 	}
 
-	public static double overlapScore(EntityAnnotation entity, EntityAnnotation goldEntity) {
-		int a = entity.getBeginTokenIndex();
-		int b = entity.getEndTokenIndex();
-		int x = goldEntity.getBeginTokenIndex();
-		int y = goldEntity.getEndTokenIndex();
-		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
-		double overlapScore = ((double) overlap) / (b - a + 1);
-		return overlapScore;
-	}
-
 	public boolean typeMatches(EntityAnnotation entity, EntityAnnotation goldEntity) {
 		return entity.getType().equals(goldEntity.getType());
 	}

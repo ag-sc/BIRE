@@ -1,11 +1,14 @@
 package Sampling;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.google.common.collect.Multimap;
 
 import Changes.BoundaryChange;
 import Changes.StateChange;
@@ -107,19 +110,19 @@ public class SamplingHelper {
 	}
 
 	/**
-	 * Chooses an existing argument (role) randomly and removes it from the Map
-	 * of arguments for this entity. Note that other annotation may still
-	 * reference this argument.
+	 * Chooses an existing argument (role and entity) randomly and removes it
+	 * from the Map of arguments for this entity. Note that other annotation may
+	 * still reference this argument.
 	 * 
 	 * @param tokenAnnotation
 	 */
 	public static void removeRandomArgument(EntityAnnotation tokenAnnotation) {
 		if (!tokenAnnotation.getArguments().isEmpty()) {
-			Map<ArgumentRole, EntityID> arguments = tokenAnnotation.getArguments();
-			List<ArgumentRole> roles = new ArrayList<>(arguments.keySet());
+			Multimap<ArgumentRole, EntityID> arguments = tokenAnnotation.getArguments();
+			List<Entry<ArgumentRole, EntityID>> roles = new ArrayList<>(arguments.entries());
 			if (!roles.isEmpty()) {
-				ArgumentRole sampledRole = getRandomElement(roles);
-				tokenAnnotation.removeArgument(sampledRole);
+				Entry<ArgumentRole, EntityID> sampledArgument = getRandomElement(roles);
+				tokenAnnotation.removeArgument(sampledArgument.getKey(), sampledArgument.getValue());
 				Log.w("\t%s: (%s): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)",
 						tokenAnnotation.getID(), tokenAnnotation.getType().getName());
 				assert(false);
@@ -228,23 +231,22 @@ public class SamplingHelper {
 		possibleNewRoles.addAll(entity.getType().getCoreArguments().keySet());
 		possibleNewRoles.addAll(entity.getType().getOptionalArguments().keySet());
 
-		List<ArgumentRole> assignedRoles = new ArrayList<>(entity.getArguments().keySet());
-		if (!assignedRoles.isEmpty()) {
+		List<Entry<ArgumentRole, EntityID>> arguments = new ArrayList<>(entity.getArguments().entries());
+		if (!arguments.isEmpty()) {
 			// select random existing argument by role
-			ArgumentRole argumentRoleToChange = getRandomElement(assignedRoles);
-			EntityID argumentEntityID = entity.getArguments().get(argumentRoleToChange);
+			Entry<ArgumentRole, EntityID> argumentToChange = getRandomElement(arguments);
 			// remove current role from possible alternatives
-			possibleNewRoles.remove(argumentRoleToChange);
+			possibleNewRoles.remove(argumentToChange.getKey());
 			// sample from alternatives
 			ArgumentRole sampledNewRole = getRandomElement(possibleNewRoles);
 			// remove already assigned roles
 			// unassignedRoles.removeAll(entity.getArguments().keySet());
 
 			if (!possibleNewRoles.isEmpty()) {
-				entity.removeArgument(argumentRoleToChange);
-				entity.addArgument(sampledNewRole, argumentEntityID);
-				Log.d("\tChange role from %s to %s for argument entity %s", argumentRoleToChange, sampledNewRole,
-						argumentEntityID);
+				entity.removeArgument(argumentToChange.getKey(), argumentToChange.getValue());
+				entity.addArgument(sampledNewRole, argumentToChange.getValue());
+				Log.d("\tChange role from %s to %s for argument entity %s", argumentToChange.getKey(), sampledNewRole,
+						argumentToChange.getValue());
 			} else {
 
 				Log.d("\t%s (%s): No unassigned arguments left", entity.getID(), entity.getType().getName());
@@ -255,24 +257,25 @@ public class SamplingHelper {
 	}
 
 	public static void changeRandomArgumentEntity(EntityAnnotation entity, State state) {
-		List<ArgumentRole> assignedRoles = new ArrayList<>(entity.getArguments().keySet());
-		if (!assignedRoles.isEmpty()) {
+		List<Entry<ArgumentRole, EntityID>> arguments = new ArrayList<>(entity.getArguments().entries());
+		if (!arguments.isEmpty()) {
 			// select random existing argument by role
-			ArgumentRole roleOfArgumentToChange = getRandomElement(assignedRoles);
-			EntityID argumentToChange = entity.getArguments().get(roleOfArgumentToChange);
+			Entry<ArgumentRole, EntityID> argumentToChange = getRandomElement(arguments);
 
 			// list alternative argument entities
 			List<EntityID> entityIDs = new ArrayList<EntityID>(state.getEntityIDs());
 
+			// remove parent entity from list of possible arguments
 			entityIDs.remove(entity.getID());
-			entityIDs.remove(argumentToChange);
+			// remove previous entity from list of possible arguments
+			entityIDs.remove(argumentToChange.getValue());
 
 			if (!entityIDs.isEmpty()) {
 				EntityID newArgumentID = getRandomElement(entityIDs);
 				// replaces the previous entity with the new one
-				entity.addArgument(roleOfArgumentToChange, newArgumentID);
-				Log.d("\tChange entity of argument %s from entity %s to %s", roleOfArgumentToChange, argumentToChange,
-						newArgumentID);
+				entity.addArgument(argumentToChange.getKey(), newArgumentID);
+				Log.d("\tChange entity of argument %s from entity %s to %s", argumentToChange.getKey(),
+						argumentToChange.getValue(), newArgumentID);
 			} else {
 
 				Log.d("\t%s (%s): No entities for argument existing", entity.getID(), entity.getType().getName());

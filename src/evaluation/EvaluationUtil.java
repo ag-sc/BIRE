@@ -9,19 +9,26 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import Corpus.Document;
+import Corpus.Token;
 import Learning.Score;
 import Learning.Vector;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Templates.Template;
+import Variables.EntityAnnotation;
+import Variables.State;
 import evaluation.SamplingProcedureRecord.SamplingStepRecord;
 
 public class EvaluationUtil {
@@ -206,5 +213,42 @@ public class EvaluationUtil {
 			Log.d("P=%s\t|\tR=%s\t|\tF1=%s", SCORE_FORMAT.format(score.precision), SCORE_FORMAT.format(score.recall),
 					SCORE_FORMAT.format(score.score));
 		}
+	}
+
+	public final static Set<String> entities = new HashSet<>(Arrays.asList("Protein", "Entity"));
+	public final static Set<String> events = new HashSet<>(
+			Arrays.asList("Gene_expression", "Transcription", "Protein_catabolism", "Localization", "Binding",
+					"Phosphorylation", "Regulation", "Positive_regulation", "Negative_regulation"));
+
+	public String toBioNLPFormat(State state) {
+		StringBuilder builder = new StringBuilder();
+		for (EntityAnnotation e : state.getEntities()) {
+			if (entities.contains(e.getType().getName())) {
+				builder.append(writeEntity(e));
+				builder.append("\n");
+			} else if (events.contains(e.getType().getName())) {
+				builder.append(writeEvent(e));
+				builder.append("\n");
+			}
+		}
+		return builder.toString();
+	}
+
+	private String writeEntity(EntityAnnotation e) {
+		Document doc = e.getState().getDocument();
+		List<Token> tokens = e.getTokens();
+		String pattern = "%s\t%s %s:%s\t%s";
+		String id = e.getID().id;
+		String type = e.getType().getName();
+		String text = e.getText();
+		int from = doc.getOffset() + tokens.get(0).getFrom();
+		int to = doc.getOffset() + tokens.get(tokens.size() - 1).getTo();
+		return String.format(pattern, id, type, from, to, text);
+	}
+
+	private String writeEvent(EntityAnnotation e) {
+		String pattern = "%s\t%s %s:%s\t%s";
+
+		return String.format(pattern);
 	}
 }

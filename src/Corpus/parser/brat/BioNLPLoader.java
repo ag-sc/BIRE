@@ -22,7 +22,7 @@ import Corpus.julie.JavaSentenceSplitter;
 import Corpus.julie.Tokenization;
 import Logging.Log;
 
-public class DatasetLoader {
+public class BioNLPLoader {
 
 	public static void main(String[] args) {
 		convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);

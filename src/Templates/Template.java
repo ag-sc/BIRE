@@ -297,13 +297,6 @@ public abstract class Template implements Serializable {
 		Vector diff = new Vector();
 		Set<FactorID> factors1 = state1.getFactorGraph().getFactorIDs(this);
 		Set<FactorID> factors2 = state2.getFactorGraph().getFactorIDs(this);
-		// Log.d("Feature differences for State %s and %s of Template %s",
-		// state1.getID(), state2.getID(),
-		// this.getClass().getSimpleName());
-		// Log.d("%s", state1);
-		// Log.d("%s", state2);
-		// Log.d("Factors1: %s", factors1);
-		// Log.d("Factors2: %s", factors2);
 		for (FactorID factorID : factors1) {
 			if (!factors2.contains(factorID)) {
 				Factor factor = factors.get(factorID);

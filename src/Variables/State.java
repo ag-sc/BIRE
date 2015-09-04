@@ -209,10 +209,10 @@ public class State implements Serializable {
 	 */
 	private void removeReferencingArguments(EntityAnnotation removedEntity) {
 		for (EntityAnnotation e : entities.values()) {
-			Map<ArgumentRole, EntityID> arguments = e.getArguments();
-			for (Entry<ArgumentRole, EntityID> entry : arguments.entrySet()) {
+			Multimap<ArgumentRole, EntityID> arguments = e.getArguments();
+			for (Entry<ArgumentRole, EntityID> entry : arguments.entries()) {
 				if (entry.getValue().equals(removedEntity.getID())) {
-					e.removeArgument(entry.getKey());
+					e.removeArgument(entry.getKey(), entry.getValue());
 					/*
 					 * Note: no need to mark entity as changed here. This will
 					 * happen in the entity's removeArgument-method
@@ -241,6 +241,30 @@ public class State implements Serializable {
 
 	public StateID getID() {
 		return id;
+	}
+
+	public void setModelScore(double modelScore) {
+		this.modelScore = modelScore;
+	}
+
+	public void setObjectiveScore(Score objectiveScore) {
+		this.objectiveScore = objectiveScore;
+	}
+
+	public Score getObjectiveScore() {
+		return objectiveScore;
+	}
+
+	public FactorGraph getFactorGraph() {
+		return factorGraph;
+	}
+
+	public void onEntityChanged(EntityAnnotation entity, StateChange change) {
+		changedEntities.put(entity.getID(), change);
+	}
+
+	public void markAsUnchanged() {
+		changedEntities.clear();
 	}
 
 	// <T1-Protein: tumor necrosis <T2-Protein: factor :T1:T2>
@@ -308,30 +332,6 @@ public class State implements Serializable {
 			builder.append("\n");
 		}
 		return builder.toString().trim();
-	}
-
-	public void setModelScore(double modelScore) {
-		this.modelScore = modelScore;
-	}
-
-	public void setObjectiveScore(Score objectiveScore) {
-		this.objectiveScore = objectiveScore;
-	}
-
-	public Score getObjectiveScore() {
-		return objectiveScore;
-	}
-
-	public FactorGraph getFactorGraph() {
-		return factorGraph;
-	}
-
-	public void onEntityChanged(EntityAnnotation entity, StateChange change) {
-		changedEntities.put(entity.getID(), change);
-	}
-
-	public void markAsUnchanged() {
-		changedEntities.clear();
 	}
 
 }

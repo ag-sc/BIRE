@@ -5,7 +5,7 @@ import java.util.List;
 
 import Corpus.Constants;
 import Corpus.Corpus;
-import Corpus.parser.brat.DatasetLoader;
+import Corpus.parser.brat.BioNLPLoader;
 import Learning.Learner;
 import Learning.Model;
 import Learning.learner.DefaultLearner;
@@ -31,15 +31,15 @@ public class TestLearning {
 			corpus = TestData.getDummyData();
 			break;
 		case 1:
-			corpus = DatasetLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+			corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			break;
 		case 2:
 			try {
-				corpus = DatasetLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = DatasetLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
+				corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
 			}
 			break;
 		default:

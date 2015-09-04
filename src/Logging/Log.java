@@ -14,8 +14,7 @@ public class Log {
 	private static final boolean logToFile = false;
 	private static final String BIRE_LOGGER_NAME = "BIRE";
 	private static final String DEFAULT_LOGFILE_DIR = "res/log";
-	private static final String LOGFILE_NAME_PATTERN = DEFAULT_LOGFILE_DIR
-			+ "/LOG_%s-%s-%s_%s-%s-%s";
+	private static final String LOGFILE_NAME_PATTERN = DEFAULT_LOGFILE_DIR + "/LOG_%s-%s-%s_%s-%s-%s";
 	// private static Logger log;
 	private static Set<String> mutedMethods;
 	private static Set<String> mutedClasses;
@@ -24,6 +23,7 @@ public class Log {
 
 	protected static final String LEVEL_MESSAGE_FORMAT = "%s: %s\n";
 	protected static final Set<Level> HIDDEN_LEVELS = new HashSet<Level>();
+
 	static {
 		HIDDEN_LEVELS.add(DebugLevel.DEBUG);
 	}
@@ -64,15 +64,13 @@ public class Log {
 	}
 
 	private static String getLogFilename(Calendar now) {
-		return String.format(LOGFILE_NAME_PATTERN, now.get(Calendar.YEAR),
-				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
-				now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+		return String.format(LOGFILE_NAME_PATTERN, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
+				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
 				now.get(Calendar.SECOND));
 	}
 
 	private static StackTraceElement getCallingMethod() {
-		StackTraceElement[] stackTraceElements = Thread.currentThread()
-				.getStackTrace();
+		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 		if (stackTraceElements != null && stackTraceElements.length >= 3) {
 			return stackTraceElements[3];
 		} else {
@@ -116,8 +114,7 @@ public class Log {
 	private static boolean isMuted(StackTraceElement e) {
 		// System.out.println("Muted Classes: " + mutedClasses);
 		// System.out.println(e);
-		return mutedClasses.contains(getClassKey(e))
-				|| mutedMethods.contains(getMethodKey(e));
+		return mutedClasses.contains(getClassKey(e)) || mutedMethods.contains(getMethodKey(e));
 	}
 
 	private static String getMethodKey(StackTraceElement e) {
@@ -135,8 +132,7 @@ public class Log {
 
 	public static void log(Level level, String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
-		logp(level, e.getClassName(), e.getMethodName(),
-				String.format(message, args));
+		logp(level, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
 	public static void d(String message) {
@@ -155,8 +151,7 @@ public class Log {
 	public static void d(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(DebugLevel.DEBUG, e.getClassName(), e.getMethodName(),
-					String.format(message, args));
+			logp(DebugLevel.DEBUG, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
 	public static void i(String message) {
@@ -168,8 +163,7 @@ public class Log {
 	public static void i(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.INFO, e.getClassName(), e.getMethodName(),
-					String.format(message, args));
+			logp(Level.INFO, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
 	public static void c(String message) {
@@ -181,45 +175,40 @@ public class Log {
 	public static void c(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
 		if (!isMuted(e))
-			logp(Level.CONFIG, e.getClassName(), e.getMethodName(),
-					String.format(message, args));
+			logp(Level.CONFIG, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
 	public static void w(String message) {
 		StackTraceElement e = getCallingMethod();
-		if (!isMuted(e))
-			logp(Level.WARNING, e.getClassName(), e.getMethodName(), message);
+		// if (!isMuted(e))
+		logp(Level.WARNING, e.getClassName(), e.getMethodName(), message);
 	}
 
 	public static void w(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
-		if (!isMuted(e))
-			logp(Level.WARNING, e.getClassName(), e.getMethodName(),
-					String.format(message, args));
+		// if (!isMuted(e))
+		logp(Level.WARNING, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
 	public static void s(String message) {
 		StackTraceElement e = getCallingMethod();
-		if (!isMuted(e))
-			logp(Level.SEVERE, e.getClassName(), e.getMethodName(), message);
+		// if (!isMuted(e))
+		logp(Level.SEVERE, e.getClassName(), e.getMethodName(), message);
 	}
 
 	public static void s(String message, Object... args) {
 		StackTraceElement e = getCallingMethod();
-		if (!isMuted(e))
-			logp(Level.SEVERE, e.getClassName(), e.getMethodName(),
-					String.format(message, args));
+		// if (!isMuted(e))
+		logp(Level.SEVERE, e.getClassName(), e.getMethodName(), String.format(message, args));
 	}
 
-	private static void logp(Level level, String className, String methodName,
-			String message) {
+	private static void logp(Level level, String className, String methodName, String message) {
 		// log.logp(level, className, methodName, String.format(message, args));
 		String logMessage = null;
 		if (HIDDEN_LEVELS.contains(level)) {
 			logMessage = message;
 		} else {
-			logMessage = String.format(LEVEL_MESSAGE_FORMAT, level.getName()
-					.toUpperCase(), message);
+			logMessage = String.format(LEVEL_MESSAGE_FORMAT, level.getName().toUpperCase(), message);
 		}
 
 		System.out.println(logMessage);

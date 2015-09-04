@@ -64,7 +64,7 @@ public class TaggedTimer {
 		// for (String tag : categoryTimings.keySet()) {
 		// summedTime += categoryTimings.get(tag);
 		// }
-		Log.d("Total: %s", totalTime);
+		Log.d("Total: %s (%s seconds)", totalTime, totalTime / 1000);
 		for (String tag : categoryTimings.keySet()) {
 			long t = categoryTimings.get(tag);
 			Log.d("%s:\ttotal: %s,\trel: %s,", tag, t, ((double) t) / ((double) totalTime));
