@@ -20,7 +20,7 @@ import com.google.common.collect.Multimap;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratCorpus;
+import Corpus.DefaultCorpus;
 import Corpus.Corpus;
 import Corpus.Token;
 import Corpus.parser.ParsingUtils;
@@ -58,7 +58,7 @@ public class UsageParser {
 	public static void main(String[] args) {
 		File annDir = new File("res/usage/de");
 
-		BratCorpus corpus = (BratCorpus) parseCorpus(annDir);
+		DefaultCorpus corpus = (DefaultCorpus) parseCorpus(annDir);
 		Log.d("Corpus: %s", corpus.toDetailedString());
 	}
 
@@ -107,7 +107,7 @@ public class UsageParser {
 		}
 
 		AnnotationConfig config = getUsageConfig();
-		Corpus corpus = new BratCorpus(config);
+		Corpus corpus = new DefaultCorpus(config);
 
 		for (String category : textFiles.keySet()) {
 			corpus.addDocuments(parseFile(corpus, category, textFiles.get(category), annotationFilesA1.get(category),
@@ -211,7 +211,7 @@ public class UsageParser {
 
 				EntityAnnotation e = new EntityAnnotation(goldState, entityID, entityType, beginTokenIndex,
 						endTokenIndex);
-				goldState.addEntityAnnotation(e);
+				goldState.addEntity(e);
 				lineNumber++;
 			}
 			annotationReader.close();
@@ -275,7 +275,7 @@ public class UsageParser {
 
 				EntityAnnotation e = new EntityAnnotation(goldState, entityType, arguments,
 						trigger.getBeginTokenIndex(), trigger.getEndTokenIndex());
-				goldState.addEntityAnnotation(e);
+				goldState.addEntity(e);
 				lineNumber++;
 			}
 			relationReader.close();

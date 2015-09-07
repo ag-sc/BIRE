@@ -1,6 +1,8 @@
 package Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,19 +10,22 @@ import java.util.regex.Pattern;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratCorpus;
+import Corpus.DefaultCorpus;
 import Corpus.Corpus;
+import Corpus.Document;
 import Corpus.Token;
+import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.brat.BratConfigReader;
 import Logging.Log;
 import Variables.EntityAnnotation;
 import Variables.State;
 
-public class TestData {
+public class DummyData {
 
 	public static Corpus getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
-		AnnotationConfig originalConfig = configReader.readConfig(new File("res/bionlp/annotation.conf"));
+		AnnotationConfig originalConfig = configReader.readConfig(new File(
+				"res/bionlp/annotation.conf"));
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
 		simplifiedConfig.addEntityType(originalConfig.getEntityType("Protein"));
 
@@ -28,19 +33,31 @@ public class TestData {
 		List<Token> tokens = extractTokens(content);
 		Log.d("Tokens for dummy data: %s", tokens);
 
-		BratCorpus corpus = new BratCorpus(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens, 0);
+		DefaultCorpus corpus = new DefaultCorpus(simplifiedConfig);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument",
+				content, tokens, 0);
 		State goldState = new State(doc);
 		doc.setGoldState(goldState);
 
-		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1", simplifiedConfig.getEntityType("Protein"), 4, 6);
-		goldState.addEntityAnnotation(e1);
-		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2", simplifiedConfig.getEntityType("Protein"), 8, 8);
-		goldState.addEntityAnnotation(e2);
+		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1",
+				simplifiedConfig.getEntityType("Protein"), 4, 6);
+		goldState.addEntity(e1);
+		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2",
+				simplifiedConfig.getEntityType("Protein"), 8, 8);
+		goldState.addEntity(e2);
 
 		corpus.addDocument(doc);
 
 		return corpus;
+	}
+
+	public static AnnotatedDocument getRepresentativeDummyData()
+			throws FileNotFoundException, ClassNotFoundException, IOException {
+		String filename = "PMID-9119025";
+		File annFile = new File("res/bionlp/ann/" + filename + ".ann");
+		File textFile = new File("res/bionlp/text/" + filename + ".txt");
+		return BioNLPLoader.loadDocument(textFile, annFile).getDocuments()
+				.get(4);
 	}
 
 	private static List<Token> extractTokens(String content) {

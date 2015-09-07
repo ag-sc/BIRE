@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BratCorpus implements Corpus {
+public class DefaultCorpus implements Corpus {
 
 	List<AnnotatedDocument> documents = new ArrayList<AnnotatedDocument>();
 	AnnotationConfig corpusConfig;
 
-	public BratCorpus(AnnotationConfig config) {
+	public DefaultCorpus(AnnotationConfig config) {
 		this.corpusConfig = config;
 	}
 

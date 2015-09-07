@@ -15,7 +15,7 @@ import java.util.Set;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.BratCorpus;
+import Corpus.DefaultCorpus;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.julie.JavaSentenceSplitter;

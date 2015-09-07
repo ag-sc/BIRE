@@ -73,7 +73,7 @@ public class SamplingHelper {
 		EntityType sampledType = sampleEntityType(state);
 		EntityAnnotation tokenAnnotation = new EntityAnnotation(state, sampledType, sampledToken.getIndex(),
 				sampledToken.getIndex());
-		state.addEntityAnnotation(tokenAnnotation);
+		state.addEntity(tokenAnnotation);
 	}
 
 	/**

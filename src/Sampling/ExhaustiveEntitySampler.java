@@ -43,7 +43,7 @@ public class ExhaustiveEntitySampler implements Sampler {
 					State generatedState = new State(previousState);
 					EntityAnnotation tokenAnnotation = new EntityAnnotation(generatedState, entityType,
 							token.getIndex(), token.getIndex());
-					generatedState.addEntityAnnotation(tokenAnnotation);
+					generatedState.addEntity(tokenAnnotation);
 					generatedStates.add(generatedState);
 				}
 			}
@@ -67,7 +67,7 @@ public class ExhaustiveEntitySampler implements Sampler {
 			// Create on state with that particular entity removed
 			State generatedState = new State(previousState);
 			EntityAnnotation entity = generatedState.getEntity(entityID);
-			generatedState.removeEntityAnnotation(entity);
+			generatedState.removeEntity(entity);
 			generatedStates.add(generatedState);
 		}
 		// // add an unchanged state

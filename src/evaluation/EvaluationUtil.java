@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import utility.EntityID;
 import Corpus.Document;
 import Corpus.Token;
 import Learning.Score;
@@ -27,6 +28,7 @@ import Learning.Vector;
 import Learning.learner.DefaultLearner;
 import Logging.Log;
 import Templates.Template;
+import Variables.ArgumentRole;
 import Variables.EntityAnnotation;
 import Variables.State;
 import evaluation.SamplingProcedureRecord.SamplingStepRecord;
@@ -39,44 +41,54 @@ public class EvaluationUtil {
 
 	public static String generateFilenameForModel(int numberOfTrainingSamples) {
 		Calendar now = Calendar.getInstance();
-		return String.format(MODEL_NAME_PATTERN, numberOfTrainingSamples, now.get(Calendar.YEAR),
-				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
+		return String.format(MODEL_NAME_PATTERN, numberOfTrainingSamples,
+				now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
+				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
 				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
 	}
 
 	public static String generateFilenameForModel(String name) {
 		Calendar now = Calendar.getInstance();
-		return String.format(MODEL_NAME_PATTERN, name, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
-				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+		return String.format(MODEL_NAME_PATTERN, name, now.get(Calendar.YEAR),
+				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
+				now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
 				now.get(Calendar.SECOND));
 	}
 
-	public static String generateFilenameForRecords(boolean isTest, int numberOfRecords) {
+	public static String generateFilenameForRecords(boolean isTest,
+			int numberOfRecords) {
 		Calendar now = Calendar.getInstance();
-		return String.format(RECORDS_NAME_PATTERN, isTest ? "Test" : "Train", numberOfRecords, now.get(Calendar.YEAR),
-				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
-				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
+		return String.format(RECORDS_NAME_PATTERN, isTest ? "Test" : "Train",
+				numberOfRecords, now.get(Calendar.YEAR),
+				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH),
+				now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
+				now.get(Calendar.SECOND));
 	}
 
-	public static void storeRecords(List<SamplingProcedureRecord> records, File dir)
-			throws FileNotFoundException, IOException {
+	public static void storeRecords(List<SamplingProcedureRecord> records,
+			File dir) throws FileNotFoundException, IOException {
 		if (!dir.exists()) {
 			dir.mkdirs();
 		}
-		File file = new File(dir, EvaluationUtil.generateFilenameForRecords(true, records.size()));
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+		File file = new File(dir, EvaluationUtil.generateFilenameForRecords(
+				true, records.size()));
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
+				file));
 		out.writeObject(records);
 		out.close();
 	}
 
-	public static void storeRecord(SamplingProcedureRecord record, File dir, String name) throws IOException {
+	public static void storeRecord(SamplingProcedureRecord record, File dir,
+			String name) throws IOException {
 		Calendar now = Calendar.getInstance();
-		String finalName = String.format(RECORD_NAME_PATTERN, name, now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
-				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE),
-				now.get(Calendar.SECOND));
+		String finalName = String.format(RECORD_NAME_PATTERN, name,
+				now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
+				now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
+				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
 
 		File file = new File(dir, finalName);
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
+				file));
 		out.writeObject(record);
 		out.close();
 	}
@@ -84,7 +96,8 @@ public class EvaluationUtil {
 	public static List<SamplingProcedureRecord> loadRecords(String file)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		List<SamplingProcedureRecord> records = (List<SamplingProcedureRecord>) in.readObject();
+		List<SamplingProcedureRecord> records = (List<SamplingProcedureRecord>) in
+				.readObject();
 		in.close();
 		return records;
 	}
@@ -92,12 +105,14 @@ public class EvaluationUtil {
 	public static SamplingProcedureRecord loadRecord(String file)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		SamplingProcedureRecord record = (SamplingProcedureRecord) in.readObject();
+		SamplingProcedureRecord record = (SamplingProcedureRecord) in
+				.readObject();
 		in.close();
 		return record;
 	}
 
-	public static void printPerformance(List<SamplingProcedureRecord> testRecords) {
+	public static void printPerformance(
+			List<SamplingProcedureRecord> testRecords) {
 		double meanModelScore = 0;
 		double meanPrecision = 0;
 		double meanRecall = 0;
@@ -105,15 +120,18 @@ public class EvaluationUtil {
 		int count = 0;
 		for (SamplingProcedureRecord r : testRecords) {
 			for (int d = 0; d < r.numberOfDocuments; d++) {
-				SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1].get(r.numberOfSamplers - 1);
+				SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1]
+						.get(r.numberOfSamplers - 1);
 
 				meanModelScore += step.acceptedState.modelScore;
 				meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
 				meanRecall += step.acceptedState.objectiveFunctionScore.recall;
 				meanOFScore += step.acceptedState.objectiveFunctionScore.score;
 
-				Log.d("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s", d, step.document.getName(),
-						step.acceptedState.modelScore, step.acceptedState.objectiveFunctionScore.precision,
+				Log.d("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s",
+						d, step.document.getName(),
+						step.acceptedState.modelScore,
+						step.acceptedState.objectiveFunctionScore.precision,
 						step.acceptedState.objectiveFunctionScore.recall,
 						step.acceptedState.objectiveFunctionScore.score);
 				count++;
@@ -123,8 +141,8 @@ public class EvaluationUtil {
 		meanPrecision /= count;
 		meanRecall /= count;
 		meanOFScore /= count;
-		Log.d("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s", count, meanModelScore, meanPrecision,
-				meanRecall, meanOFScore);
+		Log.d("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s",
+				count, meanModelScore, meanPrecision, meanRecall, meanOFScore);
 	}
 
 	public static Score mean(SamplingProcedureRecord r) {
@@ -132,7 +150,8 @@ public class EvaluationUtil {
 		double meanRecall = 0;
 		double meanOFScore = 0;
 		for (int d = 0; d < r.numberOfDocuments; d++) {
-			SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1].get(r.numberOfSamplers - 1);
+			SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps - 1]
+					.get(r.numberOfSamplers - 1);
 
 			meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
 			meanRecall += step.acceptedState.objectiveFunctionScore.recall;
@@ -174,7 +193,8 @@ public class EvaluationUtil {
 		}
 	};
 
-	public static DecimalFormat featureWeightFormat = new DecimalFormat("0.000000");
+	public static DecimalFormat featureWeightFormat = new DecimalFormat(
+			"0.000000");
 
 	/**
 	 * Prints all weights of the learners model in descending order, discarding
@@ -199,10 +219,12 @@ public class EvaluationUtil {
 	}
 
 	public static void printWeightsSorted(Map<String, Double> allWeights) {
-		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(allWeights.entrySet());
+		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(
+				allWeights.entrySet());
 		Collections.sort(features, featureWeightComparator);
 		for (Entry<String, Double> e : features) {
-			Log.d("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
+			Log.d("%s: %s", featureWeightFormat.format(e.getValue()),
+					e.getKey());
 		}
 	}
 
@@ -210,45 +232,11 @@ public class EvaluationUtil {
 
 	public static void printScores(List<Score> scores) {
 		for (Score score : scores) {
-			Log.d("P=%s\t|\tR=%s\t|\tF1=%s", SCORE_FORMAT.format(score.precision), SCORE_FORMAT.format(score.recall),
+			Log.d("P=%s\t|\tR=%s\t|\tF1=%s",
+					SCORE_FORMAT.format(score.precision),
+					SCORE_FORMAT.format(score.recall),
 					SCORE_FORMAT.format(score.score));
 		}
 	}
 
-	public final static Set<String> entities = new HashSet<>(Arrays.asList("Protein", "Entity"));
-	public final static Set<String> events = new HashSet<>(
-			Arrays.asList("Gene_expression", "Transcription", "Protein_catabolism", "Localization", "Binding",
-					"Phosphorylation", "Regulation", "Positive_regulation", "Negative_regulation"));
-
-	public String toBioNLPFormat(State state) {
-		StringBuilder builder = new StringBuilder();
-		for (EntityAnnotation e : state.getEntities()) {
-			if (entities.contains(e.getType().getName())) {
-				builder.append(writeEntity(e));
-				builder.append("\n");
-			} else if (events.contains(e.getType().getName())) {
-				builder.append(writeEvent(e));
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
-	}
-
-	private String writeEntity(EntityAnnotation e) {
-		Document doc = e.getState().getDocument();
-		List<Token> tokens = e.getTokens();
-		String pattern = "%s\t%s %s:%s\t%s";
-		String id = e.getID().id;
-		String type = e.getType().getName();
-		String text = e.getText();
-		int from = doc.getOffset() + tokens.get(0).getFrom();
-		int to = doc.getOffset() + tokens.get(tokens.size() - 1).getTo();
-		return String.format(pattern, id, type, from, to, text);
-	}
-
-	private String writeEvent(EntityAnnotation e) {
-		String pattern = "%s\t%s %s:%s\t%s";
-
-		return String.format(pattern);
-	}
 }

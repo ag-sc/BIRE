@@ -21,14 +21,14 @@ import Templates.Template;
 import utility.EntityID;
 import utility.FactorID;
 
-public class TestLearning {
+public class InspectLearning {
 
 	public static void main(String[] args) {
 		Corpus corpus = null;
 
 		switch (2) {
 		case 0:
-			corpus = TestData.getDummyData();
+			corpus = DummyData.getDummyData();
 			break;
 		case 1:
 			corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);

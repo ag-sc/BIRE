@@ -12,10 +12,10 @@ import Sampling.ExhaustiveEntitySampler;
 import Templates.CheatingTemplate;
 import Variables.State;
 
-public class TestSampling {
+public class InspectSampling {
 
 	public static void main(String[] args) {
-		Corpus corpus = TestData.getDummyData();
+		Corpus corpus = DummyData.getDummyData();
 		List<AnnotatedDocument> documents = corpus.getDocuments();
 		AnnotatedDocument doc = documents.get(0);
 		State goldState = doc.getGoldState();

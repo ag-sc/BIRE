@@ -89,7 +89,7 @@ public class DefaultSampler implements Sampler {
 				case REMOVE_ANNOTATION:
 					System.out.println(generatedState.getID()
 							+ ": delete annotation.");
-					generatedState.removeEntityAnnotation(tokenAnnotation);
+					generatedState.removeEntity(tokenAnnotation);
 					break;
 				case CHANGE_TYPE:
 					System.out.println(generatedState.getID()

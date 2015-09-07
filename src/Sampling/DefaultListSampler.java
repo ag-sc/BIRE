@@ -81,7 +81,7 @@ public class DefaultListSampler implements Sampler {
 				switch (stateChange) {
 				case REMOVE_ANNOTATION:
 					Log.d("%s: delete annotation.", generatedState.getID());
-					generatedState.removeEntityAnnotation(tokenAnnotation);
+					generatedState.removeEntity(tokenAnnotation);
 					break;
 				case CHANGE_TYPE:
 					Log.d("%s: change annotation type.", generatedState.getID());
