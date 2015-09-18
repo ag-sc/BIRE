@@ -7,27 +7,19 @@ import Corpus.parser.brat.annotations.BratAnnotation;
 
 public class BratAnnotatedDocument {
 
-	private String textFilename;
-	private String annotationFilename;
+	private String documentName;
 	private Map<String, BratAnnotation> allAnnotations = new HashMap<String, BratAnnotation>();
 	private String content;
 
-	public BratAnnotatedDocument(String textFilename,
-			String annotationFilename, String text,
-			Map<String, BratAnnotation> allAnnotations) {
+	public BratAnnotatedDocument(String documentName, String text, Map<String, BratAnnotation> allAnnotations) {
 		super();
 		this.allAnnotations = allAnnotations;
 		this.content = text;
-		this.textFilename = textFilename;
-		this.annotationFilename = annotationFilename;
+		this.documentName = documentName;
 	}
 
-	public String getTextFilename() {
-		return textFilename;
-	}
-
-	public String getAnnotationFilename() {
-		return annotationFilename;
+	public String getDocumentName() {
+		return documentName;
 	}
 
 	public Map<String, BratAnnotation> getAllAnnotations() {

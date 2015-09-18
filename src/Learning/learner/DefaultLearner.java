@@ -1,5 +1,6 @@
 package Learning.learner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,8 +98,8 @@ public class DefaultLearner implements Learner {
 		this.scorer = new Scorer(model);
 	}
 
-	@Override
-	public void train(List<AnnotatedDocument> documents, int numberOfEpochs) {
+	// @Override
+	public void train(List<? extends AnnotatedDocument> documents, int numberOfEpochs) {
 		if (multithreaded) {
 			pool = Executors.newFixedThreadPool(numberOfThreads);
 		}
@@ -127,6 +128,7 @@ public class DefaultLearner implements Learner {
 				documentCallback.onStartDocument(this, document, d, documents.size(), e, numberOfEpochs);
 
 				State goldState = document.getGoldState();
+
 				State currentState = generateInitialState(document);
 
 				for (int s = 0; s < steps; s++) {
@@ -144,7 +146,6 @@ public class DefaultLearner implements Learner {
 						Log.d("Alpha: %s; Omega: %s", currentAlpha, currentOmega);
 						Log.d("Sampler: %s", sampler.getClass().getSimpleName());
 						Log.d("Current model:\n%s", model.toString());
-
 						long genID = TaggedTimer.start("GENERATE");
 						List<State> nextStates = sampler.getNextStates(currentState, scorer);
 						TaggedTimer.stop(genID);
@@ -504,9 +505,10 @@ public class DefaultLearner implements Learner {
 		}
 	}
 
-	public void test(List<AnnotatedDocument> documents, int samplingSteps) {
+	public List<State> test(List<? extends AnnotatedDocument> documents, int samplingSteps) {
 		testRecord = new SamplingProcedureRecord(documents.size(), samplingSteps, samplers.size(), -1);
 
+		List<State> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
 			AnnotatedDocument document = documents.get(d);
 			State goldState = document.getGoldState();
@@ -542,12 +544,15 @@ public class DefaultLearner implements Learner {
 					model.trimToState(currentState);
 				}
 			}
+			finalStates.add(currentState);
 		}
-
+		return finalStates;
 	}
 
 	private State generateInitialState(AnnotatedDocument document) {
-		State state = new State(document);
+		// TODO check if this mode (initial knowledge) is requested or if the
+		// learner should start from scratch
+		State state = new State(document.getInitialState());
 		return state;
 	}
 

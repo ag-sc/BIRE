@@ -78,21 +78,15 @@ public class EvaluateParameters {
 		switch (corpusID) {
 		case USAGE:
 			try {
-				corpus = UsageLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+				corpus = UsageLoader.loadDatasetFromBinaries(Constants.getUSAGEJavaBinFilepath());
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = UsageLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+				corpus = UsageLoader.convertDatasetToJavaBinaries(Constants.getUSAGEJavaBinFilepath());
 			}
 			break;
 		case BIONLP:
-			try {
-				corpus = BioNLPLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			} catch (Exception e) {
-				e.printStackTrace();
-				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			}
+			corpus = BioNLPLoader.loadBioNLP2013Train();
 			modelDir = new File(BIONLP_MODELS_DIR_PATH);
 			if (!modelDir.exists())
 				modelDir.mkdirs();

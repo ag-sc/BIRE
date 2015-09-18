@@ -2,11 +2,7 @@ package Test;
 
 import java.util.Collection;
 
-import utility.EntityID;
-import evaluation.BioNLPEvaluation;
-import evaluation.EvaluationUtil;
 import Corpus.AnnotatedDocument;
-import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.parser.brat.BioNLPLoader;
 import Factors.Factor;
@@ -16,32 +12,20 @@ import Templates.ContextTemplate;
 import Templates.MorphologicalTemplate;
 import Templates.RelationTemplate;
 import Templates.Template;
-import Variables.EntityAnnotation;
 import Variables.State;
+import evaluation.EvaluationUtil;
 
 public class InspectTemplates {
 
 	public static void main(String[] args) {
-		Corpus corpus = null;
+		Corpus<? extends AnnotatedDocument> corpus = null;
 
-		switch (2) {
+		switch (1) {
 		case 0:
 			corpus = DummyData.getDummyData();
 			break;
 		case 1:
-			corpus = BioNLPLoader
-					.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			break;
-		case 2:
-			try {
-				corpus = BioNLPLoader
-						.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			} catch (Exception e) {
-				e.printStackTrace();
-				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = BioNLPLoader
-						.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			}
+			corpus = BioNLPLoader.loadBioNLP2013Train();
 			break;
 		default:
 			break;
@@ -51,25 +35,20 @@ public class InspectTemplates {
 		Log.d("Tokens: %s", doc.getTokens());
 		Log.d("State: %s", doc.getGoldState());
 
-		Template[] templates = { new MorphologicalTemplate(),
-				new ContextTemplate(), new RelationTemplate() };
+		Template[] templates = { new MorphologicalTemplate(), new ContextTemplate(), new RelationTemplate() };
 
 		State state = new State(doc.getGoldState());
 		for (Template t : templates) {
 			t.applyTo(state);
 			Collection<Factor> factors = t.getFactors(state);
-			Log.d("Template %s, %s factors: ", t.getClass().getSimpleName(),
-					factors.size());
+			Log.d("Template %s, %s factors: ", t.getClass().getSimpleName(), factors.size());
 			int i = 0;
 			for (Factor factor : factors) {
-				Log.d("\tFactor %s for VariableSet: %s",
-						i,
-						state.getFactorGraph().getVariableSetForFactor(
-								factor.getID()));
+				Log.d("\tFactor %s for VariableSet: %s", i,
+						state.getFactorGraph().getVariableSetForFactor(factor.getID()));
 				Vector v = factor.getFeatureVector();
 				for (String f : v.getFeatureNames()) {
-					Log.d("\t%s:\t%s", EvaluationUtil.featureWeightFormat
-							.format(v.getValueOfFeature(f)), f);
+					Log.d("\t%s:\t%s", EvaluationUtil.featureWeightFormat.format(v.getValueOfFeature(f)), f);
 				}
 				i++;
 			}

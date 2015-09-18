@@ -45,14 +45,14 @@ public class ExhaustiveBoundarySampler implements Sampler {
 				entity.setBeginTokenIndex(from - 1);
 				generatedStates.add(generatedState);
 			}
-			if (to < previousStatesEntity.getState().getDocument().getTokens().size() - 1) {
+			if (to < previousStatesEntity.getState().getDocument().getTokens().size()) {
 				// Expand right
 				State generatedState = new State(previousState);
 				EntityAnnotation entity = generatedState.getEntity(entityID);
 				entity.setEndTokenIndex(to + 1);
 				generatedStates.add(generatedState);
 			}
-			if (to - from > 0) {
+			if (to - from > 1) {
 				/**
 				 * Here we just assume that to >= from. That is why we do not
 				 * check if to > 0 or from < "max"-1. Given a consistent state,

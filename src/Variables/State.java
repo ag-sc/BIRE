@@ -45,15 +45,12 @@ public class State implements Serializable {
 
 		@Override
 		public int compare(State s1, State s2) {
-			return (int) -Math.signum(s1.getObjectiveScore().score
-					- s2.getObjectiveScore().score);
+			return (int) -Math.signum(s1.getObjectiveScore().score - s2.getObjectiveScore().score);
 		}
 	};
 	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
-	private static final DecimalFormat scoreFormat = new DecimalFormat(
-			"0.00000");
-	private static final DecimalFormat stateIDFormat = new DecimalFormat(
-			"0000000");
+	private static final DecimalFormat scoreFormat = new DecimalFormat("0.00000");
+	private static final DecimalFormat stateIDFormat = new DecimalFormat("0000000");
 
 	private static int stateIdIndex = 0;
 	private int entityIdIndex = 0;
@@ -74,8 +71,7 @@ public class State implements Serializable {
 	 * is more efficient to just clear this map instead of iterating over all
 	 * entities and reset a field in order to mark all entities as unchanged.
 	 */
-	private Multimap<EntityID, StateChange> changedEntities = HashMultimap
-			.create();
+	private Multimap<EntityID, StateChange> changedEntities = HashMultimap.create();
 	private final StateID id;
 	private Document document;
 	private double modelScore = 1;
@@ -99,8 +95,7 @@ public class State implements Serializable {
 			this.entities.put(e.getID(), new EntityAnnotation(this, e));
 		}
 		for (Entry<Integer, Set<EntityID>> e : state.tokenToEntities.entrySet()) {
-			this.tokenToEntities.put(e.getKey(),
-					new HashSet<EntityID>(e.getValue()));
+			this.tokenToEntities.put(e.getKey(), new HashSet<EntityID>(e.getValue()));
 		}
 		this.modelScore = state.modelScore;
 		this.objectiveScore = new Score(state.objectiveScore);
@@ -194,10 +189,8 @@ public class State implements Serializable {
 		return entities;
 	}
 
-	protected void removeFromTokenToEntityMapping(
-			EntityAnnotation entityAnnotation) {
-		for (int i = entityAnnotation.getBeginTokenIndex(); i <= entityAnnotation
-				.getEndTokenIndex(); i++) {
+	protected void removeFromTokenToEntityMapping(EntityAnnotation entityAnnotation) {
+		for (int i = entityAnnotation.getBeginTokenIndex(); i < entityAnnotation.getEndTokenIndex(); i++) {
 			Set<EntityID> entities = tokenToEntities.get(i);
 			if (entities == null) {
 				entities = new HashSet<EntityID>();
@@ -209,8 +202,7 @@ public class State implements Serializable {
 	}
 
 	protected void addToTokenToEntityMapping(EntityAnnotation entityAnnotation) {
-		for (int i = entityAnnotation.getBeginTokenIndex(); i <= entityAnnotation
-				.getEndTokenIndex(); i++) {
+		for (int i = entityAnnotation.getBeginTokenIndex(); i < entityAnnotation.getEndTokenIndex(); i++) {
 			Set<EntityID> entities = tokenToEntities.get(i);
 			if (entities == null) {
 				entities = new HashSet<EntityID>();
@@ -249,7 +241,7 @@ public class State implements Serializable {
 
 	protected EntityID generateEntityID() {
 		String id = GENERATED_ENTITY_ID_PREFIX + entityIdIndex;
-		assert (!entities.containsKey(id));
+		assert(!entities.containsKey(id));
 		entityIdIndex++;
 		return new EntityID(id);
 	}
@@ -295,8 +287,7 @@ public class State implements Serializable {
 		builder.append(scoreFormat.format(modelScore));
 		builder.append("]: ");
 		builder.append(" [");
-		builder.append(scoreFormat
-				.format(objectiveScore != null ? objectiveScore.score : 0));
+		builder.append(scoreFormat.format(objectiveScore != null ? objectiveScore.score : 0));
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<EntityID> entities = getAnnotationsForToken(t);
@@ -306,7 +297,7 @@ public class State implements Serializable {
 				EntityAnnotation e = getEntity(entityID);
 				if (e.getBeginTokenIndex() == t.getIndex())
 					begin.add(e);
-				if (e.getEndTokenIndex() == t.getIndex())
+				if (e.getEndTokenIndex() - 1 == t.getIndex())
 					end.add(e);
 			}
 			if (!begin.isEmpty())
@@ -319,8 +310,7 @@ public class State implements Serializable {
 		return builder.toString();
 	}
 
-	private void buildTokenPrefix(StringBuilder builder,
-			List<EntityAnnotation> begin) {
+	private void buildTokenPrefix(StringBuilder builder, List<EntityAnnotation> begin) {
 		builder.append("[");
 		for (EntityAnnotation e : begin) {
 			builder.append(e.getID());
@@ -333,8 +323,7 @@ public class State implements Serializable {
 		builder.append(" ");
 	}
 
-	private void buildTokenSuffix(StringBuilder builder,
-			List<EntityAnnotation> end) {
+	private void buildTokenSuffix(StringBuilder builder, List<EntityAnnotation> end) {
 		for (EntityAnnotation e : end) {
 			builder.append(":");
 			builder.append(e.getID());
@@ -349,8 +338,7 @@ public class State implements Serializable {
 			builder.append(e);
 			builder.append("\n");
 		}
-		for (Entry<Integer, Set<EntityID>> e : getTokenToEntityMapping()
-				.entrySet()) {
+		for (Entry<Integer, Set<EntityID>> e : getTokenToEntityMapping().entrySet()) {
 			builder.append(e);
 			builder.append("\n");
 		}

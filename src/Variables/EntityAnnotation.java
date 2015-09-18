@@ -153,7 +153,7 @@ public class EntityAnnotation extends AbstractAnnotation {
 
 	public List<Token> getTokens() {
 		List<Token> tokens = new ArrayList<Token>();
-		for (int i = beginTokenIndex; i <= endTokenIndex; i++)
+		for (int i = beginTokenIndex; i < endTokenIndex; i++)
 			tokens.add(state.getDocument().getTokens().get(i));
 		return tokens;
 	}

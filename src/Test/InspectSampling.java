@@ -15,7 +15,7 @@ import Variables.State;
 public class InspectSampling {
 
 	public static void main(String[] args) {
-		Corpus corpus = DummyData.getDummyData();
+		Corpus<AnnotatedDocument> corpus = DummyData.getDummyData();
 		List<AnnotatedDocument> documents = corpus.getDocuments();
 		AnnotatedDocument doc = documents.get(0);
 		State goldState = doc.getGoldState();

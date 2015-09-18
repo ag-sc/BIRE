@@ -13,7 +13,7 @@ public class Factor {
 		Log.off();
 	}
 
-	private static int factorIDIndex;
+	private static long factorIDIndex;
 	private Template template;
 	private FactorID factorID;
 	private Vector features;

@@ -18,6 +18,7 @@ import Corpus.parser.brat.annotations.BratAttributeAnnotation;
 import Corpus.parser.brat.annotations.BratEventAnnotation;
 import Corpus.parser.brat.annotations.BratRelationAnnotation;
 import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
+import Logging.Log;
 
 public class BratAnnotationParser {
 
@@ -31,28 +32,29 @@ public class BratAnnotationParser {
 	 * Collect all entity/relation types and their frequencies save to separate
 	 * file
 	 */
-	public BratAnnotatedDocument parseFile(File annFile, File textFile) {
+	public BratAnnotatedDocument parseFile(File textFile, List<File> annFiles) {
 		try {
-			BufferedReader annotationReader = new BufferedReader(
-					new FileReader(annFile));
+			for (File annFile : annFiles) {
+				BufferedReader annotationReader = new BufferedReader(new FileReader(annFile));
+				String line;
+				int lineNumber = 0;
+				while ((line = annotationReader.readLine()) != null) {
+					if (line.startsWith(COMMENT_INDICATOR)) {
+						Log.w("Skip comment: \"%s\"", line);
+					} else {
 
-			String line;
-			int lineNumber = 0;
-			while ((line = annotationReader.readLine()) != null) {
-				if (line.startsWith(COMMENT_INDICATOR)) {
-					System.out.println("Skip comment: \"" + line + "\"");
-				} else {
-					parseLine(line, lineNumber);
+						parseLine(line, lineNumber);
+					}
+					lineNumber++;
 				}
-				lineNumber++;
+				annotationReader.close();
 			}
-			annotationReader.close();
 
 			// Read Text
-			String content = Utils.readFile(textFile);
+			String content = FileUtils.readFile(textFile);
+			// TODO pass each ann file's annotations as separate batches
 			BratAnnotatedDocument doc = new BratAnnotatedDocument(
-					textFile.getName(), annFile.getName(), content,
-					manager.getAnnotations());
+					FileUtils.getFilenameWithoutExtension(textFile.getName()), content, manager.getAnnotations());
 			return doc;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -87,14 +89,12 @@ public class BratAnnotationParser {
 			parseRelationAnnotation(line);
 			return;
 		}
-		Matcher attributeMatcher = BratAttributeAnnotation.pattern
-				.matcher(line);
+		Matcher attributeMatcher = BratAttributeAnnotation.pattern.matcher(line);
 		if (attributeMatcher.matches()) {
 			parseAttributeAnnotation(line);
 			return;
 		}
-		System.out.println(String.format(UNKNOWN_ANNOTATION_TYPE, lineNumber,
-				line));
+		Log.w(UNKNOWN_ANNOTATION_TYPE, lineNumber, line);
 	}
 
 	private BratTextBoundAnnotation parseTextBoundAnnotation(String line) {
@@ -102,18 +102,15 @@ public class BratAnnotationParser {
 
 		String id = tabTokenizer.nextToken();
 
-		StringTokenizer spaceTokenizer = new StringTokenizer(
-				tabTokenizer.nextToken());
+		StringTokenizer spaceTokenizer = new StringTokenizer(tabTokenizer.nextToken());
 		String role = spaceTokenizer.nextToken();
 		String start = spaceTokenizer.nextToken();
 		String end = spaceTokenizer.nextToken();
 
 		String text = tabTokenizer.nextToken();
 
-		BratTextBoundAnnotation annotation = manager
-				.getOrCreateTextBoundByID(id);
-		annotation.init(role, Integer.parseInt(start), Integer.parseInt(end),
-				text);
+		BratTextBoundAnnotation annotation = manager.getOrCreateTextBoundByID(id);
+		annotation.init(role, Integer.parseInt(start), Integer.parseInt(end), text);
 		return annotation;
 	}
 
@@ -125,8 +122,7 @@ public class BratAnnotationParser {
 		String role = split[0];
 		String triggerID = split[1];
 
-		BratTextBoundAnnotation trigger = manager
-				.getOrCreateTextBoundByID(triggerID);
+		BratTextBoundAnnotation trigger = manager.getOrCreateTextBoundByID(triggerID);
 
 		Map<String, BratAnnotation> arguments = extractArgumentsAsMap(tokenizer);
 
@@ -159,15 +155,13 @@ public class BratAnnotationParser {
 			arguments.add(argument);
 		}
 
-		BratAttributeAnnotation annotation = manager
-				.getOrCreateAttributeByID(id);
+		BratAttributeAnnotation annotation = manager.getOrCreateAttributeByID(id);
 		annotation.init(role, arguments);
 
 		return annotation;
 	}
 
-	private Map<String, BratAnnotation> extractArgumentsAsMap(
-			StringTokenizer tokenizer) {
+	private Map<String, BratAnnotation> extractArgumentsAsMap(StringTokenizer tokenizer) {
 		Map<String, BratAnnotation> arguments = new HashMap<String, BratAnnotation>();
 		while (tokenizer.hasMoreElements()) {
 			String[] split = tokenizer.nextToken().split(":");

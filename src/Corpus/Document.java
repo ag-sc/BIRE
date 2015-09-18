@@ -10,14 +10,12 @@ public class Document implements Serializable {
 	protected Corpus corpus;
 	protected String content;
 	protected List<Token> tokens;
-	protected int offset = 0;
 
-	public Document(Corpus corpus, String name, String content, List<Token> tokens, int offset) {
+	public Document(Corpus corpus, String name, String content, List<Token> tokens) {
 		this.corpus = corpus;
 		this.name = name;
 		this.content = content;
 		this.tokens = tokens;
-		this.offset = offset;
 	}
 
 	public String getContent() {
@@ -30,10 +28,6 @@ public class Document implements Serializable {
 
 	public Corpus getCorpus() {
 		return corpus;
-	}
-
-	public int getOffset() {
-		return offset;
 	}
 
 	public String getName() {

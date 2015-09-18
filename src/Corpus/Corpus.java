@@ -4,13 +4,14 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-public interface Corpus extends Serializable{
+public interface Corpus<T extends AnnotatedDocument> extends Serializable {
+
 	public AnnotationConfig getCorpusConfig();
 
-	public List<AnnotatedDocument> getDocuments();
+	public List<T> getDocuments();
 
-	public void addDocument(AnnotatedDocument doc);
+	public void addDocument(T doc);
 
-	public void addDocuments(Collection<AnnotatedDocument> documents);
+	public void addDocuments(Collection<T> documents);
 
 }

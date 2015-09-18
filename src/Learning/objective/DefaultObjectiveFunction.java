@@ -110,8 +110,8 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 		int b = entity.getEndTokenIndex();
 		int x = goldEntity.getBeginTokenIndex();
 		int y = goldEntity.getEndTokenIndex();
-		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
-		double overlapScore = ((double) overlap) / (b - a + 1);
+		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x));
+		double overlapScore = ((double) overlap) / (b - a);
 		return overlapScore;
 	}
 }

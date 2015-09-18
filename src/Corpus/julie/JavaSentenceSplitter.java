@@ -11,25 +11,25 @@ import java.util.List;
 import java.util.Locale;
 
 import Corpus.parser.brat.BratAnnotatedDocument;
-import Corpus.parser.brat.Utils;
+import Corpus.parser.brat.FileUtils;
 import Corpus.parser.brat.annotations.BratAnnotation;
 import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 import Logging.Log;
 
 public class JavaSentenceSplitter {
+	static {
+		Log.off();
+	}
 
-	public static List<String> getSentencesAsList(File srcFile)
-			throws FileNotFoundException, IOException {
+	public static List<String> getSentencesAsList(File srcFile) throws FileNotFoundException, IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(srcFile));
 		String line;
 		List<String> sentences = new ArrayList<String>();
 		while ((line = reader.readLine()) != null) {
-			BreakIterator iterator = BreakIterator
-					.getSentenceInstance(Locale.US);
+			BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.US);
 			iterator.setText(line);
 			int start = iterator.first();
-			for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator
-					.next()) {
+			for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
 				// end - 1 to remove the trailing whitespace
 				String sentence = line.substring(start, end - 1);
 				sentences.add(sentence);
@@ -62,28 +62,23 @@ public class JavaSentenceSplitter {
 		return splittedText;
 	}
 
-	public static void extractAndStoreSentences(File srcFile, File sentFile)
-			throws IOException {
+	public static void extractAndStoreSentences(File srcFile, File sentFile) throws IOException {
 		String splittedText = getSentencesAsString(srcFile);
-		Utils.writeFile(sentFile, splittedText);
+		FileUtils.writeFile(sentFile, splittedText);
 	}
 
-	public static boolean isConsistent(String original, String splitted,
-			BratAnnotatedDocument doc) {
+	public static boolean isConsistent(String original, String splitted, BratAnnotatedDocument doc) {
 		for (BratAnnotation ann : doc.getAllAnnotations().values()) {
 			if (ann instanceof BratTextBoundAnnotation) {
 				BratTextBoundAnnotation t = (BratTextBoundAnnotation) ann;
 				int beginIndex = t.getStart();
 				int endIndex = t.getEnd();
 
-				String originalAnnText = original.substring(beginIndex,
-						endIndex);
-				String splittedAnnText = splitted.substring(beginIndex,
-						endIndex);
+				String originalAnnText = original.substring(beginIndex, endIndex);
+				String splittedAnnText = splitted.substring(beginIndex, endIndex);
 				if (!originalAnnText.equals(splittedAnnText)) {
 					Log.w("Splitted file %s does not match (at least) for position %s-%s:\n\torig: %s\n\tsplitted: %s",
-							doc.getAnnotationFilename(), beginIndex, endIndex,
-							originalAnnText, splittedAnnText);
+							doc.getDocumentName(), beginIndex, endIndex, originalAnnText, splittedAnnText);
 					return false;
 				}
 			}

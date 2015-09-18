@@ -3,6 +3,7 @@ package Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import Corpus.AnnotatedDocument;
 import Corpus.Constants;
 import Corpus.Corpus;
 import Corpus.parser.brat.BioNLPLoader;
@@ -24,24 +25,14 @@ import utility.FactorID;
 public class InspectLearning {
 
 	public static void main(String[] args) {
-		Corpus corpus = null;
+		Corpus<? extends AnnotatedDocument> corpus = null;
 
-		switch (2) {
+		switch (1) {
 		case 0:
 			corpus = DummyData.getDummyData();
 			break;
 		case 1:
-			corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			break;
-		case 2:
-			try {
-				corpus = BioNLPLoader.loadDatasetFromBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			} catch (Exception e) {
-				e.printStackTrace();
-				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = BioNLPLoader.convertDatasetToJavaBinaries(Constants.JAVA_BIN_BIONLP_CORPUS_FILEPATH);
-			}
-			break;
+			corpus = BioNLPLoader.loadBioNLP2013Train();
 		default:
 			break;
 		}

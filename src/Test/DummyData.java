@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,10 +23,9 @@ import Variables.State;
 
 public class DummyData {
 
-	public static Corpus getDummyData() {
+	public static Corpus<AnnotatedDocument> getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
-		AnnotationConfig originalConfig = configReader.readConfig(new File(
-				"res/bionlp/annotation.conf"));
+		AnnotationConfig originalConfig = configReader.readConfig(new File("res/bionlp/annotation.conf"));
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
 		simplifiedConfig.addEntityType(originalConfig.getEntityType("Protein"));
 
@@ -33,17 +33,14 @@ public class DummyData {
 		List<Token> tokens = extractTokens(content);
 		Log.d("Tokens for dummy data: %s", tokens);
 
-		DefaultCorpus corpus = new DefaultCorpus(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument",
-				content, tokens, 0);
+		DefaultCorpus<AnnotatedDocument> corpus = new DefaultCorpus<>(simplifiedConfig);
+		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens);
 		State goldState = new State(doc);
 		doc.setGoldState(goldState);
 
-		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1",
-				simplifiedConfig.getEntityType("Protein"), 4, 6);
+		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1", simplifiedConfig.getEntityType("Protein"), 4, 6);
 		goldState.addEntity(e1);
-		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2",
-				simplifiedConfig.getEntityType("Protein"), 8, 8);
+		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2", simplifiedConfig.getEntityType("Protein"), 8, 8);
 		goldState.addEntity(e2);
 
 		corpus.addDocument(doc);
@@ -56,8 +53,7 @@ public class DummyData {
 		String filename = "PMID-9119025";
 		File annFile = new File("res/bionlp/ann/" + filename + ".ann");
 		File textFile = new File("res/bionlp/text/" + filename + ".txt");
-		return BioNLPLoader.loadDocument(textFile, annFile).getDocuments()
-				.get(4);
+		return BioNLPLoader.loadDocument(textFile, Arrays.asList(annFile)).getDocuments().get(4);
 	}
 
 	private static List<Token> extractTokens(String content) {

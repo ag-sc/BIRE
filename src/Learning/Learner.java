@@ -6,6 +6,6 @@ import Corpus.AnnotatedDocument;
 
 public interface Learner {
 
-	public void train(List<AnnotatedDocument> documents, int epochs);
-	
+	public void train(List<? extends AnnotatedDocument> documents, int epochs);
+
 }

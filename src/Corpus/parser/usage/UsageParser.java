@@ -58,11 +58,11 @@ public class UsageParser {
 	public static void main(String[] args) {
 		File annDir = new File("res/usage/de");
 
-		DefaultCorpus corpus = (DefaultCorpus) parseCorpus(annDir);
+		DefaultCorpus<AnnotatedDocument> corpus = (DefaultCorpus) parseCorpus(annDir);
 		Log.d("Corpus: %s", corpus.toDetailedString());
 	}
 
-	public static Corpus parseCorpus(File annDir) {
+	public static Corpus<AnnotatedDocument> parseCorpus(File annDir) {
 		File[] allFiles = annDir.listFiles();
 
 		Map<String, File> textFiles = new HashMap<String, File>();
@@ -107,7 +107,7 @@ public class UsageParser {
 		}
 
 		AnnotationConfig config = getUsageConfig();
-		Corpus corpus = new DefaultCorpus(config);
+		Corpus<AnnotatedDocument> corpus = new DefaultCorpus<>(config);
 
 		for (String category : textFiles.keySet()) {
 			corpus.addDocuments(parseFile(corpus, category, textFiles.get(category), annotationFilesA1.get(category),
@@ -118,7 +118,8 @@ public class UsageParser {
 		return corpus;
 	}
 
-	private static Collection<AnnotatedDocument> parseFile(Corpus corpus, String category, File t, File a1, File r1) {
+	private static Collection<AnnotatedDocument> parseFile(Corpus<AnnotatedDocument> corpus, String category, File t,
+			File a1, File r1) {
 		Log.d("Process category %s", category);
 		Map<String, AnnotatedDocument> documents = parseDocument(corpus, category, t);
 
@@ -128,7 +129,8 @@ public class UsageParser {
 		return documents.values();
 	}
 
-	private static Map<String, AnnotatedDocument> parseDocument(Corpus corpus, String category, File t) {
+	private static Map<String, AnnotatedDocument> parseDocument(Corpus<AnnotatedDocument> corpus, String category,
+			File t) {
 		Map<String, AnnotatedDocument> documents = new HashMap<String, AnnotatedDocument>();
 		try {
 			FileInputStream fileStream = new FileInputStream(t);
@@ -148,7 +150,7 @@ public class UsageParser {
 				List<Token> tokens = tokenize(content);
 
 				AnnotatedDocument doc = new AnnotatedDocument(corpus,
-						String.format("%s-%s-%s-%s", category, documentID, productID, reviewID), content, tokens, 0);
+						String.format("%s-%s-%s-%s", category, documentID, productID, reviewID), content, tokens);
 				doc.setGoldState(new State(doc));
 				documents.put(documentID, doc);
 			}
@@ -196,13 +198,14 @@ public class UsageParser {
 							entityTypeName, text, annotationFile, lineNumber);
 				}
 
-				int beginTokenIndex = ParsingUtils.binarySearch(from, doc.getTokens());
+				// FIXME check if span search is correct for Usage annotations
+				int beginTokenIndex = ParsingUtils.binarySpanSearch(doc.getTokens(), from, true);
 				if (beginTokenIndex == -1) {
 					Log.w("No (begin) token found for character position %s for annotation \"%s\" in file %s and line %s.",
 							from, text, annotationFile, lineNumber);
 					Log.d("Tokens: %s", doc.getTokens());
 				}
-				int endTokenIndex = ParsingUtils.binarySearch(to, doc.getTokens());
+				int endTokenIndex = ParsingUtils.binarySpanSearch(doc.getTokens(), to, false);
 				if (endTokenIndex == -1) {
 					Log.w("No (end) token found for character position %s for annotation \"%s\" in file %s and line %s.",
 							to, text, annotationFile, lineNumber);

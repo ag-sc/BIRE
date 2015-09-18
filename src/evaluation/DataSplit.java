@@ -8,22 +8,22 @@ import java.util.Random;
 import Corpus.AnnotatedDocument;
 import Corpus.Corpus;
 
-public class DataSplit {
+public class DataSplit<T> {
 
 	private double split;
-	private List<AnnotatedDocument> all;
-	private List<AnnotatedDocument> train;
-	private List<AnnotatedDocument> test;
+	private List<T> all;
+	private List<T> train;
+	private List<T> test;
 
-	public DataSplit(List<AnnotatedDocument> all, double split, long seed) {
+	public DataSplit(List<T> all, double split, long seed) {
 		this.split = split;
-		this.all = new ArrayList<AnnotatedDocument>(all);
+		this.all = new ArrayList<T>(all);
 		shuffleAndSplit(new Random(seed));
 	}
 
-	public DataSplit(List<AnnotatedDocument> all, double split) {
+	public DataSplit(List<T> all, double split) {
 		this.split = split;
-		this.all = new ArrayList<AnnotatedDocument>(all);
+		this.all = new ArrayList<T>(all);
 		shuffleAndSplit(new Random());
 	}
 
@@ -39,15 +39,15 @@ public class DataSplit {
 		return split;
 	}
 
-	public List<AnnotatedDocument> getAll() {
+	public List<T> getAll() {
 		return all;
 	}
 
-	public List<AnnotatedDocument> getTrain() {
+	public List<T> getTrain() {
 		return train;
 	}
 
-	public List<AnnotatedDocument> getTest() {
+	public List<T> getTest() {
 		return test;
 	}
 

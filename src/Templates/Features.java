@@ -95,7 +95,7 @@ public class Features {
 		if (at < 0)
 			absolutPosition = e.getBeginTokenIndex() + at;
 		else if (at > 0)
-			absolutPosition = e.getEndTokenIndex() + at;
+			absolutPosition = e.getEndTokenIndex() + at - 1;
 		
 		if (absolutPosition < 0
 				|| absolutPosition > state.getDocument().getTokens().size() - 1)

@@ -26,26 +26,25 @@ import Logging.Log;
 public class UsageLoader {
 
 	public static void main(String[] args) {
-		convertDatasetToJavaBinaries(Constants.JAVA_BIN_USAGE_CORPUS_FILEPATH);
+		convertDatasetToJavaBinaries(Constants.getUSAGEJavaBinFilepath());
 	}
 
-	public static Corpus loadDatasetFromBinaries(String srcFilepath)
+	public static Corpus<AnnotatedDocument> loadDatasetFromBinaries(String srcFilepath)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream(new FileInputStream(
-				srcFilepath));
-		Corpus corpus = (Corpus) in.readObject();
+		ObjectInputStream in = new ObjectInputStream(new FileInputStream(srcFilepath));
+		Corpus<AnnotatedDocument> corpus = (Corpus) in.readObject();
 		in.close();
 		return corpus;
 	}
 
-	public static Corpus convertDatasetToJavaBinaries(String destFilepath) {
+	public static Corpus<AnnotatedDocument> convertDatasetToJavaBinaries(String destFilepath) {
 		File annDir = new File("/homes/sjebbara/datasets/USAGE-corpus-with-text/files/de");
-		Corpus corpus = UsageParser.parseCorpus(annDir);
+		Corpus<AnnotatedDocument> corpus = UsageParser.parseCorpus(annDir);
 		try {
 			System.out.println("store");
 			saveCorpusToFile(corpus, destFilepath);
-			Log.d("Corpus (%s documents) successfully parsed and stored to file \"%s\"",
-					corpus.getDocuments().size(), destFilepath);
+			Log.d("Corpus (%s documents) successfully parsed and stored to file \"%s\"", corpus.getDocuments().size(),
+					destFilepath);
 			System.out.println("done!");
 			return corpus;
 		} catch (FileNotFoundException e) {
@@ -56,7 +55,7 @@ public class UsageLoader {
 		return null;
 	}
 
-	private static void saveCorpusToFile(Corpus corpus, String destFilepath)
+	private static void saveCorpusToFile(Corpus<AnnotatedDocument> corpus, String destFilepath)
 			throws FileNotFoundException, IOException {
 		File destFile = new File(destFilepath);
 		File destDir = destFile.getParentFile();
@@ -64,8 +63,7 @@ public class UsageLoader {
 		if (!destDir.exists() && !destDir.mkdirs()) {
 			throw new IllegalStateException("Couldn't create dir: " + destDir);
 		}
-		ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(
-				destFile));
+		ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(destFile));
 		os.writeObject(corpus);
 		os.close();
 	}

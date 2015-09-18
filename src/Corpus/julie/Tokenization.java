@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Corpus.Token;
-import Corpus.parser.brat.Utils;
+import Corpus.parser.brat.FileUtils;
 import Logging.Log;
 import de.julielab.jtbd.JTBDException;
 import de.julielab.jtbd.JTBDExtendedAPI;
@@ -16,6 +16,10 @@ import de.julielab.jtbd.Tokenizer;
 import de.julielab.jtbd.Unit;
 
 public class Tokenization {
+
+	{
+		Log.off();
+	}
 
 	private static final String TOKENIZATION_FILE_SUFFIX = ".tok";
 	private static Tokenizer tokenizer;
@@ -46,15 +50,14 @@ public class Tokenization {
 	 * @throws ClassNotFoundException
 	 * @throws JTBDException
 	 */
-	public static List<Tokenization> extractTokens(String documentName, String sentencesFilepath,
-			String julieModelFilepath) throws FileNotFoundException, IOException, ClassNotFoundException {
+	public static List<Tokenization> extractTokens(List<String> sentences, String julieModelFilepath)
+			throws FileNotFoundException, IOException, ClassNotFoundException {
 		Log.d("tokenize with julie:");
 		if (tokenizer == null) {
 			tokenizer = new Tokenizer();
 			tokenizer.readModel(julieModelFilepath);
 		}
 
-		List<String> sentences = Utils.readLines(sentencesFilepath);
 		Log.d("julie-tokenized sentences:");
 		List<Tokenization> tokenizations = new ArrayList<Tokenization>();
 		int accumulatedSentenceLength = 0;
@@ -159,7 +162,7 @@ public class Tokenization {
 		}
 		try {
 			File tokenizationFile = new File(tokenizationDirPath, documentName + TOKENIZATION_FILE_SUFFIX);
-			Utils.writeFile(tokenizationFile, builder.toString());
+			FileUtils.writeFile(tokenizationFile, builder.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

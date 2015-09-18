@@ -9,6 +9,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 
+/**
+ * This class acts a simple wrapper for the actual logger, that allows to access
+ * the logger from everywhere in the code and that allows to mute single classes
+ * and methods. Since this is a rather hack-ish implementation, switching to a
+ * external logging tool in the future might be recommended.
+ * 
+ * @author sjebbara
+ *
+ */
 public class Log {
 
 	private static final boolean logToFile = false;

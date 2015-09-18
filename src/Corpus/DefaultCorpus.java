@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultCorpus implements Corpus {
+public class DefaultCorpus<T extends AnnotatedDocument> implements Corpus<T> {
 
-	List<AnnotatedDocument> documents = new ArrayList<AnnotatedDocument>();
-	AnnotationConfig corpusConfig;
+	private List<T> documents = new ArrayList<>();
+	private AnnotationConfig corpusConfig;
 
 	public DefaultCorpus(AnnotationConfig config) {
 		this.corpusConfig = config;
@@ -19,24 +19,23 @@ public class DefaultCorpus implements Corpus {
 	}
 
 	@Override
-	public List<AnnotatedDocument> getDocuments() {
+	public List<T> getDocuments() {
 		return documents;
 	}
 
 	@Override
-	public void addDocument(AnnotatedDocument doc) {
+	public void addDocument(T doc) {
 		this.documents.add(doc);
 	}
 
 	@Override
-	public void addDocuments(Collection<AnnotatedDocument> documents) {
+	public void addDocuments(Collection<T> documents) {
 		this.documents.addAll(documents);
 	}
 
 	@Override
 	public String toString() {
-		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents="
-				+ documents.size() + "]";
+		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents=" + documents.size() + "]";
 	}
 
 	public String toDetailedString() {
@@ -51,9 +50,8 @@ public class DefaultCorpus implements Corpus {
 			builder.append(doc.getGoldState());
 			builder.append("\n");
 		}
-		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents="
-				+ documents.size() + ", documents=\n" + builder.toString()
-				+ "]";
+		return "BratCorpus [corpusConfig=" + corpusConfig + ", #documents=" + documents.size() + ", documents=\n"
+				+ builder.toString() + "]";
 	}
 
 }

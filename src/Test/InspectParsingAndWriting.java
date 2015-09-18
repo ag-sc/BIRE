@@ -1,27 +1,17 @@
 package Test;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.sun.org.apache.bcel.internal.generic.LoadClass;
-
-import utility.EntityID;
-import Corpus.AnnotatedDocument;
-import Corpus.AnnotationConfig;
 import Corpus.Corpus;
-import Corpus.DefaultCorpus;
-import Corpus.Document;
-import Corpus.julie.JavaSentenceSplitter;
-import Corpus.julie.Tokenization;
+import Corpus.SubDocument;
 import Corpus.parser.brat.BioNLPLoader;
-import Corpus.parser.brat.Brat2BIREConverter;
-import Corpus.parser.brat.BratAnnotatedDocument;
-import Corpus.parser.brat.BratAnnotationParser;
-import Corpus.parser.brat.BratConfigReader;
-import Corpus.parser.brat.Utils;
+import Corpus.parser.brat.FileUtils;
 import Logging.Log;
+import Variables.EntityAnnotation;
 import Variables.State;
 import evaluation.BioNLPEvaluation;
 
@@ -40,45 +30,36 @@ public class InspectParsingAndWriting {
 	 */
 	public static void main(String[] args) {
 
-		String filename = "PMID-9119025";
-		File annFile = new File("res/bionlp/ann/" + filename + ".ann");
-		File textFile = new File("res/bionlp/text/" + filename + ".txt");
-		Corpus corpus;
-		try {
-			corpus = BioNLPLoader.loadDocument(textFile, annFile);
+		File goldDir = new File("/homes/sjebbara/datasets/BioNLP-ST-2013-GE/dev/");
+		File predDir = new File("/homes/sjebbara/datasets/BioNLP-ST-2013-GE/eval test/predicted/");
 
-			List<AnnotatedDocument> documents = corpus.getDocuments();
-			String annotationsAsText = "";
-			for (AnnotatedDocument document : documents) {
-				annotationsAsText += BioNLPEvaluation
-						.stateToBioNLPString(document.getGoldState());
-				annotationsAsText += "\n";
-			}
-			Log.d("#####################");
-			Log.d("### Original:\n%s", Utils.readFile(annFile));
-			Log.d("### Predicted:\n%s", annotationsAsText);
+		List<File> texts = FileUtils.getFiles(goldDir, "txt");
+		List<File> annotationsA1 = FileUtils.getFiles(goldDir, "a1");
+		List<File> annotationsA2 = FileUtils.getFiles(goldDir, "a2");
 
-			State state1 = documents.get(4).getGoldState();
-			State state2 = new State(state1);
-			state2.removeEntity(new EntityID("T2"));
-			Log.d("#####################");
-			Log.d(state1.getDocument().getContent());
-			Log.d("State 1: %s", state1);
-			Log.d("State 2: %s", state2);
-			Log.d("F1(State 1, State 1) =  %s",
-					BioNLPEvaluation.strictEquality(state1, state1));
-			Log.d("F1(State 2, State 2) =  %s",
-					BioNLPEvaluation.strictEquality(state2, state2));
-			Log.d("F1(State 1, State 2) =  %s",
-					BioNLPEvaluation.strictEquality(state1, state2));
-			Log.d("F1(State 2, State 1) =  %s",
-					BioNLPEvaluation.strictEquality(state2, state1));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Corpus<SubDocument> corpus = BioNLPLoader.convertDatasetToJavaBinaries(texts, annotationsA1, annotationsA2,
+				null);
+
+		List<SubDocument> documents = corpus.getDocuments();
+		List<State> states = documents.stream().map(d -> d.getGoldState()).collect(Collectors.toList());
+		Log.d("#####################");
+		Set<File> files = BioNLPEvaluation.statesToBioNLPFiles(predDir, states, true);
+		Log.d("Parsed and written %s documents: %s", files.size(), files);
+		// Log.d("### Original:\n%s", FileUtils.readFile(annFile));
+		// Log.d("### Predicted:\n%s", annotationsAsText);
+
+		Log.d("#####################");
+		State state1 = documents.get(4).getGoldState();
+		State state2 = new State(state1);
+		EntityAnnotation removedEntity = new ArrayList<>(state2.getEntities()).get(0);
+		state2.removeEntity(removedEntity.getID());
+		Log.d("State 2: remove entity %s", removedEntity);
+		Log.d(state1.getDocument().getContent());
+		Log.d("State 1: %s", state1);
+		Log.d("State 2: %s", state2);
+		Log.d("F1(State 1, State 1) =  %s", BioNLPEvaluation.strictEquality(state1, state1));
+		Log.d("F1(State 2, State 2) =  %s", BioNLPEvaluation.strictEquality(state2, state2));
+		Log.d("F1(State 1, State 2) =  %s", BioNLPEvaluation.strictEquality(state1, state2));
+		Log.d("F1(State 2, State 1) =  %s", BioNLPEvaluation.strictEquality(state2, state1));
 	}
 }

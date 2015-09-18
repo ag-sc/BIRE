@@ -194,7 +194,7 @@ public class SamplingHelper {
 		// possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
 		if (entity.getBeginTokenIndex() > 0)
 			possibleBoundaryChanges.add(BoundaryChange.EXPAND_LEFT);
-		if (entity.getEndTokenIndex() < entity.getState().getDocument().getTokens().size() - 1)
+		if (entity.getEndTokenIndex() < entity.getState().getDocument().getTokens().size())
 			possibleBoundaryChanges.add(BoundaryChange.EXPAND_RIGHT);
 		if (entity.getEndTokenIndex() - entity.getBeginTokenIndex() > 0) {
 			possibleBoundaryChanges.add(BoundaryChange.CONTRACT_LEFT);

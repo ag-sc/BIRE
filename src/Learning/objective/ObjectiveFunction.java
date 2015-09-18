@@ -14,7 +14,7 @@ public abstract class ObjectiveFunction {
 		int b = entity1.getEndTokenIndex();
 		int x = entity2.getBeginTokenIndex();
 		int y = entity2.getEndTokenIndex();
-		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x) + 1);
+		int overlap = Math.max(0, Math.min(b, y) - Math.max(a, x));
 		return overlap;
 	}
 

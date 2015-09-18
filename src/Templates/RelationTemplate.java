@@ -104,17 +104,17 @@ public class RelationTemplate extends Template implements Serializable {
 	}
 
 	private double isBefore(EntityAnnotation e1, EntityAnnotation e2) {
-		return e1.getEndTokenIndex() < e2.getBeginTokenIndex() ? 1.0 : 0;
+		return e1.getEndTokenIndex() <= e2.getBeginTokenIndex() ? 1.0 : 0;
 	}
 
 	private double isAfter(EntityAnnotation e1, EntityAnnotation e2) {
-		return e2.getEndTokenIndex() < e1.getBeginTokenIndex() ? 1.0 : 0;
+		return e2.getEndTokenIndex() <= e1.getBeginTokenIndex() ? 1.0 : 0;
 	}
 
 	private int distance(EntityAnnotation e1, EntityAnnotation e2) {
 		// TODO test implementation of entity distance
-		return Math.max(e2.getBeginTokenIndex() - e1.getEndTokenIndex(),
-				e1.getBeginTokenIndex() - e2.getEndTokenIndex());
+		return Math.max(e2.getBeginTokenIndex() - e1.getEndTokenIndex() + 1,
+				e1.getBeginTokenIndex() - e2.getEndTokenIndex() + 1);
 	}
 
 	@Override
