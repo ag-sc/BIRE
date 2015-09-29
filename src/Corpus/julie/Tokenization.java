@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Corpus.Token;
-import Corpus.parser.brat.FileUtils;
+import Corpus.parser.FileUtils;
 import Logging.Log;
 import de.julielab.jtbd.JTBDException;
 import de.julielab.jtbd.JTBDExtendedAPI;
@@ -18,7 +18,7 @@ import de.julielab.jtbd.Unit;
 public class Tokenization {
 
 	{
-		Log.off();
+		 Log.off();
 	}
 
 	private static final String TOKENIZATION_FILE_SUFFIX = ".tok";
@@ -63,10 +63,10 @@ public class Tokenization {
 		int accumulatedSentenceLength = 0;
 		for (String sentence : sentences) {
 			try {
+				Log.d("%s:\t%s", sentence.length(), sentence);
 				List<Unit> units = tokenizer.predict(sentence);
 				List<Token> tokens = new ArrayList<Token>();
-				Log.d("%s (#characters: %s)", sentence, sentence.length());
-				Log.d("\t%s", units);
+				Log.d("\t  %s", units);
 				int index = 0;
 				for (Unit u : units) {
 					String text = u.rep;
@@ -76,7 +76,8 @@ public class Tokenization {
 					index++;
 				}
 				tokenizations.add(new Tokenization(tokens, sentence, accumulatedSentenceLength));
-				accumulatedSentenceLength += sentence.length() + 1;
+				accumulatedSentenceLength += sentence.length();
+				// accumulatedSentenceLength += sentence.length() + 1;
 			} catch (JTBDException e) {
 				e.printStackTrace();
 				Log.w("Unable to tokenize sentence with JTBD. Skip: %s", sentence);
@@ -167,4 +168,11 @@ public class Tokenization {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "Tokenization [" + absoluteStartOffset + "-" + absoluteEndOffset
+				+ ": " + originalSentence + "\n\t" + tokens + "]";
+	}
+
 }

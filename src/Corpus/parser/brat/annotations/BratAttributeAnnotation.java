@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import Corpus.parser.brat.BratAnnotationManager;
+import utility.ID;
+
 public class BratAttributeAnnotation extends BratAnnotation {
 
 	public final static Pattern pattern;
 	public final static Pattern idPattern;
+
 	static {
 		String id = "((A|M)\\d+)";
 		String role = "(\\S+)";
@@ -19,39 +23,26 @@ public class BratAttributeAnnotation extends BratAnnotation {
 	}
 
 	private String role;
-	private List<BratAnnotation> arguments = new ArrayList<BratAnnotation>();
+	private List<ID<? extends BratAnnotation>> arguments = new ArrayList<>();
 
 	public String getRole() {
 		return role;
 	}
 
-	public List<BratAnnotation> getArguments() {
+	public List<ID<? extends BratAnnotation>> getArguments() {
 		return arguments;
 	}
 
-	public BratAttributeAnnotation(String id) {
-		super(id);
-	}
-
-	public void init(String role, List<BratAnnotation> arguments) {
+	public BratAttributeAnnotation(BratAnnotationManager manager, String id, String role,
+			List<ID<? extends BratAnnotation>> arguments) {
+		super(manager, id);
 		this.role = role;
 		this.arguments = arguments;
-		this.initialized = true;
 	}
 
 	@Override
 	public String toString() {
-		if (initialized) {
-			StringBuilder builder = new StringBuilder();
-			for (BratAnnotation a : arguments) {
-				builder.append(a.getID());
-				builder.append(" ");
-			}
-			return "AttributeAnnotation [id=" + id + ", role=" + role
-					+ ", arguments=" + builder.toString() + "]";
-		} else {
-			return "UNINITIALIZED AttributeAnnotation [id=" + id + "]";
-		}
+		return "AttributeAnnotation [id=" + id + ", role=" + role + ", arguments=" + arguments + "]";
 	}
 
 }

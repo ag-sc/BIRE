@@ -2,7 +2,7 @@ package utility;
 
 import java.io.Serializable;
 
-public class ID implements Serializable {
+public class ID<T> implements Serializable {
 
 	public final String id;
 

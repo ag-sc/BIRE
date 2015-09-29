@@ -9,9 +9,11 @@ import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.OptionalInt;
+import java.util.stream.Collectors;
 
+import Corpus.parser.FileUtils;
 import Corpus.parser.brat.BratAnnotatedDocument;
-import Corpus.parser.brat.FileUtils;
 import Corpus.parser.brat.annotations.BratAnnotation;
 import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 import Logging.Log;
@@ -19,6 +21,22 @@ import Logging.Log;
 public class JavaSentenceSplitter {
 	static {
 		Log.off();
+	}
+
+	public static void main(String[] args) {
+		List<String> sentences;
+		try {
+			sentences = getSentencesAsList(new File(
+					"/homes/sjebbara/datasets/BioNLP-ST-2013-GE/train/PMC-1310901-03-MATERIALS_AND_METHODS.txt"));
+			sentences.forEach(s -> System.out.println(String.format("(%s): %s", s.length(), s)));
+			int sum = 0;
+			for (String string : sentences) {
+				sum += string.length();
+			}
+			System.out.println(sum);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static List<String> getSentencesAsList(File srcFile) throws FileNotFoundException, IOException {
@@ -30,18 +48,20 @@ public class JavaSentenceSplitter {
 			iterator.setText(line);
 			int start = iterator.first();
 			for (int end = iterator.next(); end != BreakIterator.DONE; start = end, end = iterator.next()) {
-				// end - 1 to remove the trailing whitespace
-				String sentence = line.substring(start, end - 1);
+				// OBSOLETE end - 1 to remove the trailing whitespace
+				String sentence = line.substring(start, end);
 				sentences.add(sentence);
 				Log.d(sentence);
 			}
+
 			/*
 			 * This little hack with the trailing whitespaces is necessary so
 			 * that the character offsets of the respective annotations stay
-			 * consistent with the sentence-splitted text.
+			 * consistent with the sentence-splitted text. Without it, the
+			 * linebreak at the end of each line is neglected.
 			 */
 			String sentence = sentences.get(sentences.size() - 1);
-			sentence = sentence + " ";
+			sentence = sentence + "\n";
 			sentences.set(sentences.size() - 1, sentence);
 		}
 		reader.close();
@@ -68,6 +88,7 @@ public class JavaSentenceSplitter {
 	}
 
 	public static boolean isConsistent(String original, String splitted, BratAnnotatedDocument doc) {
+		boolean isConsistent = true;
 		for (BratAnnotation ann : doc.getAllAnnotations().values()) {
 			if (ann instanceof BratTextBoundAnnotation) {
 				BratTextBoundAnnotation t = (BratTextBoundAnnotation) ann;
@@ -77,13 +98,13 @@ public class JavaSentenceSplitter {
 				String originalAnnText = original.substring(beginIndex, endIndex);
 				String splittedAnnText = splitted.substring(beginIndex, endIndex);
 				if (!originalAnnText.equals(splittedAnnText)) {
-					Log.w("Splitted file %s does not match (at least) for position %s-%s:\n\torig: %s\n\tsplitted: %s",
+					Log.w("Splitted file %s does not match for position %s-%s:\n\torig: %s\n\tsplitted: %s",
 							doc.getDocumentName(), beginIndex, endIndex, originalAnnText, splittedAnnText);
-					return false;
+					isConsistent = false;
 				}
 			}
 		}
-		return true;
+		return isConsistent;
 	}
 
 }

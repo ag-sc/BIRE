@@ -2,30 +2,27 @@ package evaluation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.JOptionPane;
+import com.google.common.collect.Multimap;
 
-import java.util.Map.Entry;
-
-import utility.EntityID;
-import Corpus.Document;
 import Corpus.SubDocument;
 import Corpus.Token;
-import Corpus.parser.brat.FileUtils;
+import Corpus.parser.FileUtils;
 import Logging.Log;
+import Variables.AEntityAnnotation;
 import Variables.ArgumentRole;
-import Variables.EntityAnnotation;
 import Variables.State;
-
-import com.google.common.collect.Multimap;
+import utility.EntityID;
 
 public class BioNLPEvaluation {
 
@@ -43,7 +40,7 @@ public class BioNLPEvaluation {
 
 	public static String stateToBioNLPString(State state) {
 		StringBuilder builder = new StringBuilder();
-		for (EntityAnnotation e : state.getEntities()) {
+		for (AEntityAnnotation e : state.getEntities()) {
 			if (e.getArguments().size() == 0) {
 				// if (entities.contains(e.getType().getName())) {
 				builder.append(entityToBioNLPString(e));
@@ -57,7 +54,7 @@ public class BioNLPEvaluation {
 		return builder.toString();
 	}
 
-	public static String entityToBioNLPString(EntityAnnotation e) {
+	public static String entityToBioNLPString(AEntityAnnotation e) {
 		SubDocument doc = (SubDocument) e.getState().getDocument();
 		List<Token> tokens = e.getTokens();
 		String pattern = "%s\t%s %s %s\t%s";
@@ -69,7 +66,7 @@ public class BioNLPEvaluation {
 		return String.format(pattern, id, type, from, to, text);
 	}
 
-	public static String eventToBioNLPString(EntityAnnotation e) {
+	public static String eventToBioNLPString(AEntityAnnotation e) {
 		SubDocument doc = (SubDocument) e.getState().getDocument();
 		List<Token> tokens = e.getTokens();
 		String triggerPattern = "%s\t%s %s %s\t%s";
@@ -90,16 +87,16 @@ public class BioNLPEvaluation {
 	}
 
 	public static double strictEquality(State state, State goldState) {
-		Collection<EntityAnnotation> entities = state.getEntities();
-		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
+		Collection<AEntityAnnotation> entities = state.getEntities();
+		Collection<AEntityAnnotation> goldEntities = goldState.getEntities();
 		double tpGold = 0;
 		double tpPredicted = 0;
 		double fp = 0;
 		double fn = 0;
 
-		for (EntityAnnotation goldEntity : goldEntities) {
+		for (AEntityAnnotation goldEntity : goldEntities) {
 			boolean match = false;
-			for (EntityAnnotation entity : entities) {
+			for (AEntityAnnotation entity : entities) {
 				match = matchEntities(entity, goldEntity);
 				if (match)
 					break;
@@ -110,9 +107,9 @@ public class BioNLPEvaluation {
 				fn++;
 		}
 
-		for (EntityAnnotation entity : entities) {
+		for (AEntityAnnotation entity : entities) {
 			boolean match = false;
-			for (EntityAnnotation goldEntity : goldEntities) {
+			for (AEntityAnnotation goldEntity : goldEntities) {
 				match = matchEntities(entity, goldEntity);
 				if (match)
 					break;
@@ -139,20 +136,22 @@ public class BioNLPEvaluation {
 		return f1;
 	}
 
-	private static Collection<EntityAnnotation> unique(Collection<EntityAnnotation> entities) {
-		Collection<EntityAnnotation> uniqueEntities = new ArrayList<EntityAnnotation>();
-		for (EntityAnnotation entity : entities) {
-			boolean match = false;
-			for (EntityAnnotation uEntity : uniqueEntities) {
-				match = matchEntities(entity, uEntity);
-				if (match)
-					break;
-			}
-			if (match)
-				uniqueEntities.add(entity);
-		}
-		return uniqueEntities;
-	}
+	// private static Collection<AEntityAnnotation>
+	// unique(Collection<AEntityAnnotation> entities) {
+	// Collection<AEntityAnnotation> uniqueEntities = new
+	// ArrayList<AEntityAnnotation>();
+	// for (AEntityAnnotation entity : entities) {
+	// boolean match = false;
+	// for (EntityAnnotation uEntity : uniqueEntities) {
+	// match = matchEntities(entity, uEntity);
+	// if (match)
+	// break;
+	// }
+	// if (match)
+	// uniqueEntities.add(entity);
+	// }
+	// return uniqueEntities;
+	// }
 
 	/**
 	 * True, if these two entities match, false otherwise, given the strict
@@ -164,7 +163,7 @@ public class BioNLPEvaluation {
 	 * @param e2
 	 * @return
 	 */
-	private static boolean matchEntities(EntityAnnotation e1, EntityAnnotation e2) {
+	private static boolean matchEntities(AEntityAnnotation e1, AEntityAnnotation e2) {
 		if (!e1.getType().getName().equals(e2.getType().getName()))
 			return false;
 		if (e1.getBeginTokenIndex() != e2.getBeginTokenIndex() || e1.getEndTokenIndex() != e2.getEndTokenIndex())
@@ -184,7 +183,7 @@ public class BioNLPEvaluation {
 	 * @param e2
 	 * @return
 	 */
-	private static boolean matchArguments(EntityAnnotation e1, EntityAnnotation e2) {
+	private static boolean matchArguments(AEntityAnnotation e1, AEntityAnnotation e2) {
 		Multimap<ArgumentRole, EntityID> arguments1 = e1.getArguments();
 		Multimap<ArgumentRole, EntityID> arguments2 = e2.getArguments();
 		// this is a fast-reject test
@@ -213,8 +212,8 @@ public class BioNLPEvaluation {
 	 * @param argument2
 	 * @return
 	 */
-	private static boolean containsArgument(EntityAnnotation e1, Multimap<ArgumentRole, EntityID> arguments1,
-			EntityAnnotation e2, Entry<ArgumentRole, EntityID> argument2) {
+	private static boolean containsArgument(AEntityAnnotation e1, Multimap<ArgumentRole, EntityID> arguments1,
+			AEntityAnnotation e2, Entry<ArgumentRole, EntityID> argument2) {
 		Collection<EntityID> possibleMatches = arguments1.get(argument2.getKey());
 		for (EntityID entityID : possibleMatches) {
 			if (matchEntities(e1.getEntity(entityID), e2.getEntity(argument2.getValue())))
@@ -223,35 +222,39 @@ public class BioNLPEvaluation {
 		return false;
 	}
 
-	/**
-	 * Writes the given states to files that resemble the BioNLP annotation
-	 * format. States the belong to the same original documents (that is, which
-	 * relate to sentences in the same document) are written to the same
-	 * annotation file. If the wipeFolder flag is set to true, the user is
-	 * prompted for confirmation and the contents of the outputDir folder are
-	 * deleted before writing the state files.
-	 * 
-	 * @param outputDir
-	 * @param states
-	 * @param wipeFolder
-	 */
+	// /**
+	// * Writes the given states to files that resemble the BioNLP annotation
+	// * format. States the belong to the same original documents (that is,
+	// which
+	// * relate to sentences in the same document) are written to the same
+	// * annotation file. If the wipeFolder flag is set to true, the user is
+	// * prompted for confirmation and the contents of the outputDir folder are
+	// * deleted before writing the state files.
+	// *
+	// * @param outputDir
+	// * @param states
+	// * @param wipeFolder
+	// */
 	public static Set<File> statesToBioNLPFiles(File outputDir, List<State> states, boolean wipeFolder) {
-		if (wipeFolder) {
-			// int userInput = JOptionPane.showConfirmDialog(null,
-			// String.format("Really wipe folder \"%s\" before writing states?",
-			// outputDir.getPath()));
-			// if (userInput == JOptionPane.OK_OPTION) {
-			for (File f : outputDir.listFiles()) {
-				f.delete();
-			}
-			// }
-		}
+		// if (wipeFolder) {
+		// // int userInput = JOptionPane.showConfirmDialog(null,
+		// // String.format("Really wipe folder \"%s\" before writing states?",
+		// // outputDir.getPath()));
+		// // if (userInput == JOptionPane.OK_OPTION) {
+		// for (File f : outputDir.listFiles()) {
+		// f.delete();
+		// }
+		// // }
+		// }
 		Map<String, File> files = new HashMap<>();
+		String newParentName = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss").format(new Date());
+		File newParent = new File(outputDir, newParentName);
+		newParent.mkdir();
 		for (State s : states) {
 			SubDocument d = (SubDocument) s.getDocument();
 			File file = files.get(d.getParentDocumentName());
 			if (file == null) {
-				file = new File(outputDir, d.getParentDocumentName() + ".a2");
+				file = new File(newParent, d.getParentDocumentName() + ".a2");
 				files.put(d.getParentDocumentName(), file);
 			}
 			try {

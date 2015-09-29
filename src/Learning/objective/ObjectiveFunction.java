@@ -1,15 +1,14 @@
 package Learning.objective;
 
 import Learning.Score;
-import Logging.Log;
-import Variables.EntityAnnotation;
+import Variables.AEntityAnnotation;
 import Variables.State;
 
 public abstract class ObjectiveFunction {
 
 	public abstract Score score(State state, State goldState);
 
-	public static int overlap(EntityAnnotation entity1, EntityAnnotation entity2) {
+	public static int overlap(AEntityAnnotation entity1, AEntityAnnotation entity2) {
 		int a = entity1.getBeginTokenIndex();
 		int b = entity1.getEndTokenIndex();
 		int x = entity2.getBeginTokenIndex();
@@ -18,7 +17,7 @@ public abstract class ObjectiveFunction {
 		return overlap;
 	}
 
-	public boolean typeMatches(EntityAnnotation entity, EntityAnnotation goldEntity) {
+	public boolean typeMatches(AEntityAnnotation entity, AEntityAnnotation goldEntity) {
 		return entity.getType().equals(goldEntity.getType());
 	}
 

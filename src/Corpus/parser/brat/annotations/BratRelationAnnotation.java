@@ -5,9 +5,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import Corpus.parser.brat.BratAnnotationManager;
+import utility.ID;
+
 public class BratRelationAnnotation extends BratAnnotation {
 	public final static Pattern pattern;
 	public final static Pattern idPattern;
+
 	static {
 		String id = "(R\\d+)";
 		String role = "(\\S+)";
@@ -20,39 +24,25 @@ public class BratRelationAnnotation extends BratAnnotation {
 	}
 
 	private String role;
-	private Map<String, BratAnnotation> arguments = new HashMap<String, BratAnnotation>();
-
-	public BratRelationAnnotation(String id) {
-		super(id);
-	}
+	private Map<String, ID<? extends BratAnnotation>> arguments = new HashMap<>();
 
 	public String getRole() {
 		return role;
 	}
 
-	public Map<String, BratAnnotation> getArguments() {
+	public Map<String, ID<? extends BratAnnotation>> getArguments() {
 		return arguments;
 	}
 
-	public void init(String role, Map<String, BratAnnotation> arguments) {
+	public BratRelationAnnotation(BratAnnotationManager manager,String id, String role, Map<String, ID<? extends BratAnnotation>> arguments) {
+		super(manager,id);
 		this.role = role;
 		this.arguments = arguments;
-		this.initialized = true;
 	}
 
 	@Override
 	public String toString() {
-		if (initialized) {
-			StringBuilder builder = new StringBuilder();
-			for (Entry<String, BratAnnotation> e : arguments.entrySet()) {
-				builder.append(e.getKey() + ":" + e.getValue().getID());
-				builder.append(" ");
-			}
-			return "RelationAnnotation [id=" + id + ", role=" + role
-					+ ", arguments=" + builder.toString() + "]";
-		} else {
-			return "UNINITIALIZED RelationAnnotation [id=" + id + "]";
-		}
+		return "RelationAnnotation [id=" + id + ", role=" + role + ", arguments=" + arguments + "]";
 	}
 
 }

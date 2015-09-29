@@ -7,8 +7,8 @@ import com.google.common.collect.Multimap;
 
 import Learning.Score;
 import Logging.Log;
+import Variables.AEntityAnnotation;
 import Variables.ArgumentRole;
-import Variables.EntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
@@ -23,16 +23,16 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 
 	@Override
 	public Score score(State state, State goldState) {
-		Collection<EntityAnnotation> entities = state.getEntities();
-		Collection<EntityAnnotation> goldEntities = goldState.getEntities();
+		Collection<AEntityAnnotation> entities = state.getEntities();
+		Collection<AEntityAnnotation> goldEntities = goldState.getEntities();
 		Score score;
 		if (goldEntities.size() == 0 && entities.size() == 0) {
 			score = new Score(1, 1, 1);
 		} else {
 			double precision = 0.0;
-			for (EntityAnnotation entity : entities) {
+			for (AEntityAnnotation entity : entities) {
 				double max = 0.0;
-				for (EntityAnnotation goldEntity : goldEntities) {
+				for (AEntityAnnotation goldEntity : goldEntities) {
 					if (typeMatches(entity, goldEntity)) {
 						double overlapScore = overlapScore(entity, goldEntity);
 						// FIXME comparing overlapScore to previous overlapScore
@@ -46,9 +46,9 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 			}
 
 			double recall = 0.0;
-			for (EntityAnnotation goldEntity : goldEntities) {
+			for (AEntityAnnotation goldEntity : goldEntities) {
 				double max = 0.0;
-				for (EntityAnnotation entity : entities) {
+				for (AEntityAnnotation entity : entities) {
 					if (typeMatches(goldEntity, entity)) {
 						double overlapScore = overlapScore(goldEntity, entity);
 						if (overlapScore > max) {
@@ -74,7 +74,7 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 		return score;
 	}
 
-	private double argumentScore(EntityAnnotation entity1, EntityAnnotation entity2) {
+	private double argumentScore(AEntityAnnotation entity1, AEntityAnnotation entity2) {
 		Multimap<ArgumentRole, EntityID> arguments1 = entity1.getArguments();
 		Multimap<ArgumentRole, EntityID> arguments2 = entity2.getArguments();
 
@@ -86,7 +86,7 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 		// count arguments of entity1 that are also in entity2
 		for (Entry<ArgumentRole, EntityID> argument1 : arguments1.entries()) {
 			ArgumentRole argRole1 = argument1.getKey();
-			EntityAnnotation argEntity1 = entity1.getEntity(argument1.getValue());
+			AEntityAnnotation argEntity1 = entity1.getEntity(argument1.getValue());
 			/*
 			 * Since there are possibly several arguments with the same role,
 			 * check if there is at least one that matches (overlaps)
@@ -94,7 +94,7 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 			 */
 			Collection<EntityID> argsForRole2 = arguments2.get(argRole1);
 			for (EntityID argForRoleEntityID2 : argsForRole2) {
-				EntityAnnotation argEntity2 = entity2.getEntity(argForRoleEntityID2);
+				AEntityAnnotation argEntity2 = entity2.getEntity(argForRoleEntityID2);
 				if (overlapScore(argEntity1, argEntity2) > 0) {
 					matchingRoles++;
 					// only count one match per argument
@@ -105,7 +105,7 @@ public class DefaultObjectiveFunction extends ObjectiveFunction {
 		return matchingRoles / arguments1.size();
 	}
 
-	public static double overlapScore(EntityAnnotation entity, EntityAnnotation goldEntity) {
+	public static double overlapScore(AEntityAnnotation entity, AEntityAnnotation goldEntity) {
 		int a = entity.getBeginTokenIndex();
 		int b = entity.getEndTokenIndex();
 		int x = goldEntity.getBeginTokenIndex();

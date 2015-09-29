@@ -1,6 +1,7 @@
 package Test;
 
 import java.util.Collection;
+import java.util.logging.Logger;
 
 import Corpus.AnnotatedDocument;
 import Corpus.Corpus;
@@ -25,12 +26,12 @@ public class InspectTemplates {
 			corpus = DummyData.getDummyData();
 			break;
 		case 1:
-			corpus = BioNLPLoader.loadBioNLP2013Train();
+			corpus = BioNLPLoader.loadBioNLP2013Train(true);
 			break;
 		default:
 			break;
 		}
-		AnnotatedDocument doc = corpus.getDocuments().get(0);
+		AnnotatedDocument doc = corpus.getDocuments().get(1);
 		Log.d("Content: %s (%s)", doc.getContent(), doc.getContent().length());
 		Log.d("Tokens: %s", doc.getTokens());
 		Log.d("State: %s", doc.getGoldState());

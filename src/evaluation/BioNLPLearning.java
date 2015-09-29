@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -27,8 +26,15 @@ import Variables.State;
 public class BioNLPLearning {
 
 	public static void main(String[] args) {
-		BioNLPCorpus trainCorpus = BioNLPLoader.loadBioNLP2013Train();
-		BioNLPCorpus devCorpus = BioNLPLoader.loadBioNLP2013Dev();
+		// int trainSize = 190;
+		int trainSize = 0;
+		int testSize = 0;
+		if (args != null && args.length == 2) {
+			trainSize = Integer.parseInt(args[0]);
+			testSize = Integer.parseInt(args[1]);
+		}
+		BioNLPCorpus trainCorpus = BioNLPLoader.loadBioNLP2013Train(false);
+		BioNLPCorpus devCorpus = BioNLPLoader.loadBioNLP2013Dev(false);
 
 		Log.d("Train corpus config: %s", trainCorpus.getCorpusConfig());
 		Log.d("Dev corpus config: %s", devCorpus.getCorpusConfig());
@@ -79,14 +85,20 @@ public class BioNLPLearning {
 			// seeds[i]);
 			// List<SubDocument> train = split.getTrain();
 			// List<SubDocument> test = split.getTest();
-			List<SubDocument> train = trainCorpus.getDocuments();
-			List<SubDocument> test = devCorpus.getDocuments();
-			// List<SubDocument> train =
-			// trainCorpus.getSubDocuments(trainCorpus.getParentDocuments().subList(0,
-			// 4));
-			// List<SubDocument> test =
-			// devCorpus.getSubDocuments(devCorpus.getParentDocuments().subList(0,
-			// 1));
+			List<SubDocument> train = null;
+			List<SubDocument> test = null;
+			if (trainSize > 0) {
+				trainSize = Math.min(trainSize, trainCorpus.getParentDocuments().size());
+				train = trainCorpus.getSubDocuments(trainCorpus.getParentDocuments().subList(0, trainSize));
+			} else {
+				train = trainCorpus.getDocuments();
+			}
+			if (testSize > 0) {
+				testSize = Math.min(testSize, devCorpus.getParentDocuments().size());
+				test = devCorpus.getSubDocuments(devCorpus.getParentDocuments().subList(0, testSize));
+			} else {
+				test = devCorpus.getDocuments();
+			}
 
 			// Log.d("train:");
 			// train.forEach(d -> Log.d("%s: %s", d.getName(),
@@ -174,5 +186,6 @@ public class BioNLPLearning {
 		Log.d("Overall performance:");
 		EvaluationUtil.printPerformance(testRecords);
 		TaggedTimer.printTimings();
+
 	}
 }

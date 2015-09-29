@@ -3,7 +3,7 @@ package Templates;
 import java.util.List;
 
 import Corpus.Token;
-import Variables.EntityAnnotation;
+import Variables.AEntityAnnotation;
 import Variables.State;
 
 public class Features {
@@ -90,7 +90,7 @@ public class Features {
 	}
 
 	public static Token getTokenRelativeToEntity(State state,
-			EntityAnnotation e, int at) {
+			AEntityAnnotation e, int at) {
 		int absolutPosition = -1;
 		if (at < 0)
 			absolutPosition = e.getBeginTokenIndex() + at;

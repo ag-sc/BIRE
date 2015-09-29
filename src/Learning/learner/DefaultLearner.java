@@ -14,6 +14,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import Corpus.AnnotatedDocument;
 import Learning.Learner;
 import Learning.Model;
@@ -34,6 +37,8 @@ import evaluation.SamplingProcedureRecord;
 import evaluation.TaggedTimer;
 
 public class DefaultLearner implements Learner {
+
+	private Logger log = LogManager.getLogger(getClass());
 
 	{
 		// Log.off();
@@ -117,6 +122,7 @@ public class DefaultLearner implements Learner {
 
 		double currentAlpha = initialAlpha;
 		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
+//		log.debug("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
 		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
 		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha, finalAlpha,
 				alphaStep);
@@ -165,16 +171,6 @@ public class DefaultLearner implements Learner {
 								currentState.getObjectiveScore().score);
 						trainRecord.recordSamplingStep(document, d, s, sampler, nextStates, currentState);
 
-						// try {
-						// Log.d("Model after update:\n%s",
-						// model.toDetailedString());
-						// Log.d("########################");
-						// Log.d("PAUSE: Wait for ENTER...");
-						// Log.d("########################");
-						// System.in.read();
-						// } catch (IOException e1) {
-						// e1.printStackTrace();
-						// }
 						Log.d("Changed: %s", currentState.getChangedEntities());
 						Log.d("Graph:\n%s", currentState.getFactorGraph());
 						for (Template t : model.getTemplates()) {
@@ -182,7 +178,7 @@ public class DefaultLearner implements Learner {
 							Log.d("%s/%s recomputed factors", t.recomputed, t.all);
 						}
 						Log.d("######## Mark as unchanged and trim to state %s ########", currentState.getID());
-						// currentState.markAsUnchanged();
+						currentState.markAsUnchanged();
 						model.trimToState(currentState);
 
 						Log.d("Changed: %s", currentState.getChangedEntities());
@@ -274,7 +270,7 @@ public class DefaultLearner implements Learner {
 	 */
 	private void scoreWithModel(List<State> nextStates) {
 		long scID = TaggedTimer.start("MODEL-SCORE");
-		Log.d("Score %s states according to model...", nextStates.size() + 1);
+		Log.d("Score %s states according to model...", nextStates.size());
 		if (multithreaded) {
 			Collection<Future<?>> futures = new LinkedList<Future<?>>();
 			/*
@@ -516,7 +512,8 @@ public class DefaultLearner implements Learner {
 			State currentState = generateInitialState(document);
 
 			for (int s = 0; s < samplingSteps; s++) {
-				for (Sampler sampler : samplers) {
+				for (int indexOfSampler = 0; indexOfSampler < samplers.size(); indexOfSampler++) {
+					Sampler sampler = samplers.get(indexOfSampler);
 					Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(), goldState);
 					Log.d("Step: %s/%s", s + 1, steps);
 					Log.d("Current model:\n%s", model.toString());

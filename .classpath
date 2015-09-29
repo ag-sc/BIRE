@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="src/|Variables/RelationAnnotation.java|Variables/RelationType.java|Variables/AbstractState.java|Learning/learner/TwoStepLearner.java|Learning/FeatureVector.java|evaluation/Plots.java" kind="src" path="src"/>
+	<classpathentry excluding="src/|Variables/RelationAnnotation.java|Variables/RelationType.java|Variables/AbstractState.java|Learning/learner/TwoStepLearner.java|Learning/FeatureVector.java|evaluation/Plots.java|Variables/EntityAnnotation.java|Sampling/BoundarySampler.java|Sampling/RandomizedEntitySampler.java|Sampling/DefaultListSampler.java|Sampling/DefaultSampler.java|Logging/Log2.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="libs/JTBDv1.6-extendend-api.jar"/>
 	<classpathentry kind="lib" path="libs/mallet-deps.jar"/>
@@ -15,5 +15,7 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="/homes/sjebbara/programs/stanford-parser-full-2015-04-20/stanford-parser-3.5.2-models.jar"/>
 	<classpathentry kind="lib" path="libs/guava-18.0.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-api-2.4.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-core-2.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

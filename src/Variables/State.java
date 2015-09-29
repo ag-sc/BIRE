@@ -28,7 +28,7 @@ import Logging.Log;
 import utility.EntityID;
 import utility.StateID;
 
-public class State implements Serializable {
+public class State implements IState, Serializable {
 
 	{
 		Log.off();
@@ -60,9 +60,11 @@ public class State implements Serializable {
 	 * Since Entities only hold weak pointer via references to one another,
 	 * using a Map is sensible to enable an efficient access to the entities.
 	 */
-	private Map<EntityID, EntityAnnotation> entities = new HashMap<EntityID, EntityAnnotation>();
+	// private Map<EntityID, EntityAnnotation> entities = new HashMap<>();
+	private Map<EntityID, ImmutableEntityAnnotation> immutableEntities = new HashMap<>();
+	private Map<EntityID, MutableEntityAnnotation> mutableEntities = new HashMap<>();
 	// TODO Guava might have a more convenient way to handle this mapping
-	private Map<Integer, Set<EntityID>> tokenToEntities = new HashMap<Integer, Set<EntityID>>();
+	private Map<Integer, Set<EntityID>> tokenToEntities = new HashMap<>();
 
 	/**
 	 * The state needs to keep track of the changes that were made to its
@@ -91,8 +93,11 @@ public class State implements Serializable {
 		this();
 		this.entityIdIndex = state.entityIdIndex;
 		this.document = state.document;
-		for (EntityAnnotation e : state.entities.values()) {
-			this.entities.put(e.getID(), new EntityAnnotation(this, e));
+		for (ImmutableEntityAnnotation e : state.immutableEntities.values()) {
+			this.immutableEntities.put(e.getID(), new ImmutableEntityAnnotation(this, e));
+		}
+		for (MutableEntityAnnotation e : state.mutableEntities.values()) {
+			this.mutableEntities.put(e.getID(), new MutableEntityAnnotation(this, e));
 		}
 		for (Entry<Integer, Set<EntityID>> e : state.tokenToEntities.entrySet()) {
 			this.tokenToEntities.put(e.getKey(), new HashSet<EntityID>(e.getValue()));
@@ -106,14 +111,6 @@ public class State implements Serializable {
 	public State(Document document) {
 		this();
 		this.document = document;
-	}
-
-	public State(Document document, Collection<EntityAnnotation> initialEntities) {
-		this();
-		this.document = document;
-		for (EntityAnnotation e : initialEntities) {
-			addEntity(e);
-		}
 	}
 
 	/**
@@ -133,26 +130,34 @@ public class State implements Serializable {
 		return changedEntities;
 	}
 
-	public void addEntity(EntityAnnotation entity) {
-		Log.d("State %s: ADD new annotation: %s", this.getID(), entity);
-		entities.put(entity.getID(), entity);
+	public void addImmutableEntity(ImmutableEntityAnnotation entity) {
+		Log.d("State %s: ADD new fixed annotation: %s", this.getID(), entity);
+		immutableEntities.put(entity.getID(), entity);
 		addToTokenToEntityMapping(entity);
 		changedEntities.put(entity.getID(), StateChange.ADD_ANNOTATION);
 	}
 
-	public void removeEntity(EntityAnnotation entity) {
+	public void addMutableEntity(MutableEntityAnnotation entity) {
+		Log.d("State %s: ADD new annotation: %s", this.getID(), entity);
+		mutableEntities.put(entity.getID(), entity);
+		addToTokenToEntityMapping(entity);
+		changedEntities.put(entity.getID(), StateChange.ADD_ANNOTATION);
+	}
+
+	public void removeMutableEntity(MutableEntityAnnotation entity) {
 		Log.d("State %s: REMOVE annotation: %s", this.getID(), entity);
-		entities.remove(entity.getID());
+		mutableEntities.remove(entity.getID());
+		mutableEntities.put(entity.getID(), entity);
 		removeFromTokenToEntityMapping(entity);
 		removeReferencingArguments(entity);
 		changedEntities.put(entity.getID(), StateChange.REMOVE_ANNOTATION);
 	}
 
-	public void removeEntity(EntityID entityID) {
-		EntityAnnotation entity = getEntity(entityID);
+	public void removeMutableEntity(EntityID entityID) {
+		MutableEntityAnnotation entity = getMutableEntity(entityID);
 		if (entity != null) {
 			Log.d("State %s: REMOVE annotation: %s", this.getID(), entity);
-			entities.remove(entityID);
+			mutableEntities.remove(entityID);
 			removeFromTokenToEntityMapping(entity);
 			removeReferencingArguments(entity);
 			changedEntities.put(entityID, StateChange.REMOVE_ANNOTATION);
@@ -160,20 +165,53 @@ public class State implements Serializable {
 	}
 
 	public Set<EntityID> getEntityIDs() {
-		return entities.keySet();
+		Set<EntityID> entityIDs = new HashSet<>();
+		entityIDs.addAll(getImmutableEntityIDs());
+		entityIDs.addAll(getMutableEntityIDs());
+		return entityIDs;
 	}
 
-	public Collection<EntityAnnotation> getEntities() {
-		return entities.values();
+	public Set<EntityID> getMutableEntityIDs() {
+		return mutableEntities.keySet();
 	}
 
-	public EntityAnnotation getEntity(EntityID id) {
-		return entities.get(id);
+	public Set<EntityID> getImmutableEntityIDs() {
+		return immutableEntities.keySet();
+	}
+
+	public Collection<AEntityAnnotation> getEntities() {
+		Collection<AEntityAnnotation> entites = new ArrayList<>();
+		entites.addAll(getMutableEntities());
+		entites.addAll(getImmutableEntities());
+		return entites;
+	}
+
+	public Collection<MutableEntityAnnotation> getMutableEntities() {
+		return mutableEntities.values();
+	}
+
+	public Collection<ImmutableEntityAnnotation> getImmutableEntities() {
+		return immutableEntities.values();
+	}
+
+	public AEntityAnnotation getEntity(EntityID id) {
+		if (mutableEntities.containsKey(id))
+			return mutableEntities.get(id);
+		else
+			return immutableEntities.get(id);
+	}
+
+	public MutableEntityAnnotation getMutableEntity(EntityID id) {
+		return mutableEntities.get(id);
+	}
+
+	public ImmutableEntityAnnotation getImmutableEntity(EntityID id) {
+		return immutableEntities.get(id);
 	}
 
 	public boolean tokenHasAnnotation(Token token) {
-		Set<EntityID> entities = tokenToEntities.get(token.getIndex());
-		return entities != null && !entities.isEmpty();
+		Set<EntityID> entitiesForToken = tokenToEntities.get(token.getIndex());
+		return entitiesForToken != null && !entitiesForToken.isEmpty();
 	}
 
 	public Set<EntityID> getAnnotationsForToken(Token token) {
@@ -181,34 +219,31 @@ public class State implements Serializable {
 	}
 
 	public Set<EntityID> getAnnotationsForToken(int tokenIndex) {
-		Set<EntityID> entities = tokenToEntities.get(tokenIndex);
-		if (entities == null) {
-			entities = new HashSet<EntityID>();
-			tokenToEntities.put(tokenIndex, entities);
+		Set<EntityID> entitiesForToken = tokenToEntities.get(tokenIndex);
+		if (entitiesForToken == null) {
+			entitiesForToken = new HashSet<EntityID>();
+			tokenToEntities.put(tokenIndex, entitiesForToken);
 		}
-		return entities;
+		return entitiesForToken;
 	}
 
-	protected void removeFromTokenToEntityMapping(EntityAnnotation entityAnnotation) {
+	protected void removeFromTokenToEntityMapping(AEntityAnnotation entityAnnotation) {
 		for (int i = entityAnnotation.getBeginTokenIndex(); i < entityAnnotation.getEndTokenIndex(); i++) {
-			Set<EntityID> entities = tokenToEntities.get(i);
-			if (entities == null) {
-				entities = new HashSet<EntityID>();
-				tokenToEntities.put(i, entities);
-			} else {
-				entities.remove(entityAnnotation.getID());
+			Set<EntityID> entitiesForToken = tokenToEntities.get(i);
+			if (entitiesForToken != null) {
+				entitiesForToken.remove(entityAnnotation.getID());
 			}
 		}
 	}
 
-	protected void addToTokenToEntityMapping(EntityAnnotation entityAnnotation) {
+	protected void addToTokenToEntityMapping(AEntityAnnotation entityAnnotation) {
 		for (int i = entityAnnotation.getBeginTokenIndex(); i < entityAnnotation.getEndTokenIndex(); i++) {
-			Set<EntityID> entities = tokenToEntities.get(i);
-			if (entities == null) {
-				entities = new HashSet<EntityID>();
-				tokenToEntities.put(i, entities);
+			Set<EntityID> entitiesForToken = tokenToEntities.get(i);
+			if (entitiesForToken == null) {
+				entitiesForToken = new HashSet<EntityID>();
+				tokenToEntities.put(i, entitiesForToken);
 			}
-			entities.add(entityAnnotation.getID());
+			entitiesForToken.add(entityAnnotation.getID());
 		}
 	}
 
@@ -218,8 +253,8 @@ public class State implements Serializable {
 	 * 
 	 * @param removedEntity
 	 */
-	private void removeReferencingArguments(EntityAnnotation removedEntity) {
-		for (EntityAnnotation e : entities.values()) {
+	private void removeReferencingArguments(MutableEntityAnnotation removedEntity) {
+		for (MutableEntityAnnotation e : mutableEntities.values()) {
 			Multimap<ArgumentRole, EntityID> arguments = e.getArguments();
 			for (Entry<ArgumentRole, EntityID> entry : arguments.entries()) {
 				if (entry.getValue().equals(removedEntity.getID())) {
@@ -241,7 +276,6 @@ public class State implements Serializable {
 
 	protected EntityID generateEntityID() {
 		String id = GENERATED_ENTITY_ID_PREFIX + entityIdIndex;
-		assert(!entities.containsKey(id));
 		entityIdIndex++;
 		return new EntityID(id);
 	}
@@ -270,7 +304,7 @@ public class State implements Serializable {
 		return factorGraph;
 	}
 
-	public void onEntityChanged(EntityAnnotation entity, StateChange change) {
+	public void onEntityChanged(MutableEntityAnnotation entity, StateChange change) {
 		changedEntities.put(entity.getID(), change);
 	}
 
@@ -291,13 +325,13 @@ public class State implements Serializable {
 		builder.append("]: ");
 		for (Token t : document.getTokens()) {
 			Set<EntityID> entities = getAnnotationsForToken(t);
-			List<EntityAnnotation> begin = new ArrayList<EntityAnnotation>();
-			List<EntityAnnotation> end = new ArrayList<EntityAnnotation>();
+			List<AEntityAnnotation> begin = new ArrayList<>();
+			List<AEntityAnnotation> end = new ArrayList<>();
 			for (EntityID entityID : entities) {
-				EntityAnnotation e = getEntity(entityID);
+				AEntityAnnotation e = getEntity(entityID);
 				if (e.getBeginTokenIndex() == t.getIndex())
 					begin.add(e);
-				if (e.getEndTokenIndex() - 1 == t.getIndex())
+				if (e.getEndTokenIndex() == t.getIndex() + 1)
 					end.add(e);
 			}
 			if (!begin.isEmpty())
@@ -310,9 +344,9 @@ public class State implements Serializable {
 		return builder.toString();
 	}
 
-	private void buildTokenPrefix(StringBuilder builder, List<EntityAnnotation> begin) {
+	private void buildTokenPrefix(StringBuilder builder, List<AEntityAnnotation> begin) {
 		builder.append("[");
-		for (EntityAnnotation e : begin) {
+		for (AEntityAnnotation e : begin) {
 			builder.append(e.getID());
 			builder.append("-");
 			builder.append(e.getType().getName());
@@ -323,8 +357,8 @@ public class State implements Serializable {
 		builder.append(" ");
 	}
 
-	private void buildTokenSuffix(StringBuilder builder, List<EntityAnnotation> end) {
-		for (EntityAnnotation e : end) {
+	private void buildTokenSuffix(StringBuilder builder, List<AEntityAnnotation> end) {
+		for (AEntityAnnotation e : end) {
 			builder.append(":");
 			builder.append(e.getID());
 		}
@@ -334,7 +368,7 @@ public class State implements Serializable {
 
 	public String toDetailedString() {
 		StringBuilder builder = new StringBuilder();
-		for (EntityAnnotation e : getEntities()) {
+		for (AEntityAnnotation e : getEntities()) {
 			builder.append(e);
 			builder.append("\n");
 		}

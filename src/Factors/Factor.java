@@ -1,5 +1,7 @@
 package Factors;
 
+import java.util.UUID;
+
 import Learning.Vector;
 import Logging.Log;
 import Templates.Template;
@@ -13,7 +15,7 @@ public class Factor {
 		Log.off();
 	}
 
-	private static long factorIDIndex;
+	// private static long factorIDIndex;
 	private Template template;
 	private FactorID factorID;
 	private Vector features;
@@ -28,8 +30,8 @@ public class Factor {
 	}
 
 	private FactorID generateFactorID() {
-		String id = String.valueOf(factorIDIndex);
-		factorIDIndex++;
+		// String id = String.valueOf(factorIDIndex++);
+		String id = String.valueOf(UUID.randomUUID().toString());
 		return new FactorID(id);
 	}
 

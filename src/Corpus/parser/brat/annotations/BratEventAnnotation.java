@@ -2,12 +2,15 @@ package Corpus.parser.brat.annotations;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
+
+import Corpus.parser.brat.BratAnnotationManager;
+import utility.ID;
 
 public class BratEventAnnotation extends BratAnnotation {
 	public final static Pattern pattern;
 	public final static Pattern idPattern;
+
 	static {
 		String id = "(E\\d+)";
 		String role = "(\\S+)";
@@ -21,49 +24,37 @@ public class BratEventAnnotation extends BratAnnotation {
 	}
 
 	private String role;
-	private BratTextBoundAnnotation trigger;
-	private Map<String, BratAnnotation> arguments = new HashMap<String, BratAnnotation>();
+	private ID<BratTextBoundAnnotation> triggerID;
+	private Map<String, ID<? extends BratAnnotation>> arguments = new HashMap<>();
 
 	public String getRole() {
 		return role;
 	}
 
-	public BratTextBoundAnnotation getTrigger() {
-		return trigger;
+	public ID<BratTextBoundAnnotation> getTriggerID() {
+		return triggerID;
 	}
 
-	public Map<String, BratAnnotation> getArguments() {
+	public BratTextBoundAnnotation getTrigger() {
+		return (BratTextBoundAnnotation) getAnnotationByID(triggerID);
+	}
+
+	public Map<String, ID<? extends BratAnnotation>> getArguments() {
 		return arguments;
 	}
 
-
-	public BratEventAnnotation(String id) {
-		super(id);
-	}
-
-	public void init(String id, String role, BratTextBoundAnnotation trigger,
-			Map<String, BratAnnotation> arguments) {
+	public BratEventAnnotation(BratAnnotationManager manager, String id, String role, String triggerID,
+			Map<String, ID<? extends BratAnnotation>> arguments) {
+		super(manager, id);
 		this.role = role;
-		this.trigger = trigger;
+		this.triggerID = new ID<>(triggerID);
 		this.arguments = arguments;
-		this.initialized = true;
 	}
 
 	@Override
 	public String toString() {
-		if (initialized) {
-			StringBuilder builder = new StringBuilder();
-			for (Entry<String, BratAnnotation> e : arguments.entrySet()) {
-				builder.append(e.getKey() + ":" + e.getValue().getID());
-				builder.append(" ");
-			}
-			String triggerID = trigger == null ? "UNDEFINED" : trigger.getID();
-			return "EventAnnotation [id=" + id + ", role=" + role
-					+ ", trigger=" + triggerID + ", arguments="
-					+ builder.toString() + "]";
-		} else {
-			return "UNINITIALIZED EventAnnotation [id=" + id + "]";
-		}
+		return "EventAnnotation [id=" + id + ", role=" + role + ", trigger=" + triggerID + ", arguments=" + arguments
+				+ "]";
 	}
 
 }

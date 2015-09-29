@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 import Corpus.AnnotatedDocument;
-import Corpus.Constants;
+import Corpus.DatasetConfig;
 import Corpus.Corpus;
 import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.usage.UsageLoader;
@@ -78,15 +78,15 @@ public class EvaluateParameters {
 		switch (corpusID) {
 		case USAGE:
 			try {
-				corpus = UsageLoader.loadDatasetFromBinaries(Constants.getUSAGEJavaBinFilepath());
+				corpus = UsageLoader.loadDatasetFromBinaries(DatasetConfig.getUSAGEJavaBinFilepath());
 			} catch (Exception e) {
 				e.printStackTrace();
 				Log.w("Preparsed corpus not accessible or corrupted. Parse again:");
-				corpus = UsageLoader.convertDatasetToJavaBinaries(Constants.getUSAGEJavaBinFilepath());
+				corpus = UsageLoader.convertDatasetToJavaBinaries(DatasetConfig.getUSAGEJavaBinFilepath());
 			}
 			break;
 		case BIONLP:
-			corpus = BioNLPLoader.loadBioNLP2013Train();
+			corpus = BioNLPLoader.loadBioNLP2013Train(false);
 			modelDir = new File(BIONLP_MODELS_DIR_PATH);
 			if (!modelDir.exists())
 				modelDir.mkdirs();

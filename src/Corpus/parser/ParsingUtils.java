@@ -15,7 +15,7 @@ public class ParsingUtils {
 			Token midToken = tokens.get(middle);
 			if (findLowerBound ? characterPosition < midToken.getFrom() : characterPosition <= midToken.getFrom())
 				high = middle;
-			else if (findLowerBound ? characterPosition >= midToken.getTo() : characterPosition > midToken.getTo())
+			else if (findLowerBound ? midToken.getTo() <= characterPosition : midToken.getTo() < characterPosition)
 				low = middle + 1;
 			else
 				return middle;
@@ -24,7 +24,7 @@ public class ParsingUtils {
 		// Log.w("No token for position %s found. Last boundaries %s-%s-%s.
 		// Return middle: %s.", characterPosition, low,
 		// middle, high, middle);
-		return -2;
+		return middle;
 	}
 
 	// public static int binarySearch(int characterPosition, List<Token> tokens)

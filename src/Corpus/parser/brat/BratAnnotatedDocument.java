@@ -1,19 +1,19 @@
 package Corpus.parser.brat;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import Corpus.parser.brat.annotations.BratAnnotation;
+import utility.ID;
 
 public class BratAnnotatedDocument {
 
 	private String documentName;
-	private Map<String, BratAnnotation> allAnnotations = new HashMap<String, BratAnnotation>();
+	private BratAnnotationManager manager;
 	private String content;
 
-	public BratAnnotatedDocument(String documentName, String text, Map<String, BratAnnotation> allAnnotations) {
+	public BratAnnotatedDocument(String documentName, String text, BratAnnotationManager manager) {
 		super();
-		this.allAnnotations = allAnnotations;
+		this.manager = manager;
 		this.content = text;
 		this.documentName = documentName;
 	}
@@ -22,8 +22,12 @@ public class BratAnnotatedDocument {
 		return documentName;
 	}
 
-	public Map<String, BratAnnotation> getAllAnnotations() {
-		return allAnnotations;
+	public Map<ID<? extends BratAnnotation>, BratAnnotation> getAllAnnotations() {
+		return manager.getAnnotations();
+	}
+
+	public BratAnnotationManager getManager() {
+		return manager;
 	}
 
 	public String getText() {
@@ -32,7 +36,7 @@ public class BratAnnotatedDocument {
 
 	public String annotationsToString() {
 		StringBuilder builder = new StringBuilder();
-		for (BratAnnotation a : allAnnotations.values()) {
+		for (BratAnnotation a : manager.getAnnotations().values()) {
 			builder.append(a.toString());
 			builder.append("\n");
 		}

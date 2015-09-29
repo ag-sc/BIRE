@@ -13,12 +13,14 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import Corpus.parser.FileUtils;
 import Corpus.parser.brat.annotations.BratAnnotation;
 import Corpus.parser.brat.annotations.BratAttributeAnnotation;
 import Corpus.parser.brat.annotations.BratEventAnnotation;
 import Corpus.parser.brat.annotations.BratRelationAnnotation;
 import Corpus.parser.brat.annotations.BratTextBoundAnnotation;
 import Logging.Log;
+import utility.ID;
 
 public class BratAnnotationParser {
 
@@ -42,8 +44,10 @@ public class BratAnnotationParser {
 					if (line.startsWith(COMMENT_INDICATOR)) {
 						Log.w("Skip comment: \"%s\"", line);
 					} else {
-
-						parseLine(line, lineNumber);
+						BratAnnotation annotation = parseLine(line, lineNumber);
+						if (annotation != null) {
+							manager.addAnnotation(annFile.getName(), annotation);
+						}
 					}
 					lineNumber++;
 				}
@@ -52,9 +56,8 @@ public class BratAnnotationParser {
 
 			// Read Text
 			String content = FileUtils.readFile(textFile);
-			// TODO pass each ann file's annotations as separate batches
 			BratAnnotatedDocument doc = new BratAnnotatedDocument(
-					FileUtils.getFilenameWithoutExtension(textFile.getName()), content, manager.getAnnotations());
+					FileUtils.getFilenameWithoutExtension(textFile.getName()), content, manager);
 			return doc;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -72,29 +75,25 @@ public class BratAnnotationParser {
 	 * 
 	 * @param line
 	 */
-	private void parseLine(String line, int lineNumber) {
+	private BratAnnotation parseLine(String line, int lineNumber) {
 		Matcher textMatcher = BratTextBoundAnnotation.pattern.matcher(line);
-
 		if (textMatcher.matches()) {
-			parseTextBoundAnnotation(line);
-			return;
+			return parseTextBoundAnnotation(line);
 		}
 		Matcher eventMatcher = BratEventAnnotation.pattern.matcher(line);
 		if (eventMatcher.matches()) {
-			parseEventAnnotation(line);
-			return;
+			return parseEventAnnotation(line);
 		}
 		Matcher relationMatcher = BratRelationAnnotation.pattern.matcher(line);
 		if (relationMatcher.matches()) {
-			parseRelationAnnotation(line);
-			return;
+			return parseRelationAnnotation(line);
 		}
 		Matcher attributeMatcher = BratAttributeAnnotation.pattern.matcher(line);
 		if (attributeMatcher.matches()) {
-			parseAttributeAnnotation(line);
-			return;
+			return parseAttributeAnnotation(line);
 		}
 		Log.w(UNKNOWN_ANNOTATION_TYPE, lineNumber, line);
+		return null;
 	}
 
 	private BratTextBoundAnnotation parseTextBoundAnnotation(String line) {
@@ -109,8 +108,8 @@ public class BratAnnotationParser {
 
 		String text = tabTokenizer.nextToken();
 
-		BratTextBoundAnnotation annotation = manager.getOrCreateTextBoundByID(id);
-		annotation.init(role, Integer.parseInt(start), Integer.parseInt(end), text);
+		BratTextBoundAnnotation annotation = new BratTextBoundAnnotation(manager, id, role, Integer.parseInt(start),
+				Integer.parseInt(end), text);
 		return annotation;
 	}
 
@@ -122,12 +121,9 @@ public class BratAnnotationParser {
 		String role = split[0];
 		String triggerID = split[1];
 
-		BratTextBoundAnnotation trigger = manager.getOrCreateTextBoundByID(triggerID);
+		Map<String, ID<? extends BratAnnotation>> arguments = extractArgumentsAsMap(tokenizer);
 
-		Map<String, BratAnnotation> arguments = extractArgumentsAsMap(tokenizer);
-
-		BratEventAnnotation annotation = manager.getOrCreateEventByID(id);
-		annotation.init(id, role, trigger, arguments);
+		BratEventAnnotation annotation = new BratEventAnnotation(manager, id, role, triggerID, arguments);
 		return annotation;
 	}
 
@@ -136,10 +132,9 @@ public class BratAnnotationParser {
 
 		String id = tokenizer.nextToken();
 		String role = tokenizer.nextToken();
-		Map<String, BratAnnotation> arguments = extractArgumentsAsMap(tokenizer);
+		Map<String, ID<? extends BratAnnotation>> arguments = extractArgumentsAsMap(tokenizer);
 
-		BratRelationAnnotation annotation = manager.getOrCreateRelationByID(id);
-		annotation.init(role, arguments);
+		BratRelationAnnotation annotation = new BratRelationAnnotation(manager, id, role, arguments);
 		return annotation;
 	}
 
@@ -148,25 +143,21 @@ public class BratAnnotationParser {
 
 		String id = tokenizer.nextToken();
 		String role = tokenizer.nextToken();
-		List<BratAnnotation> arguments = new ArrayList<BratAnnotation>();
+		List<ID<? extends BratAnnotation>> arguments = new ArrayList<>();
 		while (tokenizer.hasMoreElements()) {
 			String argumentID = tokenizer.nextToken();
-			BratAnnotation argument = manager.getOrCreateByID(argumentID);
-			arguments.add(argument);
+			arguments.add(new ID<>(argumentID));
 		}
 
-		BratAttributeAnnotation annotation = manager.getOrCreateAttributeByID(id);
-		annotation.init(role, arguments);
-
+		BratAttributeAnnotation annotation = new BratAttributeAnnotation(manager, id, role, arguments);
 		return annotation;
 	}
 
-	private Map<String, BratAnnotation> extractArgumentsAsMap(StringTokenizer tokenizer) {
-		Map<String, BratAnnotation> arguments = new HashMap<String, BratAnnotation>();
+	private Map<String, ID<? extends BratAnnotation>> extractArgumentsAsMap(StringTokenizer tokenizer) {
+		Map<String, ID<? extends BratAnnotation>> arguments = new HashMap<>();
 		while (tokenizer.hasMoreElements()) {
 			String[] split = tokenizer.nextToken().split(":");
-			BratAnnotation annotation = manager.getOrCreateByID(split[1]);
-			arguments.put(split[0], annotation);
+			arguments.put(split[0], new ID<>(split[1]));
 		}
 		return arguments;
 	}

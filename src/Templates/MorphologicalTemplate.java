@@ -12,8 +12,9 @@ import Learning.Vector;
 import Logging.Log;
 import Templates.variablesets.SingleEntityVariableSet;
 import Templates.variablesets.VariableSet;
-import Variables.EntityAnnotation;
+import Variables.AEntityAnnotation;
 import Variables.State;
+import utility.EntityID;
 
 public class MorphologicalTemplate extends Template implements Serializable {
 
@@ -28,7 +29,7 @@ public class MorphologicalTemplate extends Template implements Serializable {
 		if (genericVariables instanceof SingleEntityVariableSet) {
 
 			SingleEntityVariableSet variables = (SingleEntityVariableSet) genericVariables;
-			EntityAnnotation entity = state.getEntity(variables.entityID);
+			AEntityAnnotation entity = state.getEntity(variables.entityID);
 			Log.d("%s: Add features to entity %s (\"%s\"):", this.getClass().getSimpleName(), entity.getID(),
 					entity.getText());
 			Vector featureVector = new Vector();
@@ -36,7 +37,6 @@ public class MorphologicalTemplate extends Template implements Serializable {
 			List<Token> tokens = entity.getTokens();
 			Token first = tokens.get(0);
 			Token last = tokens.get(tokens.size() - 1);
-
 			String entityType = "ENTITY_TYPE=" + entity.getType().getName() + "_";
 			featureVector.set(entityType + "ALL_TOKENS_INIT_CAP", Features.StartsWithCapital.all(tokens));
 			featureVector.set(entityType + "AT_LEAST_ONE_TOKEN_INIT_CAP", Features.StartsWithCapital.any(tokens));
@@ -108,8 +108,8 @@ public class MorphologicalTemplate extends Template implements Serializable {
 	@Override
 	protected Set<VariableSet> getVariableSets(State state) {
 		Set<VariableSet> variableSets = new HashSet<>();
-		for (EntityAnnotation entity : state.getEntities()) {
-			variableSets.add(new SingleEntityVariableSet(this, entity.getID()));
+		for (EntityID entityID : state.getEntityIDs()) {
+			variableSets.add(new SingleEntityVariableSet(this, entityID));
 		}
 		return variableSets;
 	}

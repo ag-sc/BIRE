@@ -7,7 +7,8 @@ import java.util.Set;
 
 import Learning.Scorer;
 import Logging.Log;
-import Variables.EntityAnnotation;
+import Variables.AEntityAnnotation;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
@@ -35,20 +36,20 @@ public class ExhaustiveBoundarySampler implements Sampler {
 		Set<State> generatedStates = new HashSet<State>();
 		Set<EntityID> entities = previousState.getEntityIDs();
 		for (EntityID entityID : entities) {
-			EntityAnnotation previousStatesEntity = previousState.getEntity(entityID);
+			AEntityAnnotation previousStatesEntity = previousState.getEntity(entityID);
 			int from = previousStatesEntity.getBeginTokenIndex();
 			int to = previousStatesEntity.getEndTokenIndex();
-			if (from > 0) {
+			if (0 < from) {
 				// Expand left
 				State generatedState = new State(previousState);
-				EntityAnnotation entity = generatedState.getEntity(entityID);
+				MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
 				entity.setBeginTokenIndex(from - 1);
 				generatedStates.add(generatedState);
 			}
 			if (to < previousStatesEntity.getState().getDocument().getTokens().size()) {
 				// Expand right
 				State generatedState = new State(previousState);
-				EntityAnnotation entity = generatedState.getEntity(entityID);
+				MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
 				entity.setEndTokenIndex(to + 1);
 				generatedStates.add(generatedState);
 			}
@@ -61,14 +62,14 @@ public class ExhaustiveBoundarySampler implements Sampler {
 				{
 					// Contract left
 					State generatedState = new State(previousState);
-					EntityAnnotation entity = generatedState.getEntity(entityID);
+					MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
 					entity.setBeginTokenIndex(from + 1);
 					generatedStates.add(generatedState);
 				}
 				{
 					// Contract right
 					State generatedState = new State(previousState);
-					EntityAnnotation entity = generatedState.getEntity(entityID);
+					MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
 					entity.setEndTokenIndex(to - 1);
 					generatedStates.add(generatedState);
 				}

@@ -20,15 +20,15 @@ import com.google.common.collect.Multimap;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.DefaultCorpus;
 import Corpus.Corpus;
+import Corpus.DefaultCorpus;
 import Corpus.Token;
 import Corpus.parser.ParsingUtils;
 import Logging.Log;
 import Variables.Argument;
 import Variables.ArgumentRole;
-import Variables.EntityAnnotation;
 import Variables.EntityType;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
@@ -212,9 +212,9 @@ public class UsageParser {
 					Log.d("Tokens: %s", doc.getTokens());
 				}
 
-				EntityAnnotation e = new EntityAnnotation(goldState, entityID, entityType, beginTokenIndex,
-						endTokenIndex);
-				goldState.addEntity(e);
+				MutableEntityAnnotation e = new MutableEntityAnnotation(goldState, entityID, entityType,
+						beginTokenIndex, endTokenIndex);
+				goldState.addMutableEntity(e);
 				lineNumber++;
 			}
 			annotationReader.close();
@@ -269,16 +269,16 @@ public class UsageParser {
 							lineNumber);
 				}
 
-				EntityAnnotation trigger = goldState.getEntity(new EntityID(triggerID));
+				MutableEntityAnnotation trigger = goldState.getMutableEntity(new EntityID(triggerID));
 
 				if (trigger == null) {
 					Log.w("No (trigger) entity found for id \"%s\" in file %s and line %s.", triggerID, relationFile,
 							lineNumber);
 				}
 
-				EntityAnnotation e = new EntityAnnotation(goldState, entityType, arguments,
+				MutableEntityAnnotation e = new MutableEntityAnnotation(goldState, entityType, arguments,
 						trigger.getBeginTokenIndex(), trigger.getEndTokenIndex());
-				goldState.addEntity(e);
+				goldState.addMutableEntity(e);
 				lineNumber++;
 			}
 			relationReader.close();

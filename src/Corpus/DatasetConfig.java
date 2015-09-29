@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-public class Constants {
+public class DatasetConfig {
 
 	public static final Properties BIONLP_PROPERTIES = new Properties();
 

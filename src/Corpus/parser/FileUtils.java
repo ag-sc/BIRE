@@ -1,4 +1,4 @@
-package Corpus.parser.brat;
+package Corpus.parser;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

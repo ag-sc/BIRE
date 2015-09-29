@@ -8,8 +8,8 @@ import java.util.Set;
 
 import Corpus.Token;
 import Learning.Scorer;
-import Variables.EntityAnnotation;
 import Variables.EntityType;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
@@ -41,9 +41,9 @@ public class ExhaustiveEntitySampler implements Sampler {
 						.getEntityTypes();
 				for (EntityType entityType : entityTypes) {
 					State generatedState = new State(previousState);
-					EntityAnnotation tokenAnnotation = new EntityAnnotation(generatedState, entityType,
-							token.getIndex(), token.getIndex());
-					generatedState.addEntity(tokenAnnotation);
+					MutableEntityAnnotation tokenAnnotation = new MutableEntityAnnotation(generatedState, entityType,
+							token.getIndex(), token.getIndex() + 1);
+					generatedState.addMutableEntity(tokenAnnotation);
 					generatedStates.add(generatedState);
 				}
 			}
@@ -52,7 +52,7 @@ public class ExhaustiveEntitySampler implements Sampler {
 		// Modify existing entities
 		Set<EntityID> previousStatesEntityIDs = previousState.getEntityIDs();
 		for (EntityID entityID : previousStatesEntityIDs) {
-			EntityAnnotation previousStatesEntity = previousState.getEntity(entityID);
+			MutableEntityAnnotation previousStatesEntity = previousState.getMutableEntity(entityID);
 			Collection<EntityType> entityTypes = previousState.getDocument().getCorpus().getCorpusConfig()
 					.getEntityTypes();
 			// remove the type that this entity already has assigned
@@ -60,14 +60,14 @@ public class ExhaustiveEntitySampler implements Sampler {
 			// change Type of every entity to every possible type
 			for (EntityType entityType : entityTypes) {
 				State generatedState = new State(previousState);
-				EntityAnnotation entity = generatedState.getEntity(entityID);
+				MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
 				entity.setType(entityType);
 				generatedStates.add(generatedState);
 			}
 			// Create on state with that particular entity removed
 			State generatedState = new State(previousState);
-			EntityAnnotation entity = generatedState.getEntity(entityID);
-			generatedState.removeEntity(entity);
+			MutableEntityAnnotation entity = generatedState.getMutableEntity(entityID);
+			generatedState.removeMutableEntity(entity);
 			generatedStates.add(generatedState);
 		}
 		// // add an unchanged state

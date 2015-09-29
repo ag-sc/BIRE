@@ -11,14 +11,13 @@ import java.util.regex.Pattern;
 
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
-import Corpus.DefaultCorpus;
 import Corpus.Corpus;
-import Corpus.Document;
+import Corpus.DefaultCorpus;
 import Corpus.Token;
 import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.brat.BratConfigReader;
 import Logging.Log;
-import Variables.EntityAnnotation;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 
 public class DummyData {
@@ -38,10 +37,12 @@ public class DummyData {
 		State goldState = new State(doc);
 		doc.setGoldState(goldState);
 
-		EntityAnnotation e1 = new EntityAnnotation(goldState, "T1", simplifiedConfig.getEntityType("Protein"), 4, 6);
-		goldState.addEntity(e1);
-		EntityAnnotation e2 = new EntityAnnotation(goldState, "T2", simplifiedConfig.getEntityType("Protein"), 8, 8);
-		goldState.addEntity(e2);
+		MutableEntityAnnotation e1 = new MutableEntityAnnotation(goldState, "T1",
+				simplifiedConfig.getEntityType("Protein"), 4, 6);
+		goldState.addMutableEntity(e1);
+		MutableEntityAnnotation e2 = new MutableEntityAnnotation(goldState, "T2",
+				simplifiedConfig.getEntityType("Protein"), 8, 8);
+		goldState.addMutableEntity(e2);
 
 		corpus.addDocument(doc);
 

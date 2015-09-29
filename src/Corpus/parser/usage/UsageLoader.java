@@ -16,7 +16,7 @@ import java.util.Set;
 import Corpus.AnnotatedDocument;
 import Corpus.AnnotationConfig;
 import Corpus.DefaultCorpus;
-import Corpus.Constants;
+import Corpus.DatasetConfig;
 import Corpus.Corpus;
 import Corpus.julie.JavaSentenceSplitter;
 import Corpus.julie.Tokenization;
@@ -26,7 +26,7 @@ import Logging.Log;
 public class UsageLoader {
 
 	public static void main(String[] args) {
-		convertDatasetToJavaBinaries(Constants.getUSAGEJavaBinFilepath());
+		convertDatasetToJavaBinaries(DatasetConfig.getUSAGEJavaBinFilepath());
 	}
 
 	public static Corpus<AnnotatedDocument> loadDatasetFromBinaries(String srcFilepath)

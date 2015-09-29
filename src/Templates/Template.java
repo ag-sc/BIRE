@@ -32,7 +32,7 @@ public abstract class Template implements Serializable {
 	 * number of concurrently accessing threads. Since the DefaultLearners
 	 * default thread pool size is 4 this value is used here as well.
 	 */
-	private Map<FactorID, Factor> factors = new ConcurrentHashMap<>(16, 0.75f, 4);
+	private transient Map<FactorID, Factor> factors = new ConcurrentHashMap<>(16, 0.75f, 4);
 
 	public int recomputed = 0;
 	public int removed = 0;

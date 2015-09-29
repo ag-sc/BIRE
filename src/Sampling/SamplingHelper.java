@@ -1,7 +1,6 @@
 package Sampling;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -14,9 +13,10 @@ import Changes.BoundaryChange;
 import Changes.StateChange;
 import Corpus.Token;
 import Logging.Log;
+import Variables.AEntityAnnotation;
 import Variables.ArgumentRole;
-import Variables.EntityAnnotation;
 import Variables.EntityType;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
@@ -71,9 +71,9 @@ public class SamplingHelper {
 	public static void addRandomAnnotation(Token sampledToken, State state) {
 
 		EntityType sampledType = sampleEntityType(state);
-		EntityAnnotation tokenAnnotation = new EntityAnnotation(state, sampledType, sampledToken.getIndex(),
-				sampledToken.getIndex());
-		state.addEntity(tokenAnnotation);
+		MutableEntityAnnotation tokenAnnotation = new MutableEntityAnnotation(state, sampledType,
+				sampledToken.getIndex(), sampledToken.getIndex() + 1);
+		state.addMutableEntity(tokenAnnotation);
 	}
 
 	/**
@@ -84,9 +84,9 @@ public class SamplingHelper {
 	 * @param entity
 	 * @param state
 	 */
-	public static void addRandomArgument(EntityAnnotation entity, State state) {
-		// get all possible argument (roles)
-		List<EntityAnnotation> entities = new ArrayList<>(state.getEntities());
+	public static void addRandomArgument(MutableEntityAnnotation entity, State state) {
+		// get all possible argument targets
+		List<AEntityAnnotation> entities = new ArrayList<>(state.getEntities());
 		entities.remove(entity);
 		if (!entities.isEmpty()) {
 			List<ArgumentRole> unassignedRoles = new ArrayList<>();
@@ -98,7 +98,7 @@ public class SamplingHelper {
 			if (!unassignedRoles.isEmpty()) {
 				ArgumentRole sampledRole = getRandomElement(unassignedRoles);
 
-				EntityAnnotation sampledEntity = getRandomElement(entities);
+				AEntityAnnotation sampledEntity = getRandomElement(entities);
 				entity.addArgument(sampledRole, sampledEntity.getID());
 				Log.d("\t%s + %s:%s", entity.getID(), sampledRole, sampledEntity.getID());
 			} else {
@@ -116,16 +116,18 @@ public class SamplingHelper {
 	 * 
 	 * @param tokenAnnotation
 	 */
-	public static void removeRandomArgument(EntityAnnotation tokenAnnotation) {
+	public static void removeRandomArgument(MutableEntityAnnotation tokenAnnotation) {
 		if (!tokenAnnotation.getArguments().isEmpty()) {
 			Multimap<ArgumentRole, EntityID> arguments = tokenAnnotation.getArguments();
 			List<Entry<ArgumentRole, EntityID>> roles = new ArrayList<>(arguments.entries());
 			if (!roles.isEmpty()) {
 				Entry<ArgumentRole, EntityID> sampledArgument = getRandomElement(roles);
 				tokenAnnotation.removeArgument(sampledArgument.getKey(), sampledArgument.getValue());
-				Log.w("\t%s: (%s): This type is not supposed to have arguments (yet, it seems to have some. If this message shows, something is not working consistently)",
-						tokenAnnotation.getID(), tokenAnnotation.getType().getName());
-				assert(false);
+				// Log.w("\t%s: (%s): This type is not supposed to have
+				// arguments (yet, it seems to have some. If this message shows,
+				// something is not working consistently)",
+				// tokenAnnotation.getID(),
+				// tokenAnnotation.getType().getName());
 			}
 		} else {
 			Log.d("\t%s (%s): No arguments assigned, yet", tokenAnnotation.getID(),
@@ -133,7 +135,7 @@ public class SamplingHelper {
 		}
 	}
 
-	public static boolean changeBoundaries(EntityAnnotation tokenAnnotation, State state) {
+	public static boolean changeBoundaries(MutableEntityAnnotation tokenAnnotation, State state) {
 		// the boundaries of annotations are on token level!
 		switch (sampleBoundaryChange(tokenAnnotation)) {
 		case EXPAND_LEFT:
@@ -189,7 +191,7 @@ public class SamplingHelper {
 		return stateChanges[randomIndex];
 	}
 
-	public static BoundaryChange sampleBoundaryChange(EntityAnnotation entity) {
+	public static BoundaryChange sampleBoundaryChange(MutableEntityAnnotation entity) {
 		List<BoundaryChange> possibleBoundaryChanges = new ArrayList<BoundaryChange>();
 		// possibleBoundaryChanges.add(BoundaryChange.DO_NOTHING);
 		if (entity.getBeginTokenIndex() > 0)
@@ -226,7 +228,7 @@ public class SamplingHelper {
 		return getBest(states, n);
 	}
 
-	public static void changeRandomArgumentRole(EntityAnnotation entity, State state) {
+	public static void changeRandomArgumentRole(MutableEntityAnnotation entity, State state) {
 		List<ArgumentRole> possibleNewRoles = new ArrayList<>();
 		possibleNewRoles.addAll(entity.getType().getCoreArguments().keySet());
 		possibleNewRoles.addAll(entity.getType().getOptionalArguments().keySet());
@@ -256,7 +258,7 @@ public class SamplingHelper {
 		}
 	}
 
-	public static void changeRandomArgumentEntity(EntityAnnotation entity, State state) {
+	public static void changeRandomArgumentEntity(MutableEntityAnnotation entity, State state) {
 		List<Entry<ArgumentRole, EntityID>> arguments = new ArrayList<>(entity.getArguments().entries());
 		if (!arguments.isEmpty()) {
 			// select random existing argument by role

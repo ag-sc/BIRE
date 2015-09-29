@@ -1,7 +1,6 @@
 package Sampling;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -9,7 +8,7 @@ import java.util.Set;
 import Changes.StateChange;
 import Learning.Scorer;
 import Logging.Log;
-import Variables.EntityAnnotation;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
 
 public class RelationSampler implements Sampler {
@@ -17,6 +16,7 @@ public class RelationSampler implements Sampler {
 	{
 		Log.off();
 	}
+
 	private int numberOfStates;
 
 	/**
@@ -31,8 +31,7 @@ public class RelationSampler implements Sampler {
 
 	public List<State> getNextStates(State state, Scorer scorer) {
 
-		Set<State> nextStates = generateNextStates(state, numberOfStates,
-				scorer);
+		Set<State> nextStates = generateNextStates(state, numberOfStates, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
 
 		// nextStatesSorted.sort(State.comparator);
@@ -45,52 +44,42 @@ public class RelationSampler implements Sampler {
 
 	}
 
-	private Set<State> generateNextStates(State previousState,
-			int numberOfStates, Scorer scorer) {
+	private Set<State> generateNextStates(State previousState, int numberOfStates, Scorer scorer) {
 		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);
 
 			// pick one entity at random
-			EntityAnnotation sampledEntity = SamplingHelper
-					.getRandomElement(new ArrayList<EntityAnnotation>(
-							generatedState.getEntities()));
+			MutableEntityAnnotation sampledEntity = SamplingHelper
+					.getRandomElement(new ArrayList<>(generatedState.getMutableEntities()));
 			// if annotation exists
 			if (sampledEntity != null) {
 				// choose a way to alter the state
-				StateChange stateChange = SamplingHelper.sampleStateChange(
-						StateChange.ADD_ARGUMENT, StateChange.REMOVE_ARGUMENT,
-						StateChange.CHANGE_ARGUMENT_ROLE,
-						StateChange.CHANGE_ARGUMENT_ENTITY,
-						StateChange.DO_NOTHING);
+				StateChange stateChange = SamplingHelper.sampleStateChange(StateChange.ADD_ARGUMENT,
+						StateChange.REMOVE_ARGUMENT, StateChange.CHANGE_ARGUMENT_ROLE,
+						StateChange.CHANGE_ARGUMENT_ENTITY, StateChange.DO_NOTHING);
 				switch (stateChange) {
 				case ADD_ARGUMENT:
-					Log.d("%s: add annotation argument.",
-							generatedState.getID());
-					SamplingHelper.addRandomArgument(sampledEntity,
-							generatedState);
+					Log.d("%s: add annotation argument.", generatedState.getID());
+					SamplingHelper.addRandomArgument(sampledEntity, generatedState);
 					break;
 				case REMOVE_ARGUMENT:
-					Log.d("%s: remove annotation argument.",
-							generatedState.getID());
+					Log.d("%s: remove annotation argument.", generatedState.getID());
 					SamplingHelper.removeRandomArgument(sampledEntity);
 					break;
 				case CHANGE_ARGUMENT_ROLE:
 					Log.d("%s: change argument role", generatedState.getID());
-					SamplingHelper.changeRandomArgumentRole(sampledEntity,
-							generatedState);
+					SamplingHelper.changeRandomArgumentRole(sampledEntity, generatedState);
 					break;
 				case CHANGE_ARGUMENT_ENTITY:
 					Log.d("%s: change argument entity", generatedState.getID());
-					SamplingHelper.changeRandomArgumentEntity(sampledEntity,
-							generatedState);
+					SamplingHelper.changeRandomArgumentEntity(sampledEntity, generatedState);
 					break;
 				case DO_NOTHING:
 					Log.d("Do not change the state");
 					break;
 				default:
-					Log.d("%s: unsupported state change",
-							generatedState.getID());
+					Log.d("%s: unsupported state change", generatedState.getID());
 					break;
 				}
 			}
