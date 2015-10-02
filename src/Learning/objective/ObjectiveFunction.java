@@ -2,11 +2,11 @@ package Learning.objective;
 
 import Learning.Score;
 import Variables.AEntityAnnotation;
-import Variables.State;
+import Variables.IState;
 
-public abstract class ObjectiveFunction {
+public abstract class ObjectiveFunction<StateT extends IState> {
 
-	public abstract Score score(State state, State goldState);
+	public abstract Score score(StateT state, StateT goldState);
 
 	public static int overlap(AEntityAnnotation entity1, AEntityAnnotation entity2) {
 		int a = entity1.getBeginTokenIndex();

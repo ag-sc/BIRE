@@ -11,7 +11,7 @@ import Logging.Log;
 import Variables.MutableEntityAnnotation;
 import Variables.State;
 
-public class RelationSampler implements Sampler {
+public class RelationSampler implements Sampler<State> {
 
 	{
 		Log.off();
@@ -29,7 +29,7 @@ public class RelationSampler implements Sampler {
 		this.numberOfStates = numberOfStates;
 	}
 
-	public List<State> getNextStates(State state, Scorer scorer) {
+	public List<State> getNextStates(State state, Scorer<State> scorer) {
 
 		Set<State> nextStates = generateNextStates(state, numberOfStates, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
@@ -44,7 +44,7 @@ public class RelationSampler implements Sampler {
 
 	}
 
-	private Set<State> generateNextStates(State previousState, int numberOfStates, Scorer scorer) {
+	private Set<State> generateNextStates(State previousState, int numberOfStates, Scorer<State> scorer) {
 		Set<State> generatedStates = new HashSet<State>();
 		for (int i = 0; i < numberOfStates; i++) {
 			State generatedState = new State(previousState);

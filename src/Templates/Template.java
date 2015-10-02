@@ -15,11 +15,11 @@ import Factors.FactorGraph;
 import Learning.Vector;
 import Logging.Log;
 import Templates.variablesets.VariableSet;
-import Variables.State;
+import Variables.IState;
 import utility.EntityID;
 import utility.FactorID;
 
-public abstract class Template implements Serializable {
+public abstract class Template<StateT extends IState> implements Serializable {
 	{
 		Log.off();
 	}
@@ -67,7 +67,7 @@ public abstract class Template implements Serializable {
 	 * @param state
 	 * @param alpha
 	 */
-	public void update(State state, double alpha) {
+	public void update(StateT state, double alpha) {
 		Set<Factor> factorsForState = getFactors(state);
 		Log.d("Update for state %s; %s factors.", state.getID(), factorsForState.size());
 		for (Factor factor : factorsForState) {
@@ -87,8 +87,9 @@ public abstract class Template implements Serializable {
 	 * 
 	 * @param state
 	 */
-	public void applyTo(State state) {
-		Log.d("Apply template \"%s\" to state %s", this.getClass().getSimpleName(), state.getID());
+	public void applyTo(StateT state, boolean force) {
+		Log.d("Apply template \"%s\" to state %s. Force recomputation: %s", this.getClass().getSimpleName(),
+				state.getID(), force);
 		Log.d("%s", state);
 		FactorGraph factorGraph = state.getFactorGraph();
 
@@ -96,7 +97,7 @@ public abstract class Template implements Serializable {
 		Log.d("%s possible new Variables for template: %s", allPossibleNewVariablesSet.size(),
 				allPossibleNewVariablesSet);
 
-		Multimap<EntityID, StateChange> changedEntities = state.getChangedEntities();
+		Multimap<EntityID, StateChange> changedEntities = state.getChangedVariables();
 
 		Log.d("Changed Entities: %s", changedEntities);
 		/*
@@ -110,29 +111,35 @@ public abstract class Template implements Serializable {
 				allChangedVariableSets.addAll(factorGraph.getVariableSetsForEntityID(this, entityID));
 			}
 		}
-		Log.d("(changed) Variables to be removed: %s", allChangedVariableSets);
 
-		/*
-		 * Collect all variable sets that apply to this new state that contain a
-		 * relevantly changed variable. These need to be recomputed.
-		 */
-		Set<VariableSet> recomputeVariableSets = new HashSet<>();
-		for (VariableSet variableSet : allPossibleNewVariablesSet) {
-			if (containsChangedVariable(variableSet, changedEntities)) {
-				recomputeVariableSets.add(variableSet);
+		Set<VariableSet> recomputeVariableSets;
+		if (force) {
+			/*
+			 * (Re) compute all factors that can be applied to this state.
+			 */
+			recomputeVariableSets = allPossibleNewVariablesSet;
+			factorGraph.reset();
+			Log.d("(changed) VariableSets (Factors) to be removed: ALL");
+		} else {
+			/*
+			 * Collect all variable sets that apply to this new state that
+			 * contain a relevantly changed variable. These need to be
+			 * recomputed.
+			 */
+			recomputeVariableSets = new HashSet<>();
+			for (VariableSet variableSet : allPossibleNewVariablesSet) {
+				if (containsChangedVariable(variableSet, changedEntities)) {
+					recomputeVariableSets.add(variableSet);
+				}
+			}
+
+			Log.d("(changed) VariableSets (Factors) to be removed: %s", allChangedVariableSets);
+			for (VariableSet variableSet : allChangedVariableSets) {
+				// these factors are no longer needed
+				factorGraph.removeFactorForVariableSet(this, variableSet);
 			}
 		}
 		Log.d("%s variables to be (re)computed: %s", recomputeVariableSets.size(), recomputeVariableSets);
-
-		/*
-		 * Remove old, invalidated factors for each relevant base entity. This
-		 * includes all changed entities plus the base entities of all affected
-		 * factors (overlap expected!)
-		 */
-		for (VariableSet variableSet : allChangedVariableSets) {
-			// these factors are no longer needed
-			factorGraph.removeFactorForVariableSet(this, variableSet);
-		}
 
 		for (VariableSet variableSet : recomputeVariableSets) {
 			// generate factor (features) for each relevant (changed)
@@ -153,15 +160,6 @@ public abstract class Template implements Serializable {
 	}
 
 	/**
-	 * This method returns true if the given state change might demand a
-	 * (re)computation of affected factors.
-	 * 
-	 * @param value
-	 * @return
-	 */
-	protected abstract boolean isRelevantChange(StateChange value);
-
-	/**
 	 * Generates a factor for the given set of variables. The exact type
 	 * (subclass) of the provided VariableSet must match the type that is
 	 * returned via getVariableSets(State). See the implementation of this
@@ -171,7 +169,7 @@ public abstract class Template implements Serializable {
 	 * @param variables
 	 * @return
 	 */
-	protected abstract Factor generateFactor(State state, VariableSet variables);
+	protected abstract Factor generateFactor(StateT state, VariableSet variables);
 
 	/**
 	 * Returns all sets of variables that can be extracted from the given state
@@ -180,15 +178,19 @@ public abstract class Template implements Serializable {
 	 * @param state
 	 * @return
 	 */
-	protected abstract Set<VariableSet> getVariableSets(State state);
+	protected abstract Set<VariableSet> getVariableSets(StateT state);
+
+	/**
+	 * This method returns true if the given state change might demand a
+	 * (re)computation of affected factors.
+	 * 
+	 * @param value
+	 * @return
+	 */
+	protected abstract boolean isRelevantChange(StateChange value);
 
 	private boolean anyRelevantChange(Collection<StateChange> changes) {
-		for (StateChange change : changes) {
-			if (isRelevantChange(change)) {
-				return true;
-			}
-		}
-		return false;
+		return changes.stream().anyMatch(this::isRelevantChange);
 	}
 
 	/**
@@ -217,7 +219,7 @@ public abstract class Template implements Serializable {
 	 * @param state
 	 * @return
 	 */
-	public Set<Factor> getFactors(State state) {
+	public Set<Factor> getFactors(StateT state) {
 		Set<FactorID> factorIDsForState = state.getFactorGraph().getFactorIDs(this);
 		Set<Factor> factorsForState = new HashSet<>();
 		for (FactorID factorID : factorIDsForState) {
@@ -242,28 +244,13 @@ public abstract class Template implements Serializable {
 	 * 
 	 * @param state
 	 */
-	public void trimToState(State state) {
+	public void trimToState(StateT state) {
 		Set<FactorID> factorsForState = state.getFactorGraph().getFactorIDs(this);
 		factors.keySet().retainAll(factorsForState);
 		recomputed = 0;
 		removed = 0;
 		all = 0;
 	}
-
-	// /**
-	// * Returns a vector that contains the sum of all feature vectors for all
-	// * factors of this template that are associated with the given state.
-	// *
-	// * @param state
-	// * @return
-	// */
-	// public Vector getJointFeatures(State state) {
-	// Vector sum = new Vector();
-	// for (Factor f : getFactors(state)) {
-	// sum.add(f.getFeatureVector());
-	// }
-	// return sum;
-	// }
 
 	/**
 	 * Returns all currently used factors of this template.
@@ -293,7 +280,7 @@ public abstract class Template implements Serializable {
 	 * @param state2
 	 * @return
 	 */
-	public Vector getFeatureDifferences(State state1, State state2) {
+	public Vector getFeatureDifferences(StateT state1, StateT state2) {
 		Vector diff = new Vector();
 		Set<FactorID> factors1 = state1.getFactorGraph().getFactorIDs(this);
 		Set<FactorID> factors2 = state2.getFactorGraph().getFactorIDs(this);

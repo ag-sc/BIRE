@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.Random;
 
 import Corpus.AnnotatedDocument;
-import Corpus.DatasetConfig;
 import Corpus.Corpus;
+import Corpus.DatasetConfig;
 import Corpus.parser.brat.BioNLPLoader;
 import Corpus.parser.usage.UsageLoader;
 import Learning.Model;
 import Learning.Score;
 import Learning.learner.DefaultLearner;
+import Learning.objective.DefaultObjectiveFunction;
 import Logging.Log;
 import Sampling.ExhaustiveBoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
@@ -24,6 +25,7 @@ import Templates.ContextTemplate;
 import Templates.MorphologicalTemplate;
 import Templates.RelationTemplate;
 import Templates.Template;
+import Variables.State;
 
 public class EvaluateParameters {
 
@@ -41,10 +43,10 @@ public class EvaluateParameters {
 		double finalAlpha;
 		double initialOmega;
 		double finalOmega;
-		List<Sampler> samplers;
+		List<Sampler<State>> samplers;
 
 		public Params(int numberOfSamplingSteps, int numberOfEpochs, double initialAlpha, double finalAlpha,
-				double initialOmega, double finalOmega, List<Sampler> samplers) {
+				double initialOmega, double finalOmega, List<Sampler<State>> samplers) {
 			super();
 			this.numberOfSamplingSteps = numberOfSamplingSteps;
 			this.numberOfEpochs = numberOfEpochs;
@@ -72,7 +74,7 @@ public class EvaluateParameters {
 	public static void evaluate() {
 		File modelDir = null;
 		File evalDir = null;
-		Corpus corpus = null;
+		Corpus<? extends AnnotatedDocument<State>> corpus = null;
 
 		int corpusID = BIONLP;
 		switch (corpusID) {
@@ -100,7 +102,7 @@ public class EvaluateParameters {
 
 		Log.d("Corpus:\n%s", corpus);
 
-		List<Sampler> samplers = new ArrayList<Sampler>();
+		List<Sampler<State>> samplers = new ArrayList<>();
 		samplers.add(new ExhaustiveEntitySampler());
 		samplers.add(new ExhaustiveBoundarySampler());
 		samplers.add(new RelationSampler(20));
@@ -109,9 +111,9 @@ public class EvaluateParameters {
 
 		// Leave-one-out
 
-		List<AnnotatedDocument> allDocuments = corpus.getDocuments();
+		List<? extends AnnotatedDocument<State>> allDocuments = corpus.getDocuments();
 		for (int i = 0; i < allDocuments.size(); i++) {
-			AnnotatedDocument doc = allDocuments.get(i);
+			AnnotatedDocument<State> doc = allDocuments.get(i);
 			Log.d("%s: %s", i, doc.getGoldState());
 		}
 		// allDocuments = allDocuments.subList(137, 140);
@@ -119,8 +121,8 @@ public class EvaluateParameters {
 		alphaOmegaGridSearch(modelDir, evalDir, samplers, allDocuments);
 	}
 
-	private static void alphaOmegaGridSearch(File modelDir, File evalDir, List<Sampler> samplers,
-			List<AnnotatedDocument> allDocuments) {
+	private static void alphaOmegaGridSearch(File modelDir, File evalDir, List<Sampler<State>> samplers,
+			List<? extends AnnotatedDocument<State>> allDocuments) {
 		int defaultStep = 10;
 		int defaultEpoch = 5;
 
@@ -152,8 +154,8 @@ public class EvaluateParameters {
 		TaggedTimer.printTimings();
 	}
 
-	private static void basicParamsGridSearch(File modelDir, File evalDir, List<Sampler> samplers,
-			List<AnnotatedDocument> allDocuments) {
+	private static void basicParamsGridSearch(File modelDir, File evalDir, List<Sampler<State>> samplers,
+			List<? extends AnnotatedDocument<State>> allDocuments) {
 		int defaultStep = 10;
 		int defaultEpoch = 5;
 		List<Params> step = new ArrayList<>();
@@ -192,7 +194,7 @@ public class EvaluateParameters {
 	}
 
 	private static void evaluateParamConfigs(List<Params> paramsList, int nCrossValidation,
-			List<AnnotatedDocument> documents, String descriptor, File modelDir, File evalDir) {
+			List<? extends AnnotatedDocument<State>> documents, String descriptor, File modelDir, File evalDir) {
 		Log.d("############################");
 		Log.d("############################");
 		Log.d("Evalutate param group: %s", descriptor);
@@ -209,19 +211,20 @@ public class EvaluateParameters {
 				Log.d("############################");
 				Log.d("############################");
 				Log.d("Cross Validation: %s/%s", i + 1, nCrossValidation);
-				DataSplit split = new DataSplit(documents, 0.8);
-				List<AnnotatedDocument> train = split.getTrain();
-				List<AnnotatedDocument> test = split.getTest();
+				DataSplit<? extends AnnotatedDocument<State>> split = new DataSplit<>(documents, 0.8);
+				List<? extends AnnotatedDocument<State>> train = split.getTrain();
+				List<? extends AnnotatedDocument<State>> test = split.getTest();
 
-				List<Template> templates = new ArrayList<Template>();
+				List<Template<State>> templates = new ArrayList<>();
 				templates.add(new RelationTemplate());
 				templates.add(new MorphologicalTemplate());
 				templates.add(new ContextTemplate());
 
-				Model model = new Model(templates);
+				Model<State> model = new Model<>(templates);
 
-				DefaultLearner learner = new DefaultLearner(model, params.samplers, params.numberOfSamplingSteps,
-						params.initialAlpha, params.finalAlpha, params.initialOmega, params.finalOmega);
+				DefaultLearner<State> learner = new DefaultLearner<>(model, params.samplers,
+						new DefaultObjectiveFunction(), params.numberOfSamplingSteps, params.initialAlpha,
+						params.finalAlpha, params.initialOmega, params.finalOmega);
 				Log.d("Train/test split: %s => #train: %s, #test: %s", split.getSplit(), train.size(), test.size());
 
 				Log.d("####################");
@@ -237,25 +240,29 @@ public class EvaluateParameters {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				try {
-					EvaluationUtil.storeRecord(learner.getTrainRecord(), evalDir,
-							String.format(RECORD_NAME_PATTERN, descriptor, "train", i, params.numberOfSamplingSteps,
-									params.numberOfEpochs, params.initialAlpha, params.finalAlpha, params.initialOmega,
-									params.finalOmega));
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-				learner.test(test, params.numberOfSamplingSteps);
-				try {
-					EvaluationUtil.storeRecord(learner.getTestRecord(), evalDir,
-							String.format(RECORD_NAME_PATTERN, descriptor, "test", i, params.numberOfSamplingSteps,
-									params.numberOfEpochs, params.initialAlpha, params.finalAlpha, params.initialOmega,
-									params.finalOmega));
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				// try {
+				// EvaluationUtil.storeRecord(learner.getTrainRecord(), evalDir,
+				// String.format(RECORD_NAME_PATTERN, descriptor, "train", i,
+				// params.numberOfSamplingSteps,
+				// params.numberOfEpochs, params.initialAlpha,
+				// params.finalAlpha, params.initialOmega,
+				// params.finalOmega));
+				// } catch (IOException e1) {
+				// e1.printStackTrace();
+				// }
+				List<State> predictions = learner.test(test, params.numberOfSamplingSteps);
+				// try {
+				// EvaluationUtil.storeRecord(learner.getTestRecord(), evalDir,
+				// String.format(RECORD_NAME_PATTERN, descriptor, "test", i,
+				// params.numberOfSamplingSteps,
+				// params.numberOfEpochs, params.initialAlpha,
+				// params.finalAlpha, params.initialOmega,
+				// params.finalOmega));
+				// } catch (FileNotFoundException e) {
+				// e.printStackTrace();
+				// } catch (IOException e) {
+				// e.printStackTrace();
+				// }
 			}
 		}
 	}

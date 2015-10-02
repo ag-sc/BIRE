@@ -7,12 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import Corpus.BioNLPCorpus;
 import Corpus.SubDocument;
 import Corpus.parser.brat.BioNLPLoader;
 import Learning.Model;
 import Learning.learner.DefaultLearner;
-import Logging.Log;
+import Learning.objective.DefaultObjectiveFunction;
+import Learning.objective.ObjectiveFunction;
 import Sampling.ExhaustiveBoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
 import Sampling.RelationSampler;
@@ -24,11 +28,16 @@ import Templates.Template;
 import Variables.State;
 
 public class BioNLPLearning {
+	private static Logger log = LogManager.getFormatterLogger();
 
 	public static void main(String[] args) {
+		// System.setProperty("log4j.configurationFile", "res/log4j2.xml");
 		// int trainSize = 190;
+
 		int trainSize = 0;
 		int testSize = 0;
+		// int trainSize = 1;
+		// int testSize = 1;
 		if (args != null && args.length == 2) {
 			trainSize = Integer.parseInt(args[0]);
 			testSize = Integer.parseInt(args[1]);
@@ -36,8 +45,8 @@ public class BioNLPLearning {
 		BioNLPCorpus trainCorpus = BioNLPLoader.loadBioNLP2013Train(false);
 		BioNLPCorpus devCorpus = BioNLPLoader.loadBioNLP2013Dev(false);
 
-		Log.d("Train corpus config: %s", trainCorpus.getCorpusConfig());
-		Log.d("Dev corpus config: %s", devCorpus.getCorpusConfig());
+		log.debug("Train corpus config: %s", trainCorpus.getCorpusConfig());
+		log.debug("Dev corpus config: %s", devCorpus.getCorpusConfig());
 
 		File modelDir = new File("res/bionlp/models");
 		File evalDir = new File("res/bionlp/eval");
@@ -52,7 +61,7 @@ public class BioNLPLearning {
 		if (!outputDir.exists())
 			outputDir.mkdirs();
 
-		List<Sampler> samplers = new ArrayList<Sampler>();
+		List<Sampler<State>> samplers = new ArrayList<>();
 		samplers.add(new ExhaustiveEntitySampler());
 		samplers.add(new ExhaustiveBoundarySampler());
 		samplers.add(new RelationSampler(20));
@@ -64,23 +73,27 @@ public class BioNLPLearning {
 		// List<SubDocument> allDocuments = trainCorpus.getDocuments();
 		// for (int i = 0; i < allDocuments.size(); i++) {
 		// SubDocument doc = allDocuments.get(i);
-		// Log.d("%s: %s", i, doc.getGoldState().toDetailedString());
+		// log.debug("%s: %s", i, doc.getGoldState().toDetailedString());
 		// }
 		// Collections.shuffle(allDocuments, new Random(0));
 		// allDocuments = allDocuments.subList(0, 10);
 
-		List<SamplingProcedureRecord> trainRecords = new ArrayList<SamplingProcedureRecord>();
-		List<SamplingProcedureRecord> testRecords = new ArrayList<SamplingProcedureRecord>();
+		// List<SamplingProcedureRecord> trainRecords = new
+		// ArrayList<SamplingProcedureRecord>();
+		// List<SamplingProcedureRecord> testRecords = new
+		// ArrayList<SamplingProcedureRecord>();
 
+		ObjectiveFunction<State> objective = new DefaultObjectiveFunction();
 		int numberOfSamplingSteps = 10;
-		int numberOfEpochs = 5;
+		int numberOfEpochs = 2;
 		// N-Fold cross validation
 		int n = 1;
 		// long[] seeds = { 1234, 2345, 3456 };
+		List<State> predictions = null;
 		for (int i = 0; i < n; i++) {
-			Log.d("############################");
-			Log.d("############################");
-			Log.d("Cross Validation: %s/%s", i + 1, n);
+			log.info("############################");
+			log.info("############################");
+			log.info("Cross Validation: %s/%s", i + 1, n);
 			// DataSplit<SubDocument> split = new DataSplit<>(allDocuments, 0.8,
 			// seeds[i]);
 			// List<SubDocument> train = split.getTrain();
@@ -100,22 +113,22 @@ public class BioNLPLearning {
 				test = devCorpus.getDocuments();
 			}
 
-			// Log.d("train:");
-			// train.forEach(d -> Log.d("%s: %s", d.getName(),
+			// log.debug("train:");
+			// train.forEach(d -> log.debug("%s: %s", d.getName(),
 			// d.getGoldState()));
-			// Log.d("test:");
-			// test.forEach(d -> Log.d("%s: %s", d.getName(),
+			// log.debug("test:");
+			// test.forEach(d -> log.debug("%s: %s", d.getName(),
 			// d.getGoldState()));
 
-			List<Template> templates = new ArrayList<Template>();
+			List<Template<State>> templates = new ArrayList<>();
 			templates.add(new RelationTemplate());
 			templates.add(new MorphologicalTemplate());
 			templates.add(new ContextTemplate());
-			Model model = new Model(templates);
+			Model<State> model = new Model<>(templates);
 
 			long startTime = System.currentTimeMillis();
-			DefaultLearner learner = new DefaultLearner(model, samplers, numberOfSamplingSteps, 0.01, 0.01, 0, 0);
-
+			DefaultLearner<State> learner = new DefaultLearner<>(model, samplers, objective, numberOfSamplingSteps,
+					0.01, 0.01, 0, 0);
 			/*
 			 * Pause the learner after every few documents to display additional
 			 * information
@@ -127,11 +140,11 @@ public class BioNLPLearning {
 			// int numberOfDocuments) {
 			// if (indexOfDocument % 31 == 30) {
 			// TaggedTimer.printTimings();
-			// Log.d("current trainingTime: ~ %s (%s seconds)",
+			// log.debug("current trainingTime: ~ %s (%s seconds)",
 			// (System.currentTimeMillis() - startTime),
 			// (System.currentTimeMillis() - startTime) / 1000);
 			// try {
-			// Log.d("PAUSE: Wait for ENTER...");
+			// log.debug("PAUSE: Wait for ENTER...");
 			// System.in.read();
 			// } catch (IOException e1) {
 			// e1.printStackTrace();
@@ -139,16 +152,16 @@ public class BioNLPLearning {
 			// }
 			// }
 			// });
-			Log.d("Train/test: => #train: %s, #test: %s", train.size(), test.size());
+			log.info("Train/test: => #train: %s, #test: %s", train.size(), test.size());
 
-			Log.d("####################");
-			Log.d("Start learning");
+			log.info("####################");
+			log.info("Start learning");
 			learner.train(train, numberOfEpochs);
-			trainRecords.add(learner.getTrainRecord());
+			// trainRecords.add(learner.getTrainRecord());
 			// learner.train(split.getTrain().subList(0, 5));
-			Log.d("###############");
-			Log.d("Trained Model:\n%s", model.toDetailedString());
-			Log.d("###############");
+			log.info("###############");
+			log.info("Trained Model:\n%s", model.toDetailedString());
+			log.info("###############");
 			try {
 				model.saveModelToFile(
 						new File(modelDir, EvaluationUtil.generateFilenameForModel(train.size())).getPath());
@@ -157,34 +170,34 @@ public class BioNLPLearning {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			List<State> predictions = learner.test(test, numberOfSamplingSteps);
+			predictions = learner.test(test, numberOfSamplingSteps);
 			Set<File> files = BioNLPEvaluation.statesToBioNLPFiles(outputDir, predictions, true);
-			Log.d("Produced annotaion files: %s", files);
+			log.info("Produced annotaion files: %s", files);
 
-			testRecords.add(learner.getTestRecord());
+			// testRecords.add(learner.getTestRecord());
 			// SamplingProcedureRecord testRecord = learner.getTestRecord();
 			// Plots.plotScore(trainRecord);
 			// plotScore(testRecord);
-			// Log.d("Learned weights of cross-validation %s/%s:", i, n);
+			// log.debug("Learned weights of cross-validation %s/%s:", i, n);
 			// EvaluationUtil.printWeights(learner, 10e-7);
 		}
 
-		try {
-			EvaluationUtil.storeRecords(testRecords, evalDir);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			EvaluationUtil.storeRecords(trainRecords, evalDir);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		Log.d("Overall performance:");
-		EvaluationUtil.printPerformance(testRecords);
+		// try {
+		// EvaluationUtil.storeRecords(testRecords, evalDir);
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		// try {
+		// EvaluationUtil.storeRecords(trainRecords, evalDir);
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+		log.info("Overall performance:");
+		EvaluationUtil.printPredictionPerformance(predictions);
 		TaggedTimer.printTimings();
 
 	}

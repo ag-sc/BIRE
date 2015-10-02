@@ -3,9 +3,10 @@ package Learning;
 import java.util.List;
 
 import Corpus.AnnotatedDocument;
+import Variables.IState;
 
-public interface Learner {
+public interface Learner<StateT extends IState> {
 
-	public void train(List<? extends AnnotatedDocument> documents, int epochs);
+	public List<StateT> train(List<? extends AnnotatedDocument<StateT>> documents, int epochs);
 
 }

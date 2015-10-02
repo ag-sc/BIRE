@@ -7,29 +7,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
-import Factors.Factor;
 import Logging.Log;
 import Templates.Template;
-import Variables.State;
+import Variables.IState;
 
-public class Model implements Serializable {
+public class Model<StateT extends IState> implements Serializable {
 
 	{
 		Log.off();
 	}
 
-	private Collection<Template> templates;
+	private Collection<Template<StateT>> templates;
 
-	public Model(Collection<Template> templates) {
+	public Model(Collection<Template<StateT>> templates) {
 		this.templates = templates;
-	}
-
-	public Model(Template... templates) {
-		this.templates = Arrays.asList(templates);
 	}
 
 	/**
@@ -43,7 +36,7 @@ public class Model implements Serializable {
 	 */
 	public void loadModelfromFile(String file) throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		templates = (Collection<Template>) in.readObject();
+		templates = (Collection<Template<StateT>>) in.readObject();
 		in.close();
 	}
 
@@ -61,13 +54,13 @@ public class Model implements Serializable {
 		out.close();
 	}
 
-	public Collection<Template> getTemplates() {
+	public Collection<Template<StateT>> getTemplates() {
 		return templates;
 	}
 
-	public void update(State state, double alpha) {
+	public void update(StateT state, double alpha) {
 		// Log.d("Update state: %s", state);
-		for (Template template : templates) {
+		for (Template<StateT> template : templates) {
 			template.update(state, alpha);
 		}
 	}
@@ -79,8 +72,8 @@ public class Model implements Serializable {
 	 * 
 	 * @param state
 	 */
-	public void trimToState(State state) {
-		for (Template template : templates) {
+	public void trimToState(StateT state) {
+		for (Template<StateT> template : templates) {
 			template.trimToState(state);
 		}
 	}
@@ -92,7 +85,7 @@ public class Model implements Serializable {
 	// * @param unneededStates
 	// */
 	// public void clean() {
-	// for (Template template : templates) {
+	// for (Template<StateT> template : templates) {
 	// template.clean();
 	// }
 	// }
@@ -100,7 +93,7 @@ public class Model implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		for (Template template : templates) {
+		for (Template<StateT> template : templates) {
 			builder.append(template.getClass().getSimpleName());
 			builder.append("\n");
 			builder.append("\t#Features: ");
@@ -112,7 +105,7 @@ public class Model implements Serializable {
 
 	public String toDetailedString() {
 		StringBuilder builder = new StringBuilder();
-		for (Template template : templates) {
+		for (Template<StateT> template : templates) {
 			builder.append(template.getClass().getSimpleName());
 			builder.append(" (#Features: ");
 			builder.append(template.getWeightVector().getFeatureNames().size());

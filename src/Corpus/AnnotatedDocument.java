@@ -2,32 +2,32 @@ package Corpus;
 
 import java.util.List;
 
-import Variables.State;
+import Variables.IState;
 
-public class AnnotatedDocument extends Document {
+public class AnnotatedDocument<StateT extends IState> extends Document {
 	/**
 	 * This State object holds the human labeled, correct annotations, that are
 	 * used during training and evaluation.
 	 */
-	protected State goldState;
+	protected StateT goldState;
 	/**
 	 * This state contains initial, human labeled annotations for this document,
 	 * that are provided during training and testing (!). These annotations
 	 * should not be changed since they already match some of the annotations in
 	 * the goldState.
 	 */
-	protected State initialState;
+	protected StateT initialState;
 
-	public AnnotatedDocument(Corpus<? extends AnnotatedDocument> corpus, String name, String content,
+	public AnnotatedDocument(Corpus<? extends AnnotatedDocument<StateT>> corpus, String name, String content,
 			List<Token> tokens) {
 		super(corpus, name, content, tokens);
 	}
 
-	public State getGoldState() {
+	public StateT getGoldState() {
 		return goldState;
 	}
 
-	public State getInitialState() {
+	public StateT getInitialState() {
 		return initialState;
 	}
 
@@ -37,11 +37,11 @@ public class AnnotatedDocument extends Document {
 				+ ", initialState=" + initialState + "]";
 	}
 
-	public void setGoldState(State goldState) {
+	public void setGoldState(StateT goldState) {
 		this.goldState = goldState;
 	}
 
-	public void setInitialState(State initialState) {
+	public void setInitialState(StateT initialState) {
 		this.initialState = initialState;
 	}
 

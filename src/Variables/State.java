@@ -4,10 +4,8 @@ import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,9 +13,6 @@ import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeMap;
-import com.google.common.collect.RangeSet;
 
 import Changes.StateChange;
 import Corpus.Document;
@@ -34,23 +29,9 @@ public class State implements IState, Serializable {
 		Log.off();
 	}
 
-	public static final Comparator<State> modelScoreComparator = new Comparator<State>() {
-
-		@Override
-		public int compare(State s1, State s2) {
-			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
-		}
-	};
-	public static final Comparator<State> objectiveScoreComparator = new Comparator<State>() {
-
-		@Override
-		public int compare(State s1, State s2) {
-			return (int) -Math.signum(s1.getObjectiveScore().score - s2.getObjectiveScore().score);
-		}
-	};
 	private static final String GENERATED_ENTITY_ID_PREFIX = "G";
 	private static final DecimalFormat scoreFormat = new DecimalFormat("0.00000");
-	private static final DecimalFormat stateIDFormat = new DecimalFormat("0000000");
+	private static final DecimalFormat stateIDFormat = new DecimalFormat("00000000");
 
 	private static int stateIdIndex = 0;
 	private int entityIdIndex = 0;
@@ -113,11 +94,18 @@ public class State implements IState, Serializable {
 		this.document = document;
 	}
 
+	@Override
+	public State duplicate() {
+		State cloned = new State(this);
+		return cloned;
+	}
+
 	/**
 	 * Returns a previously computed score.
 	 * 
 	 * @return
 	 */
+	@Override
 	public double getModelScore() {
 		return modelScore;
 	}
@@ -126,7 +114,8 @@ public class State implements IState, Serializable {
 		return document;
 	}
 
-	public Multimap<EntityID, StateChange> getChangedEntities() {
+	@Override
+	public Multimap<EntityID, StateChange> getChangedVariables() {
 		return changedEntities;
 	}
 
@@ -161,6 +150,8 @@ public class State implements IState, Serializable {
 			removeFromTokenToEntityMapping(entity);
 			removeReferencingArguments(entity);
 			changedEntities.put(entityID, StateChange.REMOVE_ANNOTATION);
+		} else {
+			Log.w("Cannot remove entity %s. Entity not found!", entityID);
 		}
 	}
 
@@ -284,6 +275,7 @@ public class State implements IState, Serializable {
 		return tokenToEntities;
 	}
 
+	@Override
 	public StateID getID() {
 		return id;
 	}
@@ -300,6 +292,7 @@ public class State implements IState, Serializable {
 		return objectiveScore;
 	}
 
+	@Override
 	public FactorGraph getFactorGraph() {
 		return factorGraph;
 	}

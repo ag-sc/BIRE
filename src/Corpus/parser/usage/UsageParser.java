@@ -58,11 +58,11 @@ public class UsageParser {
 	public static void main(String[] args) {
 		File annDir = new File("res/usage/de");
 
-		DefaultCorpus<AnnotatedDocument> corpus = (DefaultCorpus) parseCorpus(annDir);
+		DefaultCorpus<AnnotatedDocument<State>> corpus = parseCorpus(annDir);
 		Log.d("Corpus: %s", corpus.toDetailedString());
 	}
 
-	public static Corpus<AnnotatedDocument> parseCorpus(File annDir) {
+	public static DefaultCorpus<AnnotatedDocument<State>> parseCorpus(File annDir) {
 		File[] allFiles = annDir.listFiles();
 
 		Map<String, File> textFiles = new HashMap<String, File>();
@@ -107,7 +107,7 @@ public class UsageParser {
 		}
 
 		AnnotationConfig config = getUsageConfig();
-		Corpus<AnnotatedDocument> corpus = new DefaultCorpus<>(config);
+		DefaultCorpus<AnnotatedDocument<State>> corpus = new DefaultCorpus<>(config);
 
 		for (String category : textFiles.keySet()) {
 			corpus.addDocuments(parseFile(corpus, category, textFiles.get(category), annotationFilesA1.get(category),
@@ -118,10 +118,10 @@ public class UsageParser {
 		return corpus;
 	}
 
-	private static Collection<AnnotatedDocument> parseFile(Corpus<AnnotatedDocument> corpus, String category, File t,
-			File a1, File r1) {
+	private static Collection<AnnotatedDocument<State>> parseFile(Corpus<AnnotatedDocument<State>> corpus,
+			String category, File t, File a1, File r1) {
 		Log.d("Process category %s", category);
-		Map<String, AnnotatedDocument> documents = parseDocument(corpus, category, t);
+		Map<String, AnnotatedDocument<State>> documents = parseDocument(corpus, category, t);
 
 		addEntities(a1, documents);
 		addRelations(r1, documents);
@@ -129,9 +129,9 @@ public class UsageParser {
 		return documents.values();
 	}
 
-	private static Map<String, AnnotatedDocument> parseDocument(Corpus<AnnotatedDocument> corpus, String category,
-			File t) {
-		Map<String, AnnotatedDocument> documents = new HashMap<String, AnnotatedDocument>();
+	private static Map<String, AnnotatedDocument<State>> parseDocument(Corpus<AnnotatedDocument<State>> corpus,
+			String category, File t) {
+		Map<String, AnnotatedDocument<State>> documents = new HashMap<>();
 		try {
 			FileInputStream fileStream = new FileInputStream(t);
 			InputStreamReader streamReader = new InputStreamReader(fileStream, "UTF-8");
@@ -149,7 +149,7 @@ public class UsageParser {
 
 				List<Token> tokens = tokenize(content);
 
-				AnnotatedDocument doc = new AnnotatedDocument(corpus,
+				AnnotatedDocument<State> doc = new AnnotatedDocument<>(corpus,
 						String.format("%s-%s-%s-%s", category, documentID, productID, reviewID), content, tokens);
 				doc.setGoldState(new State(doc));
 				documents.put(documentID, doc);
@@ -163,7 +163,7 @@ public class UsageParser {
 		return documents;
 	}
 
-	private static void addEntities(File annotationFile, Map<String, AnnotatedDocument> documents) {
+	private static void addEntities(File annotationFile, Map<String, AnnotatedDocument<State>> documents) {
 
 		try {
 			FileInputStream fileStream = new FileInputStream(annotationFile);
@@ -181,7 +181,7 @@ public class UsageParser {
 				String entityID = columns[5];
 				String subjectivity = columns[6];
 				String relatedness = columns[7];
-				AnnotatedDocument doc = documents.get(documentID);
+				AnnotatedDocument<State> doc = documents.get(documentID);
 				State goldState = doc.getGoldState();
 
 				if (SUBJECTIVE_TYPE_NAME.equals(entityTypeName)) {
@@ -225,7 +225,7 @@ public class UsageParser {
 		}
 	}
 
-	private static void addRelations(File relationFile, Map<String, AnnotatedDocument> documents) {
+	private static void addRelations(File relationFile, Map<String, AnnotatedDocument<State>> documents) {
 
 		try {
 			FileInputStream fileStream = new FileInputStream(relationFile);
@@ -240,7 +240,7 @@ public class UsageParser {
 				String argument1ID = columns[2];
 				String argument2ID = columns[3];
 
-				AnnotatedDocument doc = documents.get(documentID);
+				AnnotatedDocument<State> doc = documents.get(documentID);
 				State goldState = doc.getGoldState();
 				EntityType entityType = doc.getCorpus().getCorpusConfig().getEntityType(entityTypeName);
 				if (entityType == null) {

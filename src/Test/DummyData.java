@@ -22,7 +22,7 @@ import Variables.State;
 
 public class DummyData {
 
-	public static Corpus<AnnotatedDocument> getDummyData() {
+	public static Corpus<AnnotatedDocument<State>> getDummyData() {
 		BratConfigReader configReader = new BratConfigReader();
 		AnnotationConfig originalConfig = configReader.readConfig(new File("res/bionlp/annotation.conf"));
 		AnnotationConfig simplifiedConfig = new AnnotationConfig();
@@ -32,8 +32,8 @@ public class DummyData {
 		List<Token> tokens = extractTokens(content);
 		Log.d("Tokens for dummy data: %s", tokens);
 
-		DefaultCorpus<AnnotatedDocument> corpus = new DefaultCorpus<>(simplifiedConfig);
-		AnnotatedDocument doc = new AnnotatedDocument(corpus, "DummyDocument", content, tokens);
+		DefaultCorpus<AnnotatedDocument<State>> corpus = new DefaultCorpus<>(simplifiedConfig);
+		AnnotatedDocument<State> doc = new AnnotatedDocument<State>(corpus, "DummyDocument", content, tokens);
 		State goldState = new State(doc);
 		doc.setGoldState(goldState);
 
@@ -49,7 +49,7 @@ public class DummyData {
 		return corpus;
 	}
 
-	public static AnnotatedDocument getRepresentativeDummyData()
+	public static AnnotatedDocument<State> getRepresentativeDummyData()
 			throws FileNotFoundException, ClassNotFoundException, IOException {
 		String filename = "PMID-9119025";
 		File annFile = new File("res/bionlp/ann/" + filename + ".ann");

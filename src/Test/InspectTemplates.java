@@ -1,7 +1,12 @@
 package Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.logging.Logger;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import Corpus.AnnotatedDocument;
 import Corpus.Corpus;
@@ -13,13 +18,17 @@ import Templates.ContextTemplate;
 import Templates.MorphologicalTemplate;
 import Templates.RelationTemplate;
 import Templates.Template;
+import Variables.EntityType;
+import Variables.MutableEntityAnnotation;
 import Variables.State;
+import evaluation.BioNLPLearning;
 import evaluation.EvaluationUtil;
+import utility.EntityID;
 
 public class InspectTemplates {
 
 	public static void main(String[] args) {
-		Corpus<? extends AnnotatedDocument> corpus = null;
+		Corpus<? extends AnnotatedDocument<State>> corpus = null;
 
 		switch (1) {
 		case 0:
@@ -31,16 +40,32 @@ public class InspectTemplates {
 		default:
 			break;
 		}
-		AnnotatedDocument doc = corpus.getDocuments().get(1);
+		AnnotatedDocument<State> doc = corpus.getDocuments().get(1);
 		Log.d("Content: %s (%s)", doc.getContent(), doc.getContent().length());
 		Log.d("Tokens: %s", doc.getTokens());
 		Log.d("State: %s", doc.getGoldState());
 
-		Template[] templates = { new MorphologicalTemplate(), new ContextTemplate(), new RelationTemplate() };
+		List<Template<State>> templates = Arrays.asList(new MorphologicalTemplate(), new ContextTemplate(),
+				new RelationTemplate());
 
-		State state = new State(doc.getGoldState());
-		for (Template t : templates) {
-			t.applyTo(state);
+		State state = doc.getGoldState().duplicate();
+		applyTemplatesToState(templates, state, false);
+		templates.forEach(t -> t.trimToState(state));
+		state.markAsUnchanged();
+		Log.d("");
+		Log.d("########### Modify State ###########");
+		Log.d("");
+		MutableEntityAnnotation e = new ArrayList<>(state.getMutableEntities()).get(0);
+		e.setType(new EntityType("Banana"));
+		applyTemplatesToState(templates, state, false);
+
+	}
+
+	private static void applyTemplatesToState(List<Template<State>> templates, State state, boolean force) {
+		Log.d("Mutables:   %s", state.getMutableEntities());
+		Log.d("Immutables: %s", state.getImmutableEntities());
+		for (Template<State> t : templates) {
+			t.applyTo(state, force);
 			Collection<Factor> factors = t.getFactors(state);
 			Log.d("Template %s, %s factors: ", t.getClass().getSimpleName(), factors.size());
 			int i = 0;
@@ -55,4 +80,5 @@ public class InspectTemplates {
 			}
 		}
 	}
+
 }

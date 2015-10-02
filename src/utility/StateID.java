@@ -1,8 +1,8 @@
 package utility;
 
-import Variables.State;
+import Variables.IState;
 
-public class StateID extends ID<State> {
+public class StateID extends ID<IState> {
 
 	public StateID(String id) {
 		super(id);

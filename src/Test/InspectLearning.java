@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Corpus.AnnotatedDocument;
-import Corpus.DatasetConfig;
 import Corpus.Corpus;
 import Corpus.parser.brat.BioNLPLoader;
 import Learning.Learner;
 import Learning.Model;
 import Learning.learner.DefaultLearner;
+import Learning.objective.DefaultObjectiveFunction;
 import Logging.Log;
 import Sampling.ExhaustiveBoundarySampler;
 import Sampling.ExhaustiveEntitySampler;
@@ -19,13 +19,12 @@ import Templates.ContextTemplate;
 import Templates.MorphologicalTemplate;
 import Templates.RelationTemplate;
 import Templates.Template;
-import utility.EntityID;
-import utility.FactorID;
+import Variables.State;
 
 public class InspectLearning {
 
 	public static void main(String[] args) {
-		Corpus<? extends AnnotatedDocument> corpus = null;
+		Corpus<? extends AnnotatedDocument<State>> corpus = null;
 
 		switch (1) {
 		case 0:
@@ -39,20 +38,21 @@ public class InspectLearning {
 
 		Log.d("Corpus:\n%s", corpus);
 
-		List<Sampler> samplers = new ArrayList<Sampler>();
+		List<Sampler<State>> samplers = new ArrayList<>();
 		samplers.add(new ExhaustiveEntitySampler());
 		samplers.add(new ExhaustiveBoundarySampler());
 		samplers.add(new RelationSampler(20));
 		// samplers.add(new DefaultListSampler(20));
 
-		List<Template> templates = new ArrayList<Template>();
+		List<Template<State>> templates = new ArrayList<>();
 		templates.add(new RelationTemplate());
 		templates.add(new MorphologicalTemplate());
 		templates.add(new ContextTemplate());
 		// templates.add(new CheatingTemplate());
 
-		Model model = new Model(templates);
-		Learner learner = new DefaultLearner(model, samplers, 10, 0.01, 0.001, false);
+		Model<State> model = new Model<>(templates);
+		Learner<State> learner = new DefaultLearner<>(model, samplers, new DefaultObjectiveFunction(), 10, 0.01, 0.001,
+				false);
 		// learner.train(dataSplit.getTrain());
 		learner.train(corpus.getDocuments(), 1);
 		// learner.train(corpus.getDocuments().subList(0, 1), 1);

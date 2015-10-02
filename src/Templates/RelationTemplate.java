@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 import Changes.StateChange;
 import Factors.Factor;
@@ -19,10 +20,12 @@ import Variables.EntityType;
 import Variables.State;
 import utility.EntityID;
 
-public class RelationTemplate extends Template implements Serializable {
+public class RelationTemplate extends Template<State>implements Serializable {
 	{
 		Log.off();
 	}
+
+	public final Set<StateChange> relevantChanges = Sets.newHashSet(StateChange.values());
 
 	@Override
 	public Factor generateFactor(State state, VariableSet genericVariables) {
@@ -121,7 +124,7 @@ public class RelationTemplate extends Template implements Serializable {
 
 	@Override
 	protected boolean isRelevantChange(StateChange value) {
-		return true;
+		return relevantChanges.contains(value);
 	}
 
 	@Override

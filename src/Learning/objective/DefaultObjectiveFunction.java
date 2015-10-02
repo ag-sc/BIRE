@@ -12,7 +12,7 @@ import Variables.ArgumentRole;
 import Variables.State;
 import utility.EntityID;
 
-public class DefaultObjectiveFunction extends ObjectiveFunction {
+public class DefaultObjectiveFunction extends ObjectiveFunction<State> {
 
 	{
 		Log.off();

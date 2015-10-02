@@ -17,14 +17,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import Learning.Score;
 import Learning.Vector;
 import Learning.learner.DefaultLearner;
-import Logging.Log;
 import Templates.Template;
+import Variables.IState;
 import evaluation.SamplingProcedureRecord.SamplingStepRecord;
 
 public class EvaluationUtil {
+
+	private static Logger log = LogManager.getFormatterLogger();
 
 	private static final String MODEL_NAME_PATTERN = "Model_%s_%s-%s-%s_%s-%s-%s";
 	private static final String RECORDS_NAME_PATTERN = "%s-Records_N=%s_%s-%s-%s_%s-%s-%s";
@@ -105,7 +110,7 @@ public class EvaluationUtil {
 				meanRecall += step.acceptedState.objectiveFunctionScore.recall;
 				meanOFScore += step.acceptedState.objectiveFunctionScore.score;
 
-				Log.d("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s", d, step.document.getName(),
+				log.info("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s", d, step.document.getName(),
 						step.acceptedState.modelScore, step.acceptedState.objectiveFunctionScore.precision,
 						step.acceptedState.objectiveFunctionScore.recall,
 						step.acceptedState.objectiveFunctionScore.score);
@@ -116,7 +121,32 @@ public class EvaluationUtil {
 		meanPrecision /= count;
 		meanRecall /= count;
 		meanOFScore /= count;
-		Log.d("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s", count, meanModelScore, meanPrecision,
+		log.info("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s", count, meanModelScore, meanPrecision,
+				meanRecall, meanOFScore);
+	}
+
+	public static void printPredictionPerformance(List<? extends IState> predictedStates) {
+		double meanModelScore = 0;
+		double meanPrecision = 0;
+		double meanRecall = 0;
+		double meanOFScore = 0;
+		int count = 0;
+		for (IState s : predictedStates) {
+			meanModelScore += s.getModelScore();
+			meanPrecision += s.getObjectiveScore().precision;
+			meanRecall += s.getObjectiveScore().recall;
+			meanOFScore += s.getObjectiveScore().score;
+
+			log.info("Document %s:\tmodel=%s; precision=%s, recall=%s, score=%s", s.getDocument().getName(),
+					s.getModelScore(), s.getObjectiveScore().precision, s.getObjectiveScore().recall,
+					s.getObjectiveScore().score);
+			count++;
+		}
+		meanModelScore /= count;
+		meanPrecision /= count;
+		meanRecall /= count;
+		meanOFScore /= count;
+		log.info("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s", count, meanModelScore, meanPrecision,
 				meanRecall, meanOFScore);
 	}
 
@@ -131,7 +161,7 @@ public class EvaluationUtil {
 			meanRecall += step.acceptedState.objectiveFunctionScore.recall;
 			meanOFScore += step.acceptedState.objectiveFunctionScore.score;
 
-			// Log.d("Document %s: %s; model=%s; precision=%s, recall=%s,
+			// log.info("Document %s: %s; model=%s; precision=%s, recall=%s,
 			// score=%s", d, step.document.getName(),
 			// step.acceptedState.modelScore,
 			// step.acceptedState.objectiveFunctionScore.precision,
@@ -177,9 +207,9 @@ public class EvaluationUtil {
 	 * @param learner
 	 * @param minAbsValue
 	 */
-	public static void printWeights(DefaultLearner learner, double minAbsValue) {
+	public static void printWeights(DefaultLearner<?> learner, double minAbsValue) {
 		Map<String, Double> allWeights = new HashMap<String, Double>();
-		for (Template t : learner.getModel().getTemplates()) {
+		for (Template<?> t : learner.getModel().getTemplates()) {
 			Vector weights = t.getWeightVector();
 			for (String f : weights.getFeatureNames()) {
 				double value = weights.getValueOfFeature(f);
@@ -195,7 +225,7 @@ public class EvaluationUtil {
 		ArrayList<Entry<String, Double>> features = new ArrayList<Entry<String, Double>>(allWeights.entrySet());
 		Collections.sort(features, featureWeightComparator);
 		for (Entry<String, Double> e : features) {
-			Log.d("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
+			log.info("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
 		}
 	}
 
@@ -203,7 +233,7 @@ public class EvaluationUtil {
 
 	public static void printScores(List<Score> scores) {
 		for (Score score : scores) {
-			Log.d("P=%s\t|\tR=%s\t|\tF1=%s", SCORE_FORMAT.format(score.precision), SCORE_FORMAT.format(score.recall),
+			log.info("P=%s\t|\tR=%s\t|\tF1=%s", SCORE_FORMAT.format(score.precision), SCORE_FORMAT.format(score.recall),
 					SCORE_FORMAT.format(score.score));
 		}
 	}

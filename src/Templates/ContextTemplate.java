@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
+
 import Changes.StateChange;
 import Corpus.Token;
 import Factors.Factor;
@@ -16,7 +18,10 @@ import Variables.AEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
-public class ContextTemplate extends Template implements Serializable {
+public class ContextTemplate extends Template<State>implements Serializable {
+
+	public final Set<StateChange> relevantChanges = Sets.newHashSet(StateChange.ADD_ANNOTATION,
+			StateChange.CHANGE_BOUNDARIES, StateChange.CHANGE_TYPE, StateChange.REMOVE_ANNOTATION);
 
 	{
 		Log.off();
@@ -65,7 +70,7 @@ public class ContextTemplate extends Template implements Serializable {
 
 	@Override
 	protected boolean isRelevantChange(StateChange value) {
-		return true;
+		return relevantChanges.contains(value);
 	}
 
 	@Override

@@ -12,13 +12,13 @@ import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
-public class ExhaustiveBoundarySampler implements Sampler {
+public class ExhaustiveBoundarySampler implements Sampler<State> {
 
 	{
 		Log.off();
 	}
 
-	public List<State> getNextStates(State state, Scorer scorer) {
+	public List<State> getNextStates(State state, Scorer<State> scorer) {
 
 		Set<State> generatedStates = generateNextStates(state, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(generatedStates);
@@ -32,11 +32,11 @@ public class ExhaustiveBoundarySampler implements Sampler {
 
 	}
 
-	private Set<State> generateNextStates(State previousState, Scorer scorer) {
+	private Set<State> generateNextStates(State previousState, Scorer<State> scorer) {
 		Set<State> generatedStates = new HashSet<State>();
-		Set<EntityID> entities = previousState.getEntityIDs();
+		Set<EntityID> entities = previousState.getMutableEntityIDs();
 		for (EntityID entityID : entities) {
-			AEntityAnnotation previousStatesEntity = previousState.getEntity(entityID);
+			MutableEntityAnnotation previousStatesEntity = previousState.getMutableEntity(entityID);
 			int from = previousStatesEntity.getBeginTokenIndex();
 			int to = previousStatesEntity.getEndTokenIndex();
 			if (0 < from) {

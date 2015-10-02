@@ -5,6 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.google.common.collect.Sets;
+
 import Changes.StateChange;
 import Corpus.Token;
 import Factors.Factor;
@@ -16,11 +21,16 @@ import Variables.AEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
-public class MorphologicalTemplate extends Template implements Serializable {
+public class MorphologicalTemplate extends Template<State>implements Serializable {
+
+	private Logger log = LogManager.getLogger(getClass());
 
 	{
 		Log.off();
 	}
+
+	public final Set<StateChange> relevantChanges = Sets.newHashSet(StateChange.ADD_ANNOTATION,
+			StateChange.CHANGE_BOUNDARIES, StateChange.CHANGE_TYPE, StateChange.REMOVE_ANNOTATION);
 
 	@Override
 	public Factor generateFactor(State state, VariableSet genericVariables) {
@@ -30,6 +40,8 @@ public class MorphologicalTemplate extends Template implements Serializable {
 
 			SingleEntityVariableSet variables = (SingleEntityVariableSet) genericVariables;
 			AEntityAnnotation entity = state.getEntity(variables.entityID);
+			log.debug("%s: Add features to entity %s (\"%s\"):", this.getClass().getSimpleName(), entity.getID(),
+					entity.getText());
 			Log.d("%s: Add features to entity %s (\"%s\"):", this.getClass().getSimpleName(), entity.getID(),
 					entity.getText());
 			Vector featureVector = new Vector();
@@ -102,7 +114,7 @@ public class MorphologicalTemplate extends Template implements Serializable {
 
 	@Override
 	protected boolean isRelevantChange(StateChange value) {
-		return true;
+		return relevantChanges.contains(value);
 	}
 
 	@Override

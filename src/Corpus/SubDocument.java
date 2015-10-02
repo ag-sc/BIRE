@@ -4,7 +4,7 @@ import java.util.List;
 
 import Variables.State;
 
-public class SubDocument extends AnnotatedDocument {
+public class SubDocument extends AnnotatedDocument<State> {
 	protected String parentDocumentName;
 
 	protected int offset = 0;

@@ -15,7 +15,7 @@ import Templates.variablesets.UnorderedEntititesVariableSet;
 import Templates.variablesets.VariableSet;
 import Variables.State;
 
-public class CheatingTemplate extends Template implements Serializable {
+public class CheatingTemplate extends Template<State>implements Serializable {
 
 	{
 		Log.off();
@@ -23,7 +23,7 @@ public class CheatingTemplate extends Template implements Serializable {
 
 	private static final String GOLD = "GOLD";
 
-	private ObjectiveFunction objective = new DefaultObjectiveFunction();
+	private ObjectiveFunction<State> objective = new DefaultObjectiveFunction();
 
 	public CheatingTemplate() {
 		// weights.set(GOLD, 1.0);
@@ -33,7 +33,7 @@ public class CheatingTemplate extends Template implements Serializable {
 	public Factor generateFactor(State state, VariableSet variables) {
 		Vector featureVector = new Vector();
 		if (state.getDocument() instanceof AnnotatedDocument) {
-			State goldState = ((AnnotatedDocument) state.getDocument()).getGoldState();
+			State goldState = ((AnnotatedDocument<State>) state.getDocument()).getGoldState();
 			double score = objective.score(state, goldState).score;
 			featureVector.set(GOLD, score);
 

@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DefaultCorpus<T extends AnnotatedDocument> implements Corpus<T> {
+public class DefaultCorpus<DocT extends AnnotatedDocument<?>> implements Corpus<DocT> {
 
-	private List<T> documents = new ArrayList<>();
+	private List<DocT> documents = new ArrayList<>();
 	private AnnotationConfig corpusConfig;
 
 	public DefaultCorpus(AnnotationConfig config) {
@@ -19,17 +19,17 @@ public class DefaultCorpus<T extends AnnotatedDocument> implements Corpus<T> {
 	}
 
 	@Override
-	public List<T> getDocuments() {
+	public List<DocT> getDocuments() {
 		return documents;
 	}
 
 	@Override
-	public void addDocument(T doc) {
+	public void addDocument(DocT doc) {
 		this.documents.add(doc);
 	}
 
 	@Override
-	public void addDocuments(Collection<T> documents) {
+	public void addDocuments(Collection<DocT> documents) {
 		this.documents.addAll(documents);
 	}
 
@@ -40,7 +40,7 @@ public class DefaultCorpus<T extends AnnotatedDocument> implements Corpus<T> {
 
 	public String toDetailedString() {
 		StringBuilder builder = new StringBuilder();
-		for (AnnotatedDocument doc : documents) {
+		for (AnnotatedDocument<?> doc : documents) {
 			builder.append(doc.getName());
 			builder.append("\n\t");
 			builder.append(doc.getContent());

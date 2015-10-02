@@ -7,21 +7,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import Corpus.AnnotatedDocument;
-import Corpus.AnnotationConfig;
-import Corpus.DefaultCorpus;
-import Corpus.DatasetConfig;
 import Corpus.Corpus;
-import Corpus.julie.JavaSentenceSplitter;
-import Corpus.julie.Tokenization;
-import Corpus.parser.brat.BratConfigReader;
+import Corpus.DatasetConfig;
 import Logging.Log;
+import Variables.State;
 
 public class UsageLoader {
 
@@ -29,17 +20,17 @@ public class UsageLoader {
 		convertDatasetToJavaBinaries(DatasetConfig.getUSAGEJavaBinFilepath());
 	}
 
-	public static Corpus<AnnotatedDocument> loadDatasetFromBinaries(String srcFilepath)
+	public static Corpus<AnnotatedDocument<State>> loadDatasetFromBinaries(String srcFilepath)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(srcFilepath));
-		Corpus<AnnotatedDocument> corpus = (Corpus) in.readObject();
+		Corpus<AnnotatedDocument<State>> corpus = (Corpus) in.readObject();
 		in.close();
 		return corpus;
 	}
 
-	public static Corpus<AnnotatedDocument> convertDatasetToJavaBinaries(String destFilepath) {
+	public static Corpus<AnnotatedDocument<State>> convertDatasetToJavaBinaries(String destFilepath) {
 		File annDir = new File("/homes/sjebbara/datasets/USAGE-corpus-with-text/files/de");
-		Corpus<AnnotatedDocument> corpus = UsageParser.parseCorpus(annDir);
+		Corpus<AnnotatedDocument<State>> corpus = UsageParser.parseCorpus(annDir);
 		try {
 			System.out.println("store");
 			saveCorpusToFile(corpus, destFilepath);
@@ -55,7 +46,7 @@ public class UsageLoader {
 		return null;
 	}
 
-	private static void saveCorpusToFile(Corpus<AnnotatedDocument> corpus, String destFilepath)
+	private static void saveCorpusToFile(Corpus<AnnotatedDocument<State>> corpus, String destFilepath)
 			throws FileNotFoundException, IOException {
 		File destFile = new File(destFilepath);
 		File destDir = destFile.getParentFile();

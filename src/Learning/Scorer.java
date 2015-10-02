@@ -6,17 +6,16 @@ import java.util.Set;
 import Factors.Factor;
 import Logging.Log;
 import Templates.Template;
-import Variables.State;
-import evaluation.TaggedTimer;
+import Variables.IState;
 
-public class Scorer {
+public class Scorer<StateT extends IState> {
 	{
 		Log.off();
 	}
 
-	private Model model;
+	private Model<StateT> model;
 
-	public Scorer(Model model) {
+	public Scorer(Model<StateT> model) {
 		this.model = model;
 	}
 
@@ -28,17 +27,17 @@ public class Scorer {
 	 * @param state
 	 * @return
 	 */
-	public double score(State state) {
+	public double score(StateT state) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
 		// compute the score of the state according to all templates and all
 		// respective factors
 		double score = 1;
-		Collection<Template> templates = model.getTemplates();
+		Collection<Template<StateT>> templates = model.getTemplates();
 		// boolean factorsApplied = false;
 		// Log.d("Score state: %s", state);
-		for (Template template : templates) {
+		for (Template<StateT> template : templates) {
 			// Log.d("\tTemplate %s", template.getClass().getSimpleName());
 			Vector weightVector = template.getWeightVector();
 			Set<Factor> factors = template.getFactors(state);
@@ -56,25 +55,17 @@ public class Scorer {
 		return score;
 	}
 
-	public void unroll(State state) {
-		/*
-		 * TODO to safe some RAM this function could return the generated
-		 * factors directly. This would safe some unnecessary loops and the
-		 * templates would not need to safe the factors for every state. Still,
-		 * templates would need to safe some kind of information to allow for
-		 * the update of specific factors when the learner tries to update
-		 * weights.
-		 */
-		for (Template t : model.getTemplates()) {
-			t.applyTo(state);
+	public void unroll(StateT state) {
+		for (Template<StateT> t : model.getTemplates()) {
+			t.applyTo(state, false);
 		}
 	}
 
-	public Model getModel() {
+	public Model<StateT> getModel() {
 		return model;
 	}
 
-	public void setModel(Model model) {
+	public void setModel(Model<StateT> model) {
 		this.model = model;
 	}
 

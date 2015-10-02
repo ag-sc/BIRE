@@ -1,15 +1,17 @@
 package evaluation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import Logging.Log;
 
 public class TaggedTimer {
+
+	private static Logger log = LogManager.getFormatterLogger();
 
 	private static Map<String, Long> categoryTimings = new ConcurrentHashMap<>();
 	private static Map<Long, String> jobCategories = new ConcurrentHashMap<>();
@@ -64,10 +66,10 @@ public class TaggedTimer {
 		// for (String tag : categoryTimings.keySet()) {
 		// summedTime += categoryTimings.get(tag);
 		// }
-		Log.d("Total: %s (%s seconds)", totalTime, totalTime / 1000);
+		log.info("Total: %s (%s seconds)", totalTime, totalTime / 1000);
 		for (String tag : categoryTimings.keySet()) {
 			long t = categoryTimings.get(tag);
-			Log.d("%s:\ttotal: %s,\trel: %s,", tag, t, ((double) t) / ((double) totalTime));
+			log.info("%s:\ttotal: %s,\trel: %s,", tag, t, ((double) t) / ((double) totalTime));
 		}
 	}
 

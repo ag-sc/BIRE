@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,22 +24,21 @@ import Learning.Model;
 import Learning.Score;
 import Learning.Scorer;
 import Learning.Vector;
-import Learning.callbacks.DocumentCallback;
-import Learning.callbacks.EpochCallback;
-import Learning.callbacks.SamplerCallback;
-import Learning.callbacks.StepCallback;
-import Learning.objective.DefaultObjectiveFunction;
+import Learning.callbacks.IDocumentCallback;
+import Learning.callbacks.IEpochCallback;
+import Learning.callbacks.ISamplerCallback;
+import Learning.callbacks.IStepCallback;
 import Learning.objective.ObjectiveFunction;
 import Logging.Log;
 import Sampling.Sampler;
 import Templates.Template;
-import Variables.State;
-import evaluation.SamplingProcedureRecord;
+import Variables.IState;
 import evaluation.TaggedTimer;
 
-public class DefaultLearner implements Learner {
+public class DefaultLearner<StateT extends IState> implements Learner<StateT> {
 
-	private Logger log = LogManager.getLogger(getClass());
+	// private static Logger log = LogManager.getFormatterLogger();
+	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
 	{
 		// Log.off();
@@ -55,61 +55,58 @@ public class DefaultLearner implements Learner {
 	private double initialOmega;
 	private double finalOmega;
 
-	private Model model;
+	private Model<StateT> model;
 	// TODO Scorer should be part of the model
-	private Scorer scorer;
-	private ObjectiveFunction objective;
-	private List<Sampler> samplers;
+	private Scorer<StateT> scorer;
+	private ObjectiveFunction<StateT> objective;
+	private List<Sampler<StateT>> samplers;
 
+	private boolean useInitialAnnotations = false;
 	/*
 	 * Provide empty default callbacks to avoid null-checks
 	 */
-	private EpochCallback epochCallback = new EpochCallback() {
+	private IEpochCallback epochCallback = new IEpochCallback() {
 	};
-	private DocumentCallback documentCallback = new DocumentCallback() {
+	private IDocumentCallback documentCallback = new IDocumentCallback() {
 	};
-	private StepCallback stepCallback = new StepCallback() {
+	private IStepCallback stepCallback = new IStepCallback() {
 	};
-	private SamplerCallback samplerCallback = new SamplerCallback() {
+	private ISamplerCallback samplerCallback = new ISamplerCallback() {
 	};
 
-	private SamplingProcedureRecord trainRecord;
-	private SamplingProcedureRecord testRecord;
+	// private SamplingProcedureRecord trainRecord;
+	// private SamplingProcedureRecord testRecord;
 
-	private ExecutorService pool;
+	// private ExecutorService pool;
 	private final boolean multithreaded = true;
-	private int numberOfThreads = 3;
+	private int numberOfThreads = 12;
 
-	public DefaultLearner() {
-		this.objective = new DefaultObjectiveFunction();
-	}
-
-	public DefaultLearner(Model model, List<Sampler> samplers, int steps, double initialAlpha, double finalAlpha,
-			double initialOmega, double finalOmega) {
-		this();
+	public DefaultLearner(Model<StateT> model, List<Sampler<StateT>> samplers, ObjectiveFunction<StateT> objective,
+			int steps, double initialAlpha, double finalAlpha, double initialOmega, double finalOmega) {
 		this.model = model;
 		this.samplers = samplers;
+		this.objective = objective;
 		this.steps = steps;
 		this.initialAlpha = initialAlpha;
 		this.finalAlpha = finalAlpha;
 		this.initialOmega = initialOmega;
 		this.finalOmega = finalOmega;
-		this.scorer = new Scorer(model);
+		this.scorer = new Scorer<>(model);
 	}
 
-	public DefaultLearner(Model model, List<Sampler> samplers, int steps, double initialAlpha, double finalAlpha,
-			boolean sampleNextState) {
-		this(model, samplers, steps, initialAlpha, finalAlpha, 1, 0);
-		this.scorer = new Scorer(model);
+	public DefaultLearner(Model<StateT> model, List<Sampler<StateT>> samplers, ObjectiveFunction<StateT> objective,
+			int steps, double initialAlpha, double finalAlpha, boolean sampleNextState) {
+		this(model, samplers, objective, steps, initialAlpha, finalAlpha, 1, 0);
+		this.scorer = new Scorer<>(model);
 	}
 
 	// @Override
-	public void train(List<? extends AnnotatedDocument> documents, int numberOfEpochs) {
-		if (multithreaded) {
-			pool = Executors.newFixedThreadPool(numberOfThreads);
-		}
+	public List<StateT> train(List<? extends AnnotatedDocument<StateT>> documents, int numberOfEpochs) {
+		// if (multithreaded) {
+		// pool = Executors.newFixedThreadPool(numberOfThreads);
+		// }
+		List<StateT> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
-		trainRecord = new SamplingProcedureRecord(documents.size(), steps, samplers.size(), initialAlpha);
 		/**
 		 * This variable represents the probability for the learner to select
 		 * the next state for the sampling procedure according to the (best)
@@ -122,68 +119,68 @@ public class DefaultLearner implements Learner {
 
 		double currentAlpha = initialAlpha;
 		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
-//		log.debug("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
-		Log.d("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
-		Log.d("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha, finalAlpha,
-				alphaStep);
+		log.info("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
+		log.info("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha,
+				finalAlpha, alphaStep);
 		for (int e = 0; e < numberOfEpochs; e++) {
 			epochCallback.onStartEpoch(this, e, numberOfEpochs);
 
 			for (int d = 0; d < documents.size(); d++) {
-				AnnotatedDocument document = documents.get(d);
+				AnnotatedDocument<StateT> document = documents.get(d);
 				documentCallback.onStartDocument(this, document, d, documents.size(), e, numberOfEpochs);
 
-				State goldState = document.getGoldState();
+				StateT goldState = document.getGoldState();
 
-				State currentState = generateInitialState(document);
+				StateT currentState = generateInitialState(document);
 
 				for (int s = 0; s < steps; s++) {
 					stepCallback.onStartStep(this, s, steps, document, d, documents.size(), e, numberOfEpochs);
 					for (int indexOfSampler = 0; indexOfSampler < samplers.size(); indexOfSampler++) {
-						Sampler sampler = samplers.get(indexOfSampler);
+						Sampler<StateT> sampler = samplers.get(indexOfSampler);
 						samplerCallback.onStartSampler(this, sampler, indexOfSampler, samplers.size(), s, steps,
 								document, d, documents.size(), e, numberOfEpochs);
 
-						Log.d("############################################");
-						Log.d("Epoch: %s/%s", e + 1, numberOfEpochs);
-						Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(),
+						log.info("############################################");
+						log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+						log.info("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(),
 								goldState);
-						Log.d("Step: %s/%s", s + 1, steps);
-						Log.d("Alpha: %s; Omega: %s", currentAlpha, currentOmega);
-						Log.d("Sampler: %s", sampler.getClass().getSimpleName());
-						Log.d("Current model:\n%s", model.toString());
+						log.info("Step: %s/%s", s + 1, steps);
+						log.info("Alpha: %s; Omega: %s", currentAlpha, currentOmega);
+						log.info("Sampler: %s", sampler.getClass().getSimpleName());
+						log.debug("Current model:\n%s", model.toString());
 						long genID = TaggedTimer.start("GENERATE");
-						List<State> nextStates = sampler.getNextStates(currentState, scorer);
+						List<StateT> nextStates = sampler.getNextStates(currentState, scorer);
 						TaggedTimer.stop(genID);
 
 						unroll(currentState, nextStates);
 						scoreWithObjective(goldState, currentState, nextStates);
 						update(currentAlpha, goldState, currentState, nextStates);
 
-						Log.d("(Re)Score:");
+						log.debug("(Re)Score:");
 						scoreWithModel(Arrays.asList(currentState));
 
 						currentState = selectNextState(nextStates, currentOmega);
 						/*
 						 * Log and record this sampling step
 						 */
-						Log.d("Next state: %s\n\tObjective funtion score = %s", currentState,
+						log.info("Next state: %s\n\tObjective funtion score = %s", currentState,
 								currentState.getObjectiveScore().score);
-						trainRecord.recordSamplingStep(document, d, s, sampler, nextStates, currentState);
+						// trainRecord.recordSamplingStep(document, d, s,
+						// sampler, nextStates, currentState);
 
-						Log.d("Changed: %s", currentState.getChangedEntities());
-						Log.d("Graph:\n%s", currentState.getFactorGraph());
-						for (Template t : model.getTemplates()) {
-							Log.d("Templates: %s: %s", t.getClass().getSimpleName(), t.getFactors().keySet());
-							Log.d("%s/%s recomputed factors", t.recomputed, t.all);
+						log.debug("Changed: %s", currentState.getChangedVariables());
+						log.debug("Graph:\n%s", currentState.getFactorGraph());
+						for (Template<StateT> t : model.getTemplates()) {
+							log.debug("Templates: %s: %s", t.getClass().getSimpleName(), t.getFactors().keySet());
+							log.debug("%s/%s recomputed factors", t.recomputed, t.all);
 						}
-						Log.d("######## Mark as unchanged and trim to state %s ########", currentState.getID());
+						log.debug("######## Mark as unchanged and trim to state %s ########", currentState.getID());
 						currentState.markAsUnchanged();
 						model.trimToState(currentState);
 
-						Log.d("Changed: %s", currentState.getChangedEntities());
-						for (Template t : model.getTemplates()) {
-							Log.d("Templates: %s: %s", t.getClass().getSimpleName(), t.getFactors().keySet());
+						log.debug("Changed: %s", currentState.getChangedVariables());
+						for (Template<StateT> t : model.getTemplates()) {
+							log.debug("Templates: %s: %s", t.getClass().getSimpleName(), t.getFactors().keySet());
 						}
 						samplerCallback.onEndSampler(this, sampler, indexOfSampler, samplers.size(), s, steps, document,
 								d, documents.size(), e, numberOfEpochs);
@@ -193,13 +190,22 @@ public class DefaultLearner implements Learner {
 					stepCallback.onEndStep(this, s, steps, document, d, documents.size(), e, numberOfEpochs);
 				}
 				long stopTime = System.currentTimeMillis();
-				Log.d("Final, sampled state:\n\t%s\nObjective funtion score = %s", currentState,
+				log.info("Final, sampled state:\n\t%s\nObjective funtion score = %s", currentState,
 						currentState.getObjectiveScore());
-				Log.d("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
+				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				documentCallback.onEndDocument(this, document, d, documents.size(), e, numberOfEpochs);
+
+				/*
+				 * Store the final predicted state for the current document if
+				 * the current epoch is the final one.
+				 */
+				if (e == numberOfEpochs - 1) {
+					finalStates.add(currentState);
+				}
 			}
 			epochCallback.onEndEpoch(this, e, numberOfEpochs);
 		}
+		return finalStates;
 	}
 
 	/**
@@ -211,9 +217,9 @@ public class DefaultLearner implements Learner {
 	 * @param currentState
 	 * @param nextStates
 	 */
-	private void update(double currentAlpha, State goldState, State currentState, List<State> nextStates) {
-		Log.d("Update model with %s states and alpha=%s", nextStates.size(), currentAlpha);
-		for (State state : nextStates) {
+	private void update(double currentAlpha, StateT goldState, StateT currentState, List<StateT> nextStates) {
+		log.debug("Update model with %s states and alpha=%s", nextStates.size(), currentAlpha);
+		for (StateT state : nextStates) {
 			atomicUpdate(currentAlpha, goldState, currentState, state);
 		}
 	}
@@ -226,38 +232,46 @@ public class DefaultLearner implements Learner {
 	 * @param currentState
 	 * @param nextStates
 	 */
-	private void unroll(State currentState, List<State> nextStates) {
+	private void unroll(StateT currentState, List<StateT> nextStates) {
 		long unrollID = TaggedTimer.start("SC-UNROLL");
-		Log.d("Unroll features for %s states...", nextStates.size() + 1);
+		log.debug("Unroll features for %s states...", nextStates.size() + 1);
+		List<StateT> allStates = new ArrayList<>(nextStates);
+		allStates.add(currentState);
 
+		Stream<StateT> stream = null;
 		if (multithreaded) {
-			Collection<Future<?>> futures = new LinkedList<Future<?>>();
-			/*
-			 * Enqueue a task in the thread pool that unrolls the features of a
-			 * given state
-			 */
-			futures.add(pool.submit(new UnrollFeaturesTask(scorer, currentState)));
-			for (State state : nextStates) {
-				futures.add(pool.submit(new UnrollFeaturesTask(scorer, state)));
-			}
-			/*
-			 * Wait for all states to be finished before proceeding
-			 */
-			for (Future<?> future : futures) {
-				try {
-					future.get();
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				} catch (ExecutionException e1) {
-					e1.printStackTrace();
-				}
-			}
+			stream = allStates.parallelStream();
+			// Collection<Future<?>> futures = new LinkedList<Future<?>>();
+			// /*
+			// * Enqueue a task in the thread pool that unrolls the features of
+			// a
+			// * given state
+			// */
+			// futures.add(pool.submit(new UnrollFeaturesTask(scorer,
+			// currentState)));
+			// for (StateT state : nextStates) {
+			// futures.add(pool.submit(new UnrollFeaturesTask(scorer, state)));
+			// }
+			// /*
+			// * Wait for all states to be finished before proceeding
+			// */
+			// for (Future<?> future : futures) {
+			// try {
+			// future.get();
+			// } catch (InterruptedException e1) {
+			// e1.printStackTrace();
+			// } catch (ExecutionException e1) {
+			// e1.printStackTrace();
+			// }
+			// }
 		} else {
-			scorer.unroll(currentState);
-			for (State state : nextStates) {
-				scorer.unroll(state);
-			}
+			stream = allStates.stream();
+			// scorer.unroll(currentState);
+			// for (StateT state : nextStates) {
+			// scorer.unroll(state);
+			// }
 		}
+		stream.forEach(s -> scorer.unroll(s));
 		TaggedTimer.stop(unrollID);
 	}
 
@@ -268,35 +282,43 @@ public class DefaultLearner implements Learner {
 	 * 
 	 * @param nextStates
 	 */
-	private void scoreWithModel(List<State> nextStates) {
+	private void scoreWithModel(List<StateT> nextStates) {
 		long scID = TaggedTimer.start("MODEL-SCORE");
-		Log.d("Score %s states according to model...", nextStates.size());
+		log.debug("Score %s states according to model...", nextStates.size());
+
+		Stream<StateT> stream = null;
 		if (multithreaded) {
-			Collection<Future<?>> futures = new LinkedList<Future<?>>();
-			/*
-			 * Enqueue a task in the thread pool that scores the state according
-			 * to the model
-			 */
-			for (State state : nextStates) {
-				futures.add(pool.submit(new ScoreWithModelTask(scorer, state)));
-			}
-			/*
-			 * Wait for all states to be finished before proceeding
-			 */
-			for (Future<?> future : futures) {
-				try {
-					future.get();
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				} catch (ExecutionException e1) {
-					e1.printStackTrace();
-				}
-			}
+			stream = nextStates.parallelStream();
 		} else {
-			for (State state : nextStates) {
-				scorer.score(state);
-			}
+			stream = nextStates.stream();
 		}
+		stream.forEach(s -> scorer.score(s));
+		// if (multithreaded) {
+		// Collection<Future<?>> futures = new LinkedList<Future<?>>();
+		// /*
+		// * Enqueue a task in the thread pool that scores the state according
+		// * to the model
+		// */
+		// for (StateT state : nextStates) {
+		// futures.add(pool.submit(new ScoreWithModelTask(scorer, state)));
+		// }
+		// /*
+		// * Wait for all states to be finished before proceeding
+		// */
+		// for (Future<?> future : futures) {
+		// try {
+		// future.get();
+		// } catch (InterruptedException e1) {
+		// e1.printStackTrace();
+		// } catch (ExecutionException e1) {
+		// e1.printStackTrace();
+		// }
+		// }
+		// } else {
+		// for (StateT state : nextStates) {
+		// scorer.score(state);
+		// }
+		// }
 		TaggedTimer.stop(scID);
 	}
 
@@ -309,37 +331,49 @@ public class DefaultLearner implements Learner {
 	 * @param currentState
 	 * @param nextStates
 	 */
-	private void scoreWithObjective(State goldState, State currentState, List<State> nextStates) {
+	private void scoreWithObjective(StateT goldState, StateT currentState, List<StateT> nextStates) {
 		long scID = TaggedTimer.start("OBJ-SCORE");
-		Log.d("Score %s states according to objective...", nextStates.size() + 1);
+		log.debug("Score %s states according to objective...", nextStates.size() + 1);
+		List<StateT> allStates = new ArrayList<>(nextStates);
+		allStates.add(currentState);
+
+		Stream<StateT> stream = null;
 		if (multithreaded) {
-			Collection<Future<?>> futures = new LinkedList<Future<?>>();
-			/*
-			 * Enqueue a task in the thread pool that scores the state according
-			 * to the objective
-			 */
-			futures.add(pool.submit(new ScoreWithObjectiveTask(goldState, currentState)));
-			for (State state : nextStates) {
-				futures.add(pool.submit(new ScoreWithObjectiveTask(goldState, state)));
-			}
-			/*
-			 * Wait for all states to be finished before proceeding
-			 */
-			for (Future<?> future : futures) {
-				try {
-					future.get();
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				} catch (ExecutionException e1) {
-					e1.printStackTrace();
-				}
-			}
+			stream = allStates.parallelStream();
 		} else {
-			objective.score(currentState, goldState);
-			for (State state : nextStates) {
-				objective.score(state, goldState);
-			}
+			stream = allStates.stream();
 		}
+		stream.forEach(s -> objective.score(s, goldState));
+		// if (multithreaded) {
+		// Collection<Future<?>> futures = new LinkedList<Future<?>>();
+		// /*
+		// * Enqueue a task in the thread pool that scores the state according
+		// * to the objective
+		// */
+		// futures.add(pool.submit(new ScoreWithObjectiveTask(goldState,
+		// currentState)));
+		// for (StateT state : nextStates) {
+		// futures.add(pool.submit(new ScoreWithObjectiveTask(goldState,
+		// state)));
+		// }
+		// /*
+		// * Wait for all states to be finished before proceeding
+		// */
+		// for (Future<?> future : futures) {
+		// try {
+		// future.get();
+		// } catch (InterruptedException e1) {
+		// e1.printStackTrace();
+		// } catch (ExecutionException e1) {
+		// e1.printStackTrace();
+		// }
+		// }
+		// } else {
+		// objective.score(currentState, goldState);
+		// for (StateT state : nextStates) {
+		// objective.score(state, goldState);
+		// }
+		// }
 		TaggedTimer.stop(scID);
 	}
 
@@ -353,7 +387,7 @@ public class DefaultLearner implements Learner {
 	 * @param currentState
 	 * @param possibleNextState
 	 */
-	private void atomicUpdate(double alpha, State goldState, State currentState, State possibleNextState) {
+	private void atomicUpdate(double alpha, StateT goldState, StateT currentState, StateT possibleNextState) {
 		Log.methodOff();
 		switch (learningProcedure) {
 		case SAMPLE_RANK: {
@@ -363,8 +397,8 @@ public class DefaultLearner implements Learner {
 			 * respective template
 			 */
 			long diffID = TaggedTimer.start("UP-DIFF");
-			Map<Template, Vector> featureDifferences = new HashMap<Template, Vector>();
-			for (Template t : model.getTemplates()) {
+			Map<Template<StateT>, Vector> featureDifferences = new HashMap<>();
+			for (Template<StateT> t : model.getTemplates()) {
 				Vector differences = t.getFeatureDifferences(possibleNextState, currentState);
 				featureDifferences.put(t, differences);
 				weightedDifferences += differences.dotProduct(t.getWeightVector());
@@ -372,12 +406,12 @@ public class DefaultLearner implements Learner {
 			TaggedTimer.stop(diffID);
 
 			if (weightedDifferences > 0 && preference(currentState, possibleNextState, goldState)) {
-				Log.d("Next:\t%s", possibleNextState);
-				Log.d("Current:\t%s", currentState);
+				log.trace("Next:\t%s", possibleNextState);
+				log.trace("Current:\t%s", currentState);
 				updateFeatures(featureDifferences, -alpha);
 			} else if (weightedDifferences <= 0 && preference(possibleNextState, currentState, goldState)) {
-				Log.d("Next:\t%s", possibleNextState);
-				Log.d("Current:\t%s", currentState);
+				log.trace("Next:\t%s", possibleNextState);
+				log.trace("Current:\t%s", currentState);
 				updateFeatures(featureDifferences, +alpha);
 			} else {
 			}
@@ -390,33 +424,35 @@ public class DefaultLearner implements Learner {
 			double Mn = possibleNextState.getModelScore();
 			double Mc = currentState.getModelScore();
 
-			Log.d("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s", possibleNextState.getID(), Oc, On, Mc, Mn);
+			log.trace("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s", possibleNextState.getID(), Oc, On, Mc,
+					Mn);
 
 			double learningSignal = 1;
 			double learningStep = alpha * learningSignal;
 			if (On > Oc) { // On-Oc > 0
 				if (Mn <= Mc) { // Mn-Mc < 0
-					Log.d("Model: DECREASE current; INCREASE next");
+					log.trace("Model: DECREASE current; INCREASE next");
 					model.update(currentState, -learningStep);
 					model.update(possibleNextState, +learningStep);
 				}
 			} else if (On < Oc) { // On-Oc < 0
 				if (Mn >= Mc) { // Mn-Mc > 0
-					Log.d("Model: INCREASE current; DECREASE next");
+					log.trace("Model: INCREASE current; DECREASE next");
 					model.update(currentState, +learningStep);
 					model.update(possibleNextState, -learningStep);
 				}
 			} else if (On == Oc) {
 				// if (Mn > Mc) { // Mn-Mc > 0
-				// Log.d("Model: DECREASE next; INCREASE current");
+				// log.info("Model: DECREASE next; INCREASE current");
 				// model.update(currentState, -learningStep);
 				// model.update(possibleNextState, +learningStep);
 				// } else if (Mn < Mc) { // Mn-Mc > 0
-				// Log.d("Model: INCREASE next; DECREASE current");
+				// log.info("Model: INCREASE next; DECREASE current");
 				// model.update(currentState, +learningStep);
 				// model.update(possibleNextState, -learningStep);
 				// }
-				// Log.d("Current state %s and next State %s are equally good.
+				// log.info("Current state %s and next State %s are equally
+				// good.
 				// Do nothing.",
 				// currentState.getID(), possibleNextState.getID());
 			}
@@ -436,18 +472,19 @@ public class DefaultLearner implements Learner {
 	 * @param featureDifferences
 	 * @param learningDirection
 	 */
-	private void updateFeatures(Map<Template, Vector> featureDifferences, double learningDirection) {
+	private void updateFeatures(Map<Template<StateT>, Vector> featureDifferences, double learningDirection) {
 		Log.methodOff();
 		long upID = TaggedTimer.start("UP-UPDATE");
-		Log.d("UPDATE: learning direction: %s", learningDirection);
-		for (Template t : model.getTemplates()) {
-			Log.d("Template: %s", t.getClass().getSimpleName());
+		log.trace("UPDATE: learning direction: %s", learningDirection);
+		for (Template<StateT> t : model.getTemplates()) {
+			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
 			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				// only update for real differences
 				if (featureDifference.getValue() != 0) {
 					double learningStep = learningDirection * featureDifference.getValue();
-					Log.d("\t%s -> %s:\t%s", featureDifference.getValue(), learningStep, featureDifference.getKey());
+					log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), learningStep,
+							featureDifference.getKey());
 					t.update(featureDifference.getKey(), learningStep);
 				}
 			}
@@ -467,7 +504,7 @@ public class DefaultLearner implements Learner {
 	 * @param goldState
 	 * @return
 	 */
-	private boolean preference(State state1, State state2, State goldState) {
+	private boolean preference(StateT state1, StateT state2, StateT goldState) {
 
 		double O1 = state1.getObjectiveScore().score;
 		double O2 = state2.getObjectiveScore().score;
@@ -488,56 +525,51 @@ public class DefaultLearner implements Learner {
 	 * @param objectiveDrivenProbability
 	 * @return
 	 */
-	public State selectNextState(List<State> states, double objectiveDrivenProbability) {
+	public StateT selectNextState(List<StateT> states, double objectiveDrivenProbability) {
 		if (Math.random() < objectiveDrivenProbability) {
-			Log.d("Next state: Best by OBJECTIVE");
-			Collections.sort(states, State.objectiveScoreComparator);
+			log.info("Next state: Best by OBJECTIVE");
+			Collections.sort(states, StateT.objectiveScoreComparator);
 			return states.get(0);
 		} else {
-			Log.d("Next state: Best by MODEL");
+			log.info("Next state: Best by MODEL");
 			scoreWithModel(states);
-			Collections.sort(states, State.modelScoreComparator);
+			Collections.sort(states, StateT.modelScoreComparator);
 			return states.get(0);
 		}
 	}
 
-	public List<State> test(List<? extends AnnotatedDocument> documents, int samplingSteps) {
-		testRecord = new SamplingProcedureRecord(documents.size(), samplingSteps, samplers.size(), -1);
-
-		List<State> finalStates = new ArrayList<>();
+	public List<StateT> test(List<? extends AnnotatedDocument<StateT>> documents, int samplingSteps) {
+		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
-			AnnotatedDocument document = documents.get(d);
-			State goldState = document.getGoldState();
+			AnnotatedDocument<StateT> document = documents.get(d);
+			StateT goldState = document.getGoldState();
 
-			State currentState = generateInitialState(document);
+			StateT currentState = generateInitialState(document);
 
 			for (int s = 0; s < samplingSteps; s++) {
 				for (int indexOfSampler = 0; indexOfSampler < samplers.size(); indexOfSampler++) {
-					Sampler sampler = samplers.get(indexOfSampler);
-					Log.d("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(), goldState);
-					Log.d("Step: %s/%s", s + 1, steps);
-					Log.d("Current model:\n%s", model.toString());
-					Log.d("Sampler: %s", sampler.getClass().getSimpleName());
-					List<State> nextStates = sampler.getNextStates(currentState, scorer);
+					Sampler<StateT> sampler = samplers.get(indexOfSampler);
+					log.info("Document(%s/%s):\n\t%s\n\t%s", d + 1, documents.size(), document.getContent(), goldState);
+					log.info("Step: %s/%s", s + 1, steps);
+					log.info("Current model:\n%s", model.toString());
+					log.info("Sampler: %s", sampler.getClass().getSimpleName());
+					List<StateT> nextStates = sampler.getNextStates(currentState, scorer);
 
-					Log.d("Score:");
+					log.debug("Score:");
 					scorer.unroll(currentState);
 					scorer.score(currentState);
-					for (State state : nextStates) {
+					for (StateT state : nextStates) {
 						scorer.unroll(state);
 						scorer.score(state);
 					}
-					Collections.sort(nextStates, State.modelScoreComparator);
+					Collections.sort(nextStates, StateT.modelScoreComparator);
 
 					currentState = nextStates.get(0);
 
-					/*
-					 * Log and record this sampling step
-					 */
 					Score objectiveFunctionScore = objective.score(currentState, goldState);
-					Log.d("Next state: %s\n\tObjective funtion score = %s", currentState, objectiveFunctionScore);
-					testRecord.recordSamplingStep(document, d, s, sampler, nextStates, currentState);
+					log.info("Next state: %s\n\tObjective funtion score = %s", currentState, objectiveFunctionScore);
 
+					currentState.markAsUnchanged();
 					model.trimToState(currentState);
 				}
 			}
@@ -546,88 +578,95 @@ public class DefaultLearner implements Learner {
 		return finalStates;
 	}
 
-	private State generateInitialState(AnnotatedDocument document) {
+	private StateT generateInitialState(AnnotatedDocument<StateT> document) {
 		// TODO check if this mode (initial knowledge) is requested or if the
 		// learner should start from scratch
-		State state = new State(document.getInitialState());
-		return state;
+		return document.getInitialState().duplicate();
 	}
 
-	public Model getModel() {
+	public boolean isUseInitialAnnotations() {
+		return useInitialAnnotations;
+	}
+
+	public void setUseInitialAnnotations(boolean useInitialAnnotations) {
+		this.useInitialAnnotations = useInitialAnnotations;
+	}
+
+	public Model<StateT> getModel() {
 		return model;
 	}
 
-	public Scorer getScorer() {
+	public Scorer<StateT> getScorer() {
 		return scorer;
 	}
+	//
+	// public SamplingProcedureRecord getTrainRecord() {
+	// return trainRecord;
+	// }
+	//
+	// public SamplingProcedureRecord getTestRecord() {
+	// return testRecord;
+	// }
 
-	public SamplingProcedureRecord getTrainRecord() {
-		return trainRecord;
-	}
-
-	public SamplingProcedureRecord getTestRecord() {
-		return testRecord;
-	}
-
-	public void setEpochCallback(EpochCallback epochCallback) {
+	public void setEpochCallback(IEpochCallback epochCallback) {
 		this.epochCallback = epochCallback;
 	}
 
-	public void setDocumentCallback(DocumentCallback documentCallback) {
+	public void setDocumentCallback(IDocumentCallback documentCallback) {
 		this.documentCallback = documentCallback;
 	}
 
-	public void setStepCallback(StepCallback stepCallback) {
+	public void setStepCallback(IStepCallback stepCallback) {
 		this.stepCallback = stepCallback;
 	}
 
-	public void setSamplerCallback(SamplerCallback samplerCallback) {
+	public void setSamplerCallback(ISamplerCallback samplerCallback) {
 		this.samplerCallback = samplerCallback;
 	}
 
-	class UnrollFeaturesTask implements Runnable {
-		private State state;
-		private Scorer scorer;
-
-		public UnrollFeaturesTask(Scorer scorer, State state) {
-			this.scorer = scorer;
-			this.state = state;
-		}
-
-		@Override
-		public void run() {
-			scorer.unroll(state);
-		}
-	}
-
-	class ScoreWithModelTask implements Runnable {
-		private State state;
-		private Scorer scorer;
-
-		public ScoreWithModelTask(Scorer scorer, State state) {
-			this.scorer = scorer;
-			this.state = state;
-		}
-
-		@Override
-		public void run() {
-			scorer.score(state);
-		}
-	}
-
-	class ScoreWithObjectiveTask implements Runnable {
-		private State state;
-		private State goldState;
-
-		public ScoreWithObjectiveTask(State goldState, State state) {
-			this.goldState = goldState;
-			this.state = state;
-		}
-
-		@Override
-		public void run() {
-			objective.score(state, goldState);
-		}
-	}
+	// class UnrollFeaturesTask implements Runnable {
+	// private StateT state;
+	// private Scorer<StateT> scorer;
+	//
+	// public UnrollFeaturesTask(Scorer<StateT> scorer, StateT state) {
+	// this.scorer = scorer;
+	// this.state = state;
+	// }
+	//
+	// @Override
+	// public void run() {
+	// scorer.unroll(state);
+	// }
+	// }
+	//
+	// class ScoreWithModelTask implements Runnable {
+	// private StateT state;
+	// private Scorer<StateT> scorer;
+	//
+	// public ScoreWithModelTask(Scorer<StateT> scorer, StateT state) {
+	// this.scorer = scorer;
+	// this.state = state;
+	// }
+	//
+	// @Override
+	// public void run() {
+	// scorer.score(state);
+	// }
+	// }
+	//
+	// class ScoreWithObjectiveTask implements Runnable {
+	// private StateT state;
+	// private StateT goldState;
+	//
+	// public ScoreWithObjectiveTask(StateT goldState, StateT state) {
+	// this.goldState = goldState;
+	// this.state = state;
+	// }
+	//
+	// @Override
+	// public void run() {
+	// objective.score(state, goldState);
+	// }
+	// }
 
 }

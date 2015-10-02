@@ -13,7 +13,7 @@ import Variables.MutableEntityAnnotation;
 import Variables.State;
 import utility.EntityID;
 
-public class ExhaustiveEntitySampler implements Sampler {
+public class ExhaustiveEntitySampler implements Sampler<State> {
 
 	{
 		// Log.off();
@@ -22,14 +22,14 @@ public class ExhaustiveEntitySampler implements Sampler {
 	public ExhaustiveEntitySampler() {
 	}
 
-	public List<State> getNextStates(State state, Scorer scorer) {
+	public List<State> getNextStates(State state, Scorer<State> scorer) {
 		Set<State> nextStates = generateNextStates(state, scorer);
 		List<State> nextStatesSorted = new ArrayList<State>(nextStates);
 
 		return nextStatesSorted;
 	}
 
-	private Set<State> generateNextStates(State previousState, Scorer scorer) {
+	private Set<State> generateNextStates(State previousState, Scorer<State> scorer) {
 		Set<State> generatedStates = new HashSet<State>();
 		List<Token> tokens = previousState.getDocument().getTokens();
 		// Add new entities to empty tokens
@@ -50,7 +50,7 @@ public class ExhaustiveEntitySampler implements Sampler {
 
 		}
 		// Modify existing entities
-		Set<EntityID> previousStatesEntityIDs = previousState.getEntityIDs();
+		Set<EntityID> previousStatesEntityIDs = previousState.getMutableEntityIDs();
 		for (EntityID entityID : previousStatesEntityIDs) {
 			MutableEntityAnnotation previousStatesEntity = previousState.getMutableEntity(entityID);
 			Collection<EntityType> entityTypes = previousState.getDocument().getCorpus().getCorpusConfig()

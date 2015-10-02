@@ -1,16 +1,9 @@
 package Variables;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import Changes.StateChange;
-import Corpus.Token;
 import utility.EntityID;
 
 public class MutableEntityAnnotation extends ImmutableEntityAnnotation {

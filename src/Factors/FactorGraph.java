@@ -24,11 +24,15 @@ public class FactorGraph implements Serializable {
 	}
 
 	private BiMap<VariableSet, FactorID> variableSet2Factor;
-	private Multimap<Template, FactorID> template2Factors;
-	private Map<FactorID, Template> factor2Template;
+	private Multimap<Template<?>, FactorID> template2Factors;
+	private Map<FactorID, Template<?>> factor2Template;
 	private Multimap<EntityID, VariableSet> entity2VariableSets;
 
 	public FactorGraph() {
+		init();
+	}
+
+	private void init() {
 		variableSet2Factor = HashBiMap.create();
 		template2Factors = HashMultimap.create();
 		factor2Template = new HashMap<>();
@@ -42,7 +46,7 @@ public class FactorGraph implements Serializable {
 		this.entity2VariableSets = HashMultimap.create(factorGraph.entity2VariableSets);
 	}
 
-	public void removeFactorForVariableSet(Template template, VariableSet variableSet) {
+	public void removeFactorForVariableSet(Template<?> template, VariableSet variableSet) {
 		FactorID factorID = variableSet2Factor.get(variableSet);
 		template2Factors.remove(template, factorID);
 		factor2Template.remove(factorID);
@@ -52,7 +56,7 @@ public class FactorGraph implements Serializable {
 		}
 	}
 
-	public void addFactor(Template template, FactorID factorID, VariableSet variableSet) {
+	public void addFactor(Template<?> template, FactorID factorID, VariableSet variableSet) {
 		Log.d("Adding Factor to Graph: %s, %s, %s", template.getClass().getSimpleName(), factorID, variableSet);
 		template2Factors.put(template, factorID);
 		factor2Template.put(factorID, template);
@@ -62,7 +66,7 @@ public class FactorGraph implements Serializable {
 		}
 	}
 
-	public Set<FactorID> getFactorIDs(Template template) {
+	public Set<FactorID> getFactorIDs(Template<?> template) {
 		/*
 		 * TODO ensure that there are really no factors of foreign states in
 		 * this graph.
@@ -74,7 +78,7 @@ public class FactorGraph implements Serializable {
 		return variableSet2Factor.inverse().get(factorID);
 	}
 
-	public Set<VariableSet> getVariableSetsForEntityID(Template template, EntityID entityID) {
+	public Set<VariableSet> getVariableSetsForEntityID(Template<?> template, EntityID entityID) {
 		Set<FactorID> allFactorsForTemplate = new HashSet<>(template2Factors.get(template));
 		Set<VariableSet> variablesOfTemplateForEntity = new HashSet<>();
 		for (FactorID factorID : allFactorsForTemplate) {
@@ -92,7 +96,7 @@ public class FactorGraph implements Serializable {
 		StringBuilder builder = new StringBuilder();
 		builder.append(String.format("### Template: Factors... ###"));
 		builder.append("\n");
-		for (Template t : template2Factors.keySet()) {
+		for (Template<?> t : template2Factors.keySet()) {
 			builder.append(String.format("\t%s: %s", t.getClass().getSimpleName(), template2Factors.get(t)));
 
 			builder.append("\n");
@@ -118,6 +122,10 @@ public class FactorGraph implements Serializable {
 			builder.append("\n");
 		}
 		return builder.toString();
+	}
+
+	public void reset() {
+		init();
 	}
 
 }
