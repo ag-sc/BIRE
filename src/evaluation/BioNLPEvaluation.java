@@ -33,19 +33,32 @@ public class BioNLPEvaluation {
 	public BioNLPEvaluation() {
 	}
 
-	public final static Set<String> entities = new HashSet<>(Arrays.asList("Protein", "Entity"));
-	public final static Set<String> events = new HashSet<>(
-			Arrays.asList("Gene_expression", "Transcription", "Protein_catabolism", "Localization", "Binding",
-					"Phosphorylation", "Regulation", "Positive_regulation", "Negative_regulation"));
+	// public final static Set<String> entities = new
+	// HashSet<>(Arrays.asList("Protein", "Entity"));
+	// public final static Set<String> events = new HashSet<>(
+	// Arrays.asList("Gene_expression", "Transcription", "Protein_catabolism",
+	// "Localization", "Binding",
+	// "Phosphorylation", "Regulation", "Positive_regulation",
+	// "Negative_regulation"));
+
+	public static boolean isEvent(AEntityAnnotation e) {
+		return e.getArguments().size() > 0;
+	}
+
+	private static String convertToEntityID(String rawID) {
+		return "T-" + rawID;
+	}
+
+	private static String convertToEventID(String rawID) {
+		return "E-" + rawID;
+	}
 
 	public static String stateToBioNLPString(State state) {
 		StringBuilder builder = new StringBuilder();
 		for (AEntityAnnotation e : state.getEntities()) {
-			if (e.getArguments().size() == 0) {
-				// if (entities.contains(e.getType().getName())) {
+			if (!isEvent(e)) {
 				builder.append(entityToBioNLPString(e));
 				builder.append("\n");
-				// } else if (events.contains(e.getType().getName())) {
 			} else {
 				builder.append(eventToBioNLPString(e));
 				builder.append("\n");
@@ -58,12 +71,13 @@ public class BioNLPEvaluation {
 		SubDocument doc = (SubDocument) e.getState().getDocument();
 		List<Token> tokens = e.getTokens();
 		String pattern = "%s\t%s %s %s\t%s";
-		String id = e.getID().id;
+		String rawID = e.getID().id;
+		String convertedID = convertToEntityID(rawID);
 		String type = e.getType().getName();
 		String text = e.getText();
 		int from = doc.getOffset() + tokens.get(0).getFrom();
 		int to = doc.getOffset() + tokens.get(tokens.size() - 1).getTo();
-		return String.format(pattern, id, type, from, to, text);
+		return String.format(pattern, convertedID, type, from, to, text);
 	}
 
 	public static String eventToBioNLPString(AEntityAnnotation e) {
@@ -72,16 +86,27 @@ public class BioNLPEvaluation {
 		String triggerPattern = "%s\t%s %s %s\t%s";
 		String eventPattern = "%s\t%s:%s";
 		String argumentPattern = " %s:%s";
-		String id = e.getID().id;
+		String rawID = e.getID().id;
+		String convertedID = convertToEventID(rawID);
+
 		String type = e.getType().getName();
 		String text = e.getText();
 		int from = doc.getOffset() + tokens.get(0).getFrom();
 		int to = doc.getOffset() + tokens.get(tokens.size() - 1).getTo();
-		String triggerID = "T-" + id;
+		String triggerID = convertToEntityID(rawID);
+
 		String trigger = String.format(triggerPattern, triggerID, type, from, to, text);
-		String event = String.format(eventPattern, id, type, triggerID);
+		String event = String.format(eventPattern, convertedID, type, triggerID);
+
 		for (Entry<ArgumentRole, EntityID> arg : e.getArguments().entries()) {
-			event += String.format(argumentPattern, arg.getKey().role, arg.getValue().id);
+			AEntityAnnotation argEntity = e.getEntity(arg.getValue());
+			String convertedArgID = null;
+			if (isEvent(argEntity)) {
+				convertedArgID = convertToEventID(arg.getValue().id);
+			} else {
+				convertedArgID = convertToEntityID(arg.getValue().id);
+			}
+			event += String.format(argumentPattern, arg.getKey().role, convertedArgID);
 		}
 		return trigger + "\n" + event;
 	}

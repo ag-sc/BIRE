@@ -2,7 +2,9 @@ package evaluation;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -36,8 +38,6 @@ public class BioNLPLearning {
 
 		int trainSize = 0;
 		int testSize = 0;
-		// int trainSize = 1;
-		// int testSize = 1;
 		if (args != null && args.length == 2) {
 			trainSize = Integer.parseInt(args[0]);
 			testSize = Integer.parseInt(args[1]);
@@ -51,6 +51,7 @@ public class BioNLPLearning {
 		File modelDir = new File("res/bionlp/models");
 		File evalDir = new File("res/bionlp/eval");
 		File outputDir = new File("res/bionlp/gen");
+		File predictionFile = new File("res/bionlp/prediction.bin");
 
 		if (!modelDir.exists())
 			modelDir.mkdirs();
@@ -196,6 +197,15 @@ public class BioNLPLearning {
 		// } catch (IOException e) {
 		// e.printStackTrace();
 		// }
+		try {
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(predictionFile));
+			out.writeObject(predictions);
+			out.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		log.info("Overall performance:");
 		EvaluationUtil.printPredictionPerformance(predictions);
 		TaggedTimer.printTimings();

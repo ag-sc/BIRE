@@ -2,17 +2,11 @@ package Learning.learner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -556,12 +550,19 @@ public class DefaultLearner<StateT extends IState> implements Learner<StateT> {
 					List<StateT> nextStates = sampler.getNextStates(currentState, scorer);
 
 					log.debug("Score:");
-					scorer.unroll(currentState);
-					scorer.score(currentState);
-					for (StateT state : nextStates) {
-						scorer.unroll(state);
-						scorer.score(state);
-					}
+					unroll(currentState, nextStates);
+					
+					// scorer.score(currentState);
+					List<StateT> allStates = new ArrayList<>(nextStates);
+					allStates.add(currentState);
+					
+					scoreWithModel(allStates);
+					// scorer.unroll(currentState);
+					// scorer.score(currentState);
+					// for (StateT state : nextStates) {
+					// scorer.unroll(state);
+					// scorer.score(state);
+					// }
 					Collections.sort(nextStates, StateT.modelScoreComparator);
 
 					currentState = nextStates.get(0);

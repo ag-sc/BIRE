@@ -1,5 +1,6 @@
 package Variables;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import com.google.common.collect.Multimap;
@@ -11,7 +12,7 @@ import Learning.Score;
 import utility.EntityID;
 import utility.StateID;
 
-public interface IState {
+public interface IState extends Serializable {
 
 	public static final Comparator<IState> modelScoreComparator = new Comparator<IState>() {
 
