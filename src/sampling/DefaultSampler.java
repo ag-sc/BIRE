@@ -17,9 +17,9 @@ import learning.ObjectiveFunction;
 import learning.Scorer;
 import variables.AbstractState;
 
-public abstract class AbstractSampler<StateT extends AbstractState> extends Sampler<StateT> {
+public class DefaultSampler<StateT extends AbstractState> extends Sampler<StateT> {
 
-	private static Logger log = LogManager.getFormatterLogger(AbstractSampler.class.getName());
+	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
 
 	enum LearningProcedure {
 		SAMPLE_RANK, PERCEPTRON;
@@ -28,14 +28,17 @@ public abstract class AbstractSampler<StateT extends AbstractState> extends Samp
 	protected Model<StateT> model;
 	protected Scorer<StateT> scorer;
 	protected ObjectiveFunction<StateT> objective;
+	private List<Explorer<StateT>> explorers;
 
 	protected final boolean multiThreaded = true;
 
-	public AbstractSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT> objective) {
+	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT> objective,
+			List<Explorer<StateT>> explorers) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
 		this.objective = objective;
+		this.explorers = explorers;
 	}
 
 	@Override
@@ -46,12 +49,15 @@ public abstract class AbstractSampler<StateT extends AbstractState> extends Samp
 
 		for (int s = 0; s < steps; s++) {
 			log.info("---------------------------");
-			log.info("Step: %s/%s", s + 1, steps);
-			log.info("Previous State: %s", currentState);
-			log.info("---------------------------");
-			generatedChain.add(currentState = performStep(learner, goldState, currentState));
-			log.info("Sampled State:  %s", currentState);
-			log.info("---------------------------");
+			for (Explorer<StateT> explorer : explorers) {
+				log.info("...............");
+				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
+				// log.info("...............");
+				generatedChain.add(currentState = performStep(learner, explorer, goldState, currentState));
+				log.info("Sampled State:  %s", currentState);
+				// log.info("...............");
+			}
+			// log.info("---------------------------");
 		}
 		return generatedChain;
 	}
@@ -61,9 +67,10 @@ public abstract class AbstractSampler<StateT extends AbstractState> extends Samp
 		return generateChain(document, null, steps);
 	}
 
-	protected StateT performStep(Learner<StateT> learner, StateT goldState, StateT currentState) {
+	protected StateT performStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
+			StateT currentState) {
 		// long genID = TaggedTimer.start("GENERATE");
-		List<StateT> nextStates = getNextStates(currentState);
+		List<StateT> nextStates = explorer.getNextStates(currentState);
 		// TaggedTimer.stop(genID);
 
 		unroll(currentState, nextStates);
@@ -85,8 +92,6 @@ public abstract class AbstractSampler<StateT extends AbstractState> extends Samp
 		// model.trimToState(currentState);
 		return currentState;
 	}
-
-	protected abstract List<StateT> getNextStates(StateT currentState);
 
 	/**
 	 * Applies the model's template to each of the given states, thus unrolling
