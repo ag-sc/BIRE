@@ -1,8 +1,8 @@
 package utility;
 
-import Factors.Factor;
+import factors.AbstractFactor;
 
-public class FactorID extends ID<Factor> {
+public class FactorID extends ID<AbstractFactor> {
 
 	public FactorID(String id) {
 		super(id);

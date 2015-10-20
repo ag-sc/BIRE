@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import Corpus.AnnotatedDocument;
-import Corpus.Corpus;
+import corpus.AnnotatedDocument;
+import corpus.Corpus;
 
 public class DataSplit<T> {
 
