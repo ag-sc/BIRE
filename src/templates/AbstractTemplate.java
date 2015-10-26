@@ -27,9 +27,9 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	// private transient Map<FactorID, AbstractFactor> factors = new
 	// ConcurrentHashMap<>(16, 0.75f, 4);
 
-	public int recomputed = 0;
-	public int removed = 0;
-	public int all = 0;
+	// public int recomputed = 0;
+	// public int removed = 0;
+	// public int all = 0;
 
 	/**
 	 * Updates the weight of the given feature by adding the given alpha value.
@@ -90,7 +90,7 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 		Set<AbstractFactor> allPossibleFactors = generateFactors(state);
 		log.debug("%s possible Factors: %s", allPossibleFactors.size(), allPossibleFactors);
 
-		factorGraph.updateFactors(allPossibleFactors);
+		factorGraph.updateFactors(this, allPossibleFactors);
 
 		// TODO only update changed factors
 		log.debug("(Re)compute Factors: %s", allPossibleFactors);
@@ -179,15 +179,16 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	 */
 	protected abstract Set<AbstractFactor> generateFactors(StateT state);
 
-	/**
-	 * This method returns true if the given state change might demand a
-	 * (re)computation of affected factors.
-	 * 
-	 * @param value
-	 * @return
-	 */
-	protected abstract boolean isRelevantChange(StateChange value);
-
+	// /**
+	// * This method returns true if the given state change might demand a
+	// * (re)computation of affected factors.
+	// *
+	// * @param value
+	// * @return
+	// */
+	// protected boolean isRelevantChange(StateChange value) {
+	// return true;
+	// }
 	// private boolean anyRelevantChange(Collection<StateChange> changes) {
 	// return changes.stream().anyMatch(this::isRelevantChange);
 	// }

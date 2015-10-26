@@ -1,22 +1,23 @@
 package factors;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 import learning.Vector;
 import templates.AbstractTemplate;
+import utility.FactorID;
 import utility.VariableID;
 import variables.AbstractState;
-import utility.FactorID;
 
-public abstract class AbstractFactor {
+public abstract class AbstractFactor implements Serializable {
 
 	protected AbstractTemplate<? extends AbstractState> template;
 	protected FactorID factorID;
 	protected Vector features;
 
-	public abstract Set<VariableID> getEntityIDs();
+	public abstract Set<VariableID> getVariableIDs();
 
 	private AbstractFactor() {
 		this.factorID = generateFactorID();
@@ -59,7 +60,7 @@ public abstract class AbstractFactor {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((template == null) ? 0 : template.hashCode());
-		result = prime * result + ((getEntityIDs() == null) ? 0 : getEntityIDs().hashCode());
+		result = prime * result + ((getVariableIDs() == null) ? 0 : getVariableIDs().hashCode());
 		return result;
 	}
 
@@ -77,7 +78,7 @@ public abstract class AbstractFactor {
 				return false;
 		} else if (!template.equals(other.template))
 			return false;
-		if (!Objects.equals(this.getEntityIDs(), other.getEntityIDs())) {
+		if (!Objects.equals(this.getVariableIDs(), other.getVariableIDs())) {
 			return false;
 		}
 		return true;

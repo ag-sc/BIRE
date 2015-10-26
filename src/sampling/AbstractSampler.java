@@ -6,7 +6,7 @@ import corpus.AnnotatedDocument;
 import learning.Learner;
 import variables.AbstractState;
 
-public abstract class Sampler<StateT extends AbstractState> {
+public abstract class AbstractSampler<StateT extends AbstractState> {
 
 	protected boolean useInitialAnnotations = false;
 
@@ -24,7 +24,7 @@ public abstract class Sampler<StateT extends AbstractState> {
 		this.useInitialAnnotations = useInitialAnnotations;
 	}
 
-	public abstract List<StateT> generateChain(AnnotatedDocument<StateT> document, Learner<StateT> learner, int steps);
+	public abstract List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps, Learner<StateT> learner);
 
 	public abstract List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps);
 

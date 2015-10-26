@@ -61,9 +61,9 @@ public abstract class AbstractState implements Serializable {
 
 	public abstract StateID getID();
 
-	public abstract Multimap<VariableID, StateChange> getChangedVariables();
+	// public abstract Multimap<VariableID, StateChange> getChangedVariables();
 
-	public abstract void markAsUnchanged();
+	// public abstract void markAsUnchanged();
 
 	public abstract <StateT extends AbstractState> StateT duplicate();
 

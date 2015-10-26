@@ -8,17 +8,17 @@ import templates.AbstractTemplate;
 import utility.VariableID;
 import variables.AbstractState;
 
-public class SingleEntityFactor extends AbstractFactor {
+public class SingleVariableFactor extends AbstractFactor {
 
 	public VariableID entityID;
 
-	public SingleEntityFactor(AbstractTemplate<? extends AbstractState> template, VariableID entityID) {
+	public SingleVariableFactor(AbstractTemplate<? extends AbstractState> template, VariableID entityID) {
 		super(template);
 		this.entityID = entityID;
 	}
 
 	@Override
-	public Set<VariableID> getEntityIDs() {
+	public Set<VariableID> getVariableIDs() {
 		Set<VariableID> entities = new HashSet<>();
 		entities.add(entityID);
 		return entities;

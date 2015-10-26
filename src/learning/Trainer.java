@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.AnnotatedDocument;
-import sampling.Sampler;
+import sampling.AbstractSampler;
 import variables.AbstractState;
 
 public class Trainer<StateT extends AbstractState> {
@@ -26,9 +26,9 @@ public class Trainer<StateT extends AbstractState> {
 
 	private Model<StateT> model;
 	private Scorer<StateT> scorer;
-	private Sampler<StateT> sampler;
+	private AbstractSampler<StateT> sampler;
 
-	public Trainer(Model<StateT> model, Scorer<StateT> scorer, Sampler<StateT> sampler) {
+	public Trainer(Model<StateT> model, Scorer<StateT> scorer, AbstractSampler<StateT> sampler) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
@@ -64,7 +64,7 @@ public class Trainer<StateT extends AbstractState> {
 				log.info("Gold State: %s", document.getGoldState());
 				log.info("===========================");
 
-				List<StateT> generatedChain = sampler.generateChain(document, learner, steps);
+				List<StateT> generatedChain = sampler.generateChain(document, steps, learner);
 				StateT finalState = generatedChain.get(generatedChain.size() - 1);
 				long stopTime = System.currentTimeMillis();
 
@@ -92,9 +92,17 @@ public class Trainer<StateT extends AbstractState> {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
 			AnnotatedDocument<StateT> document = documents.get(d);
+			log.info("===========================");
+			log.info("Content   : %s", document.getContent());
+			log.info("Gold State: %s", document.getGoldState());
+			log.info("===========================");
 			List<StateT> generatedChain = sampler.generateChain(document, steps);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 			finalStates.add(finalState);
+			log.info("++++++++++++++++");
+			log.info("Gold State:   %s", document.getGoldState());
+			log.info("Final State:  %s", finalState);
+			log.info("++++++++++++++++");
 		}
 		return finalStates;
 	}

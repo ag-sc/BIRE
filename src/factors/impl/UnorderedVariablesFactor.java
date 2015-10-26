@@ -8,16 +8,16 @@ import templates.AbstractTemplate;
 import utility.VariableID;
 import variables.AbstractState;
 
-public class UnorderedEntititesFactor extends AbstractFactor {
+public class UnorderedVariablesFactor extends AbstractFactor {
 	public Set<VariableID> entities;
 
-	public UnorderedEntititesFactor(AbstractTemplate<? extends AbstractState> template, Set<VariableID> entities) {
+	public UnorderedVariablesFactor(AbstractTemplate<? extends AbstractState> template, Set<VariableID> entities) {
 		super(template);
 		this.entities = entities;
 	}
 
 	@Override
-	public Set<VariableID> getEntityIDs() {
+	public Set<VariableID> getVariableIDs() {
 		Set<VariableID> entities = new HashSet<>(this.entities);
 		return entities;
 	}

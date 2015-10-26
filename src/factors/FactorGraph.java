@@ -4,10 +4,16 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
+import templates.AbstractTemplate;
+
 public class FactorGraph implements Serializable {
 
 	// private Map<FactorID, AbstractFactor> factorMap;
-	private Set<AbstractFactor> factors;
+	private Multimap<AbstractTemplate<?>, AbstractFactor> factors;
+	// private Set<AbstractFactor> factors;
 	// private BiMap<AbstractFactor, FactorID> variableSet2Factor;
 	// private Multimap<Template<?>, FactorID> template2Factors;
 	// private Map<FactorID, Template<?>> factor2Template;
@@ -22,7 +28,8 @@ public class FactorGraph implements Serializable {
 		// template2Factors = HashMultimap.create();
 		// factor2Template = new HashMap<>();
 		// factorMap = new HashMap<>();
-		factors = new HashSet<>();
+		factors = HashMultimap.create();
+		// factors = new HashSet<>();
 		// variable2Factors = HashMultimap.create();
 	}
 
@@ -33,14 +40,15 @@ public class FactorGraph implements Serializable {
 		// HashMultimap.create(factorGraph.template2Factors);
 		// this.factor2Template = new HashMap<>(factorGraph.factor2Template);
 		// this.factorMap = new HashMap<>(factorGraph.factorMap);
-		this.factors = new HashSet<>(factorGraph.factors);
+		this.factors = HashMultimap.create(factorGraph.factors);
+		// this.factors = new HashSet<>(factorGraph.factors);
 		// this.variable2Factors =
 		// HashMultimap.create(factorGraph.variable2Factors);
 	}
 
-	public void updateFactors(Set<AbstractFactor> factors) {
-		this.factors.clear();
-		this.factors.addAll(factors);
+	public void updateFactors(AbstractTemplate<?> template, Set<AbstractFactor> factors) {
+//		this.factors.clear();
+		this.factors.putAll(template, factors);
 		// discard all factors that already exist
 		// Set<AbstractFactor> newFactors = new HashSet<>(factors);
 		// factors.removeAll(this.factors);
@@ -48,7 +56,7 @@ public class FactorGraph implements Serializable {
 	}
 
 	public Set<AbstractFactor> getFactors() {
-		return new HashSet<>(factors);
+		return new HashSet<>(factors.values());
 	}
 
 	public void reset() {

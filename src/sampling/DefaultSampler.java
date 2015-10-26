@@ -1,7 +1,6 @@
 package sampling;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -17,13 +16,9 @@ import learning.ObjectiveFunction;
 import learning.Scorer;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState> extends Sampler<StateT> {
+public class DefaultSampler<StateT extends AbstractState> extends AbstractSampler<StateT> {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
-
-	enum LearningProcedure {
-		SAMPLE_RANK, PERCEPTRON;
-	}
 
 	protected Model<StateT> model;
 	protected Scorer<StateT> scorer;
@@ -42,7 +37,7 @@ public class DefaultSampler<StateT extends AbstractState> extends Sampler<StateT
 	}
 
 	@Override
-	public List<StateT> generateChain(AnnotatedDocument<StateT> document, Learner<StateT> learner, int steps) {
+	public List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps, Learner<StateT> learner) {
 		List<StateT> generatedChain = new ArrayList<>();
 		StateT goldState = document.getGoldState();
 		StateT currentState = generateInitialState(document);
@@ -53,7 +48,12 @@ public class DefaultSampler<StateT extends AbstractState> extends Sampler<StateT
 				log.info("...............");
 				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
 				// log.info("...............");
-				generatedChain.add(currentState = performStep(learner, explorer, goldState, currentState));
+				if (learner != null) {
+					generatedChain.add(currentState = performTrainingStep(learner, explorer, goldState, currentState));
+				} else {
+					generatedChain
+							.add(currentState = performPredictionStep(learner, explorer, goldState, currentState));
+				}
 				log.info("Sampled State:  %s", currentState);
 				// log.info("...............");
 			}
@@ -64,32 +64,48 @@ public class DefaultSampler<StateT extends AbstractState> extends Sampler<StateT
 
 	@Override
 	public List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps) {
-		return generateChain(document, null, steps);
+		return generateChain(document, steps, null);
 	}
 
-	protected StateT performStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
+	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
 			StateT currentState) {
 		// long genID = TaggedTimer.start("GENERATE");
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 		// TaggedTimer.stop(genID);
 
 		unroll(currentState, nextStates);
-		scoreWithObjective(currentState, nextStates, goldState);
 
-		if (learner != null) {
-			for (StateT state : nextStates) {
-				learner.update(currentState, state, goldState);
-			}
+		scoreWithObjective(currentState, nextStates, goldState);
+		for (StateT state : nextStates) {
+			learner.update(currentState, state, goldState);
 		}
 		log.debug("(Re)Score:");
-		scoreWithModel(Arrays.asList(currentState));
+		List<StateT> allStates = new ArrayList<>(nextStates);
+		allStates.add(currentState);
+		scoreWithModel(allStates);
 
 		// TODO the former parameter "omega" is now preliminarily replaced
 		// with a default value of 0.5
 		currentState = selectNextState(nextStates, 1);
 
-		currentState.markAsUnchanged();
+//		currentState.markAsUnchanged();
 		// model.trimToState(currentState);
+		return currentState;
+	}
+
+	protected StateT performPredictionStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
+			StateT currentState) {
+		List<StateT> nextStates = explorer.getNextStates(currentState);
+		unroll(currentState, nextStates);
+		log.debug("Score:");
+		List<StateT> allStates = new ArrayList<>(nextStates);
+		allStates.add(currentState);
+		scoreWithModel(allStates);
+
+		Collections.sort(nextStates, StateT.modelScoreComparator);
+		currentState = nextStates.get(0);
+
+//		currentState.markAsUnchanged();
 		return currentState;
 	}
 
