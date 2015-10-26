@@ -59,6 +59,8 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	}
 
 	private void sampleRankUpdate(StateT currentState, StateT possibleNextState, StateT goldState) {
+		log.trace("Current:\t%s", currentState);
+		log.trace("Next:\t%s", possibleNextState);
 		double weightedDifferenceSum = 0;
 		/*
 		 * Collect differences of features for both states and remember
@@ -74,12 +76,8 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		TaggedTimer.stop(diffID);
 
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState, goldState)) {
-			log.trace("Next:\t%s", possibleNextState);
-			log.trace("Current:\t%s", currentState);
 			updateFeatures(featureDifferences, -alpha);
 		} else if (weightedDifferenceSum <= 0 && preference(possibleNextState, currentState, goldState)) {
-			log.trace("Next:\t%s", possibleNextState);
-			log.trace("Current:\t%s", currentState);
 			updateFeatures(featureDifferences, +alpha);
 		} else {
 		}
@@ -98,13 +96,14 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		Vector diff = new Vector();
 		Set<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
 		Set<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
+		
 		for (AbstractFactor factor : factors1) {
-			if (factor.getTemplate() == template && !factors2.contains(factor)) {
+			if (factor.getTemplate() == template) {
 				diff.add(factor.getFeatureVector());
 			}
 		}
 		for (AbstractFactor factor : factors2) {
-			if (factor.getTemplate() == template && !factors1.contains(factor)) {
+			if (factor.getTemplate() == template) {
 				diff.sub(factor.getFeatureVector());
 			}
 		}

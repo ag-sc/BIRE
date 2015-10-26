@@ -47,7 +47,8 @@ public class FactorGraph implements Serializable {
 	}
 
 	public void updateFactors(AbstractTemplate<?> template, Set<AbstractFactor> factors) {
-//		this.factors.clear();
+		// this.factors.clear();
+		this.factors.removeAll(template);
 		this.factors.putAll(template, factors);
 		// discard all factors that already exist
 		// Set<AbstractFactor> newFactors = new HashSet<>(factors);
