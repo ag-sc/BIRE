@@ -18,7 +18,6 @@ public class Trainer<StateT extends AbstractState> {
 		SAMPLE_RANK, PERCEPTRON;
 	}
 
-	private LearningProcedure learningProcedure = LearningProcedure.SAMPLE_RANK;
 	private double initialAlpha;
 	private double finalAlpha;
 	private double initialOmega;
@@ -26,17 +25,18 @@ public class Trainer<StateT extends AbstractState> {
 
 	private Model<StateT> model;
 	private Scorer<StateT> scorer;
-	private AbstractSampler<StateT> sampler;
+	// private AbstractSampler<StateT, QueryT> sampler;
 
-	public Trainer(Model<StateT> model, Scorer<StateT> scorer, AbstractSampler<StateT> sampler) {
+	public Trainer(Model<StateT> model, Scorer<StateT> scorer) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
-		this.sampler = sampler;
+		// this.sampler = sampler;
 	}
 
-	public List<StateT> train(Learner<StateT> learner, List<? extends AnnotatedDocument<StateT>> documents,
-			int numberOfEpochs, int steps) {
+	public <PriorT, ResultT> List<StateT> train(AbstractSampler<PriorT, StateT, ResultT> sampler,
+			Learner<StateT> learner, List<? extends AnnotatedDocument<PriorT, ResultT>> documents, int numberOfEpochs,
+			int steps) {
 		List<StateT> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		/**
@@ -57,11 +57,11 @@ public class Trainer<StateT extends AbstractState> {
 			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
 			log.info("##############################");
 			for (int d = 0; d < documents.size(); d++) {
-				AnnotatedDocument<StateT> document = documents.get(d);
+				AnnotatedDocument<PriorT, ResultT> document = documents.get(d);
 				log.info("===========================");
 				log.info("Epoch: %s/%s; Document: %s/%s", e + 1, numberOfEpochs, d + 1, documents.size());
 				log.info("Content   : %s", document.getContent());
-				log.info("Gold State: %s", document.getGoldState());
+				log.info("Gold State: %s", document.getGoldResult());
 				log.info("===========================");
 
 				List<StateT> generatedChain = sampler.generateChain(document, steps, learner);
@@ -69,7 +69,7 @@ public class Trainer<StateT extends AbstractState> {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold State:   %s", document.getGoldState());
+				log.info("Gold State:   %s", document.getGoldResult());
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -88,19 +88,20 @@ public class Trainer<StateT extends AbstractState> {
 		return finalStates;
 	}
 
-	public List<StateT> test(List<? extends AnnotatedDocument<StateT>> documents, int steps) {
+	public <PriorT, QueryT> List<StateT> test(AbstractSampler<PriorT, StateT, QueryT> sampler,
+			List<? extends AnnotatedDocument<PriorT, QueryT>> documents, int steps) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
-			AnnotatedDocument<StateT> document = documents.get(d);
+			AnnotatedDocument<PriorT, QueryT> document = documents.get(d);
 			log.info("===========================");
 			log.info("Content   : %s", document.getContent());
-			log.info("Gold State: %s", document.getGoldState());
+			log.info("Gold State: %s", document.getGoldResult());
 			log.info("===========================");
 			List<StateT> generatedChain = sampler.generateChain(document, steps);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
-			log.info("Gold State:   %s", document.getGoldState());
+			log.info("Gold State:   %s", document.getGoldResult());
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 		}

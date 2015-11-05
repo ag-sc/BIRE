@@ -2,6 +2,8 @@ package variables;
 
 import utility.VariableID;
 
-public interface Variable {
+public interface Variable<StateT extends AbstractState> {
 	public VariableID getID();
+
+	public StateT getState();
 }

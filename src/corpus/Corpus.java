@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-public interface Corpus<T extends AnnotatedDocument> extends Serializable {
+public interface Corpus<T extends AnnotatedDocument<?, ?>> extends Serializable {
 
 	public List<T> getDocuments();
 

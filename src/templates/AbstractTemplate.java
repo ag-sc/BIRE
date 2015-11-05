@@ -6,7 +6,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import changes.StateChange;
 import factors.AbstractFactor;
 import factors.FactorGraph;
 import learning.Vector;

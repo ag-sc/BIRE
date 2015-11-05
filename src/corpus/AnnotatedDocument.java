@@ -2,47 +2,28 @@ package corpus;
 
 import java.util.List;
 
-import variables.AbstractState;
-
-public class AnnotatedDocument<StateT extends AbstractState> extends Document {
+public class AnnotatedDocument<PriorT, ResultT> extends Document<PriorT> {
 	/**
 	 * This State object holds the human labeled, correct annotations, that are
 	 * used during training and evaluation.
 	 */
-	protected StateT goldState;
-	/**
-	 * This state contains initial, human labeled annotations for this document,
-	 * that are provided during training and testing (!). These annotations
-	 * should not be changed since they already match some of the annotations in
-	 * the goldState.
-	 */
-	protected StateT initialState;
+	protected ResultT goldQuery;
 
-	public AnnotatedDocument(Corpus<? extends AnnotatedDocument<StateT>> corpus, String name, String content,
-			List<Token> tokens) {
-		super(corpus, name, content, tokens);
+	public AnnotatedDocument(String name, String content, List<Token> tokens) {
+		super(name, content, tokens);
 	}
 
-	public StateT getGoldState() {
-		return goldState;
-	}
-
-	public StateT getInitialState() {
-		return initialState;
+	public ResultT getGoldResult() {
+		return goldQuery;
 	}
 
 	@Override
 	public String toString() {
-		return "AnnotatedDocument [content=" + content + ", tokens=" + tokens + ", goldState=" + goldState
-				+ ", initialState=" + initialState + "]";
+		return "AnnotatedDocument [content=" + content + ", tokens=" + tokens + ", goldState=" + goldQuery + "]";
 	}
 
-	public void setGoldState(StateT goldState) {
-		this.goldState = goldState;
-	}
-
-	public void setInitialState(StateT initialState) {
-		this.initialState = initialState;
+	public void setGoldResult(ResultT goldQuery) {
+		this.goldQuery = goldQuery;
 	}
 
 }

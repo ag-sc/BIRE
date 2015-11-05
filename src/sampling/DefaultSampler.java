@@ -3,12 +3,14 @@ package sampling;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.AnnotatedDocument;
+import corpus.Document;
 import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
@@ -16,31 +18,39 @@ import learning.ObjectiveFunction;
 import learning.Scorer;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState> extends AbstractSampler<StateT> {
+public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
+		extends AbstractSampler<PriorT, StateT, ResultT> {
+
+	enum SamplingStrategy {
+		GREEDY, LINEAR_SAMPLING, SOFTMAX_SAMPLING;
+	}
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
 
 	protected Model<StateT> model;
 	protected Scorer<StateT> scorer;
-	protected ObjectiveFunction<StateT> objective;
+	protected ObjectiveFunction<StateT, ResultT> objective;
+	private Initializer<PriorT, StateT> initializer;
 	private List<Explorer<StateT>> explorers;
 
 	protected final boolean multiThreaded = true;
+	private SamplingStrategy samplintStrategy = SamplingStrategy.GREEDY;
 
-	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT> objective,
-			List<Explorer<StateT>> explorers) {
+	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
+			Initializer<PriorT, StateT> initializer, List<Explorer<StateT>> explorers) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
 		this.objective = objective;
+		this.initializer = initializer;
 		this.explorers = explorers;
 	}
 
 	@Override
-	public List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps, Learner<StateT> learner) {
+	public List<StateT> generateChain(AnnotatedDocument<PriorT, ResultT> document, int steps, Learner<StateT> learner) {
 		List<StateT> generatedChain = new ArrayList<>();
-		StateT goldState = document.getGoldState();
-		StateT currentState = generateInitialState(document);
+		ResultT goldResult = document.getGoldResult();
+		StateT currentState = initializer.getInitialState(document);
 
 		for (int s = 0; s < steps; s++) {
 			log.info("---------------------------");
@@ -48,12 +58,7 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 				log.info("...............");
 				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
 				// log.info("...............");
-				if (learner != null) {
-					generatedChain.add(currentState = performTrainingStep(learner, explorer, goldState, currentState));
-				} else {
-					generatedChain
-							.add(currentState = performPredictionStep(learner, explorer, goldState, currentState));
-				}
+				generatedChain.add(currentState = performTrainingStep(learner, explorer, goldResult, currentState));
 				log.info("Sampled State:  %s", currentState);
 				// log.info("...............");
 			}
@@ -63,11 +68,23 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 	}
 
 	@Override
-	public List<StateT> generateChain(AnnotatedDocument<StateT> document, int steps) {
-		return generateChain(document, steps, null);
+	public List<StateT> generateChain(Document<PriorT> document, int steps) {
+		List<StateT> generatedChain = new ArrayList<>();
+		StateT currentState = initializer.getInitialState(document);
+
+		for (int s = 0; s < steps; s++) {
+			log.info("---------------------------");
+			for (Explorer<StateT> explorer : explorers) {
+				log.info("...............");
+				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
+				generatedChain.add(currentState = performPredictionStep(explorer, currentState));
+				log.info("Sampled State:  %s", currentState);
+			}
+		}
+		return generatedChain;
 	}
 
-	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
+	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, ResultT goldResult,
 			StateT currentState) {
 		// long genID = TaggedTimer.start("GENERATE");
 		List<StateT> nextStates = explorer.getNextStates(currentState);
@@ -75,10 +92,11 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 
 		unroll(currentState, nextStates);
 
-		scoreWithObjective(currentState, nextStates, goldState);
-		for (StateT state : nextStates) {
-			learner.update(currentState, state, goldState);
-		}
+		scoreWithObjective(currentState, nextStates, goldResult);
+		// for (StateT state : nextStates) {
+		// learner.update(currentState, state);
+		// }
+		learner.update(currentState, nextStates);
 		log.debug("(Re)Score:");
 		List<StateT> allStates = new ArrayList<>(nextStates);
 		allStates.add(currentState);
@@ -86,15 +104,14 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 
 		// TODO the former parameter "omega" is now preliminarily replaced
 		// with a default value of 0.5
-		currentState = selectNextState(nextStates, 1);
+		currentState = selectNextState(nextStates, false, samplintStrategy);
 
-//		currentState.markAsUnchanged();
+		// currentState.markAsUnchanged();
 		// model.trimToState(currentState);
 		return currentState;
 	}
 
-	protected StateT performPredictionStep(Learner<StateT> learner, Explorer<StateT> explorer, StateT goldState,
-			StateT currentState) {
+	protected StateT performPredictionStep(Explorer<StateT> explorer, StateT currentState) {
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 		unroll(currentState, nextStates);
 		log.debug("Score:");
@@ -102,10 +119,11 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 		allStates.add(currentState);
 		scoreWithModel(allStates);
 
-		Collections.sort(nextStates, StateT.modelScoreComparator);
-		currentState = nextStates.get(0);
+		// Collections.sort(nextStates, StateT.modelScoreComparator);
+		currentState = selectNextState(nextStates, true, SamplingStrategy.GREEDY);
+		// currentState = selectNextState(nextStates, true, samplintStrategy);
 
-//		currentState.markAsUnchanged();
+		// currentState.markAsUnchanged();
 		return currentState;
 	}
 
@@ -159,11 +177,11 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 	 * <i>multiThreaded</i> flag determines if the computation is performed in
 	 * parallel or sequentially.
 	 * 
-	 * @param goldState
+	 * @param goldResult
 	 * @param currentState
 	 * @param nextStates
 	 */
-	protected void scoreWithObjective(StateT currentState, List<StateT> nextStates, StateT goldState) {
+	protected void scoreWithObjective(StateT currentState, List<StateT> nextStates, ResultT goldResult) {
 		long scID = TaggedTimer.start("OBJ-SCORE");
 		log.debug("Score %s states according to objective...", nextStates.size() + 1);
 		List<StateT> allStates = new ArrayList<>(nextStates);
@@ -175,33 +193,25 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 		} else {
 			stream = allStates.stream();
 		}
-		stream.forEach(s -> objective.score(s, goldState));
+		stream.forEach(s -> objective.score(s, goldResult));
 		TaggedTimer.stop(scID);
 	}
 
-	/**
-	 * Selects a successor state from the given list of states. The state with
-	 * the best score is chosen, where the objective score is used as the
-	 * measure with probability <i>p_o=objectiveDrivenProbability</i> and the
-	 * model score with <i>p_m=1-objectiveDrivenProbability</i>. The scores are
-	 * merely accessed and not recomputed. This steps needs to be performed
-	 * beforehand.
-	 * 
-	 * @param states
-	 * @param objectiveDrivenProbability
-	 * @return
-	 */
-	protected StateT selectNextState(List<StateT> states, double objectiveDrivenProbability) {
-		if (Math.random() < objectiveDrivenProbability) {
-			log.info("Next state: Best by OBJECTIVE");
-			Collections.sort(states, StateT.objectiveScoreComparator);
+	protected StateT selectNextState(List<StateT> states, boolean model, SamplingStrategy strategy) {
+		switch (strategy) {
+		case GREEDY:
+			if (model) {
+				Collections.sort(states, AbstractState.modelScoreComparator);
+			} else {
+				Collections.sort(states, AbstractState.objectiveScoreComparator);
+			}
 			return states.get(0);
-		} else {
-			log.info("Next state: Best by MODEL");
-			scoreWithModel(states);
-			Collections.sort(states, StateT.modelScoreComparator);
-			return states.get(0);
+		case LINEAR_SAMPLING:
+			return drawRandomlyFrom(states, model, false);
+		case SOFTMAX_SAMPLING:
+			return drawRandomlyFrom(states, model, true);
 		}
+		return null;
 	}
 
 	protected Model<StateT> getModel() {
@@ -210,5 +220,42 @@ public class DefaultSampler<StateT extends AbstractState> extends AbstractSample
 
 	protected Scorer<StateT> getScorer() {
 		return scorer;
+	}
+
+	public static <StateT extends AbstractState> StateT drawRandomlyFrom(List<StateT> nextStates, boolean model,
+			boolean softmax) {
+		// compute total sum of scores
+		Function<StateT, Double> toScore = null;
+		if (model) {
+			toScore = s -> s.getModelScore();
+		} else {
+			toScore = d -> d.getObjectiveScore();
+		}
+		Function<Double, Double> toProbability = null;
+		if (softmax) {
+			toProbability = d -> Math.exp(d);
+		} else {
+			toProbability = d -> d;
+		}
+		double totalSum = 0;
+		for (StateT s : nextStates) {
+			if (model) {
+				totalSum += toProbability.apply(toScore.apply(s));
+			} else {
+				totalSum += toProbability.apply(toScore.apply(s));
+			}
+		}
+
+		double index = Math.random() * totalSum;
+		double sum = 0;
+		int i = 0;
+		while (sum < index) {
+			if (model) {
+				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
+			} else {
+				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
+			}
+		}
+		return nextStates.get(Math.max(0, i - 1));
 	}
 }
