@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.AnnotatedDocument;
+import corpus.LabeledDocument;
 import sampling.AbstractSampler;
 import variables.AbstractState;
 
@@ -35,7 +35,7 @@ public class Trainer<StateT extends AbstractState> {
 	}
 
 	public <PriorT, ResultT> List<StateT> train(AbstractSampler<PriorT, StateT, ResultT> sampler,
-			Learner<StateT> learner, List<? extends AnnotatedDocument<PriorT, ResultT>> documents, int numberOfEpochs,
+			Learner<StateT> learner, List<? extends LabeledDocument<PriorT, ResultT>> documents, int numberOfEpochs,
 			int steps) {
 		List<StateT> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
@@ -57,7 +57,7 @@ public class Trainer<StateT extends AbstractState> {
 			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
 			log.info("##############################");
 			for (int d = 0; d < documents.size(); d++) {
-				AnnotatedDocument<PriorT, ResultT> document = documents.get(d);
+				LabeledDocument<PriorT, ResultT> document = documents.get(d);
 				log.info("===========================");
 				log.info("Epoch: %s/%s; Document: %s/%s", e + 1, numberOfEpochs, d + 1, documents.size());
 				log.info("Content   : %s", document.getContent());
@@ -89,10 +89,10 @@ public class Trainer<StateT extends AbstractState> {
 	}
 
 	public <PriorT, QueryT> List<StateT> test(AbstractSampler<PriorT, StateT, QueryT> sampler,
-			List<? extends AnnotatedDocument<PriorT, QueryT>> documents, int steps) {
+			List<? extends LabeledDocument<PriorT, QueryT>> documents, int steps) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
-			AnnotatedDocument<PriorT, QueryT> document = documents.get(d);
+			LabeledDocument<PriorT, QueryT> document = documents.get(d);
 			log.info("===========================");
 			log.info("Content   : %s", document.getContent());
 			log.info("Gold State: %s", document.getGoldResult());

@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.AnnotatedDocument;
+import corpus.LabeledDocument;
 import corpus.Document;
 import evaluation.TaggedTimer;
 import learning.Learner;
@@ -47,7 +47,7 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 	}
 
 	@Override
-	public List<StateT> generateChain(AnnotatedDocument<PriorT, ResultT> document, int steps, Learner<StateT> learner) {
+	public List<StateT> generateChain(LabeledDocument<PriorT, ResultT> document, int steps, Learner<StateT> learner) {
 		List<StateT> generatedChain = new ArrayList<>();
 		ResultT goldResult = document.getGoldResult();
 		StateT currentState = initializer.getInitialState(document);
@@ -57,12 +57,9 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
-				// log.info("...............");
 				generatedChain.add(currentState = performTrainingStep(learner, explorer, goldResult, currentState));
 				log.info("Sampled State:  %s", currentState);
-				// log.info("...............");
 			}
-			// log.info("---------------------------");
 		}
 		return generatedChain;
 	}
@@ -86,32 +83,25 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 
 	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, ResultT goldResult,
 			StateT currentState) {
-		// long genID = TaggedTimer.start("GENERATE");
+		log.debug("TRAINING:");
 		List<StateT> nextStates = explorer.getNextStates(currentState);
-		// TaggedTimer.stop(genID);
 
 		unroll(currentState, nextStates);
 
 		scoreWithObjective(currentState, nextStates, goldResult);
-		// for (StateT state : nextStates) {
-		// learner.update(currentState, state);
-		// }
 		learner.update(currentState, nextStates);
 		log.debug("(Re)Score:");
 		List<StateT> allStates = new ArrayList<>(nextStates);
 		allStates.add(currentState);
 		scoreWithModel(allStates);
 
-		// TODO the former parameter "omega" is now preliminarily replaced
-		// with a default value of 0.5
 		currentState = selectNextState(nextStates, false, samplintStrategy);
 
-		// currentState.markAsUnchanged();
-		// model.trimToState(currentState);
 		return currentState;
 	}
 
 	protected StateT performPredictionStep(Explorer<StateT> explorer, StateT currentState) {
+		log.debug("PREDICTION:");
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 		unroll(currentState, nextStates);
 		log.debug("Score:");
@@ -119,11 +109,8 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 		allStates.add(currentState);
 		scoreWithModel(allStates);
 
-		// Collections.sort(nextStates, StateT.modelScoreComparator);
 		currentState = selectNextState(nextStates, true, SamplingStrategy.GREEDY);
-		// currentState = selectNextState(nextStates, true, samplintStrategy);
 
-		// currentState.markAsUnchanged();
 		return currentState;
 	}
 
@@ -222,6 +209,18 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 		return scorer;
 	}
 
+	/**
+	 * Selects a state from the given list according to the probability
+	 * distribution defined by the states' (model/objective) scores. Each score
+	 * is divided by the total sum of all scores, in order to create a
+	 * probability distribution across states. If "softmax" is true, the
+	 * probability distribution is computed using the softmax formula.
+	 * 
+	 * @param nextStates
+	 * @param model
+	 * @param softmax
+	 * @return
+	 */
 	public static <StateT extends AbstractState> StateT drawRandomlyFrom(List<StateT> nextStates, boolean model,
 			boolean softmax) {
 		// compute total sum of scores

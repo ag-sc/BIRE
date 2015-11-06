@@ -13,7 +13,7 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import learning.DefaultLearner;
+import learning.Model;
 import learning.Vector;
 import templates.AbstractTemplate;
 import variables.AbstractState;
@@ -40,96 +40,6 @@ public class EvaluationUtil {
 				now.get(Calendar.SECOND));
 	}
 
-	public static String generateFilenameForRecords(boolean isTest, int numberOfRecords) {
-		Calendar now = Calendar.getInstance();
-		return String.format(RECORDS_NAME_PATTERN, isTest ? "Test" : "Train", numberOfRecords, now.get(Calendar.YEAR),
-				now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
-				now.get(Calendar.MINUTE), now.get(Calendar.SECOND));
-	}
-
-	// public static void storeRecords(List<SamplingProcedureRecord> records,
-	// File dir)
-	// throws FileNotFoundException, IOException {
-	// if (!dir.exists()) {
-	// dir.mkdirs();
-	// }
-	// File file = new File(dir, EvaluationUtil.generateFilenameForRecords(true,
-	// records.size()));
-	// ObjectOutputStream out = new ObjectOutputStream(new
-	// FileOutputStream(file));
-	// out.writeObject(records);
-	// out.close();
-	// }
-	//
-	// public static void storeRecord(SamplingProcedureRecord record, File dir,
-	// String name) throws IOException {
-	// Calendar now = Calendar.getInstance();
-	// String finalName = String.format(RECORD_NAME_PATTERN, name,
-	// now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1,
-	// now.get(Calendar.DAY_OF_MONTH), now.get(Calendar.HOUR_OF_DAY),
-	// now.get(Calendar.MINUTE),
-	// now.get(Calendar.SECOND));
-	//
-	// File file = new File(dir, finalName);
-	// ObjectOutputStream out = new ObjectOutputStream(new
-	// FileOutputStream(file));
-	// out.writeObject(record);
-	// out.close();
-	// }
-	//
-	// public static List<SamplingProcedureRecord> loadRecords(String file)
-	// throws FileNotFoundException, IOException, ClassNotFoundException {
-	// ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-	// List<SamplingProcedureRecord> records = (List<SamplingProcedureRecord>)
-	// in.readObject();
-	// in.close();
-	// return records;
-	// }
-	//
-	// public static SamplingProcedureRecord loadRecord(String file)
-	// throws FileNotFoundException, IOException, ClassNotFoundException {
-	// ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-	// SamplingProcedureRecord record = (SamplingProcedureRecord)
-	// in.readObject();
-	// in.close();
-	// return record;
-	// }
-	//
-	// public static void printPerformance(List<SamplingProcedureRecord>
-	// testRecords) {
-	// double meanModelScore = 0;
-	// double meanPrecision = 0;
-	// double meanRecall = 0;
-	// double meanOFScore = 0;
-	// int count = 0;
-	// for (SamplingProcedureRecord r : testRecords) {
-	// for (int d = 0; d < r.numberOfDocuments; d++) {
-	// SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps -
-	// 1].get(r.numberOfSamplers - 1);
-	//
-	// meanModelScore += step.acceptedState.modelScore;
-	// meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
-	// meanRecall += step.acceptedState.objectiveFunctionScore.recall;
-	// meanOFScore += step.acceptedState.objectiveFunctionScore.score;
-	//
-	// log.info("Document %s: %s; model=%s; precision=%s, recall=%s, score=%s",
-	// d, step.document.getName(),
-	// step.acceptedState.modelScore,
-	// step.acceptedState.objectiveFunctionScore.precision,
-	// step.acceptedState.objectiveFunctionScore.recall,
-	// step.acceptedState.objectiveFunctionScore.score);
-	// count++;
-	// }
-	// }
-	// meanModelScore /= count;
-	// meanPrecision /= count;
-	// meanRecall /= count;
-	// meanOFScore /= count;
-	// log.info("Mean(n=%s):\tmodel=%s; precision=%s, recall=%s, score=%s",
-	// count, meanModelScore, meanPrecision,
-	// meanRecall, meanOFScore);
-	// }
-
 	public static void printPredictionPerformance(List<? extends AbstractState> predictedStates) {
 		double meanModelScore = 0;
 		double meanObjectiveScore = 0;
@@ -154,31 +64,6 @@ public class EvaluationUtil {
 		log.info("Mean(n=%s):\tmodel=%s; objective=%s", count, meanModelScore, meanObjectiveScore);
 	}
 
-	// public static Score mean(SamplingProcedureRecord r) {
-	// double meanPrecision = 0;
-	// double meanRecall = 0;
-	// double meanOFScore = 0;
-	// for (int d = 0; d < r.numberOfDocuments; d++) {
-	// SamplingStepRecord step = r.samplingSteps[d][r.numberOfSteps -
-	// 1].get(r.numberOfSamplers - 1);
-	//
-	// meanPrecision += step.acceptedState.objectiveFunctionScore.precision;
-	// meanRecall += step.acceptedState.objectiveFunctionScore.recall;
-	// meanOFScore += step.acceptedState.objectiveFunctionScore.score;
-	//
-	// // log.info("Document %s: %s; model=%s; precision=%s, recall=%s,
-	// // score=%s", d, step.document.getName(),
-	// // step.acceptedState.modelScore,
-	// // step.acceptedState.objectiveFunctionScore.precision,
-	// // step.acceptedState.objectiveFunctionScore.recall,
-	// // step.acceptedState.objectiveFunctionScore.score);
-	// }
-	// meanPrecision /= r.numberOfDocuments;
-	// meanRecall /= r.numberOfDocuments;
-	// meanOFScore /= r.numberOfDocuments;
-	// return new Score(meanPrecision, meanRecall, meanOFScore);
-	// }
-
 	public static double mean(List<Double> scores) {
 		double score = 0;
 		for (double s : scores) {
@@ -198,16 +83,16 @@ public class EvaluationUtil {
 	public static DecimalFormat featureWeightFormat = new DecimalFormat("0.000000");
 
 	/**
-	 * Prints all weights of the learners model in descending order, discarding
-	 * all weights with an absolute value smaller than minAbsValue. To print all
+	 * Prints all weights of the model model in descending order, discarding all
+	 * weights with an absolute value smaller than minAbsValue. To print all
 	 * values set minAbsValue <= 0
 	 * 
-	 * @param learner
+	 * @param model
 	 * @param minAbsValue
 	 */
-	public static void printWeights(DefaultLearner<?> learner, double minAbsValue) {
+	public static void printWeights(Model<?> model, double minAbsValue) {
 		Map<String, Double> allWeights = new HashMap<String, Double>();
-		for (AbstractTemplate<?> t : learner.getModel().getTemplates()) {
+		for (AbstractTemplate<?> t : model.getTemplates()) {
 			Vector weights = t.getWeightVector();
 			for (String f : weights.getFeatureNames()) {
 				double value = weights.getValueOfFeature(f);
