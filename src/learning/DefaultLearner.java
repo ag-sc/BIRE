@@ -1,11 +1,11 @@
 package learning;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,32 +19,22 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
-	enum LearningProcedure {
-		SAMPLE_RANK, PERCEPTRON;
-	}
-
-	private LearningProcedure learningProcedure = LearningProcedure.SAMPLE_RANK;
 	private double alpha;
 	private Model<StateT> model;
-	private Scorer<StateT> scorer;
 	private boolean normalize = true;
 	public double currentAlpha;
 	public int updates = 0;
 
-	public DefaultLearner(Model<StateT> model, Scorer<StateT> scorer, double alpha) {
+	public DefaultLearner(Model<StateT> model, double alpha) {
 		super();
 		this.model = model;
-		this.scorer = scorer;
 		this.currentAlpha = alpha;
 	}
 
 	/**
 	 * Performs a model update according to a learning scheme (currently
-	 * SampleRank or our custom perceptron learning). The update step is scaled
-	 * with the provided alpha value and normalized with the number of states in
-	 * this batch.
+	 * SampleRank). The update step is scaled with the provided alpha value.
 	 * 
-	 * @param goldState
 	 * @param currentState
 	 * @param possibleNextState
 	 */
@@ -53,24 +43,19 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		update(currentState, Arrays.asList(possibleNextState));
 	}
 
+	/**
+	 * Performs a model update according to a learning scheme (currently
+	 * SampleRank). The update step is scaled with the provided alpha value and
+	 * normalized with the number of states in this batch.
+	 * 
+	 * @param currentState
+	 * @param possibleNextState
+	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextState) {
 		Map<AbstractTemplate<StateT>, Vector> weightUpdates = new HashMap<>();
 		model.getTemplates().forEach(t -> weightUpdates.put(t, new Vector()));
-		switch (learningProcedure) {
-		case SAMPLE_RANK:
-			// Collect weight updates for each possible state/current state pair
-			possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightUpdates));
-			break;
-		// case PERCEPTRON:
-		// perceptronUpdate(goldState, currentState, possibleNextState);
-		// break;
-		default:
-			log.warn("Cannot perform unknown update procedure \"%s\"", learningProcedure);
-			break;
-		}
-		// weightUpdates.values().forEach(v ->
-		// v.getFeatures().entrySet().forEach(e -> System.out.println(e)));
+		possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightUpdates));
 		if (normalize) {
 			applyWeightUpdate(weightUpdates, possibleNextState.size());
 		} else {
@@ -117,8 +102,8 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 */
 	public Vector getFeatureDifferences(AbstractTemplate<StateT> template, StateT state1, StateT state2) {
 		Vector diff = new Vector();
-		Set<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
-		Set<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
+		Collection<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
+		Collection<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
 
 		for (AbstractFactor factor : factors1) {
 			if (factor.getTemplate() == template) {
@@ -132,48 +117,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		}
 		return diff;
 	}
-
-	// private void perceptronUpdate(StateT goldState, StateT currentState,
-	// StateT possibleNextState) {
-	// double On = objective.score(possibleNextState, goldState).score;
-	// double Oc = objective.score(currentState, goldState).score;
-	//
-	// double Mn = possibleNextState.getModelScore();
-	// double Mc = currentState.getModelScore();
-	//
-	// log.trace("Next %s:\tO(g,c)=%s,\tO(g,n)=%s\t|\tM(c)=%s,\tM(n)=%s",
-	// possibleNextState.getID(), Oc, On, Mc, Mn);
-	//
-	// double learningSignal = 1;
-	// double learningStep = alpha * learningSignal;
-	// if (On > Oc) { // On-Oc > 0
-	// if (Mn <= Mc) { // Mn-Mc < 0
-	// log.trace("Model: DECREASE current; INCREASE next");
-	// model.update(currentState, -learningStep);
-	// model.update(possibleNextState, +learningStep);
-	// }
-	// } else if (On < Oc) { // On-Oc < 0
-	// if (Mn >= Mc) { // Mn-Mc > 0
-	// log.trace("Model: INCREASE current; DECREASE next");
-	// model.update(currentState, +learningStep);
-	// model.update(possibleNextState, -learningStep);
-	// }
-	// } else if (On == Oc) {
-	// // if (Mn > Mc) { // Mn-Mc > 0
-	// // log.info("Model: DECREASE next; INCREASE current");
-	// // model.update(currentState, -learningStep);
-	// // model.update(possibleNextState, +learningStep);
-	// // } else if (Mn < Mc) { // Mn-Mc > 0
-	// // log.info("Model: INCREASE next; DECREASE current");
-	// // model.update(currentState, +learningStep);
-	// // model.update(possibleNextState, -learningStep);
-	// // }
-	// // log.info("Current state %s and next State %s are equally
-	// // good.
-	// // Do nothing.",
-	// // currentState.getID(), possibleNextState.getID());
-	// }
-	// }
 
 	/**
 	 * The features present in the vectors in the featureDifferences map are
@@ -206,6 +149,12 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		TaggedTimer.stop(upID);
 	}
 
+	/**
+	 * Applies the previously collected weight updates in one step.
+	 * 
+	 * @param weightUpdates
+	 * @param numberOfUpdates
+	 */
 	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightUpdates, int numberOfUpdates) {
 		long upID = TaggedTimer.start("UP-UPDATE");
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
@@ -235,20 +184,13 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @return
 	 */
 	private boolean preference(StateT state1, StateT state2) {
-
 		double O1 = state1.getObjectiveScore();
 		double O2 = state2.getObjectiveScore();
-		// double O1 = objective.score(state1, goldState).score;
-		// double O2 = objective.score(state2, goldState).score;
 		return O1 > O2;
 	}
 
 	public Model<StateT> getModel() {
 		return model;
-	}
-
-	public Scorer<StateT> getScorer() {
-		return scorer;
 	}
 
 }

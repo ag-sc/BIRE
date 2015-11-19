@@ -16,6 +16,13 @@ public class JoinExplorer<StateT extends AbstractState> implements Explorer<Stat
 
 	private List<Explorer<StateT>> explorers;
 
+	/**
+	 * This is an implementation of the Explorer interface that merges the
+	 * individual results of a given list of explorers into a single list of
+	 * possible successor states.
+	 * 
+	 * @param explorers
+	 */
 	public JoinExplorer(List<Explorer<StateT>> explorers) {
 		this.explorers = explorers;
 	}

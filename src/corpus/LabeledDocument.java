@@ -2,7 +2,7 @@ package corpus;
 
 import java.util.List;
 
-public class LabeledDocument<PriorT, ResultT> extends Document<PriorT> {
+public class LabeledDocument<PriorT, ResultT> extends Document<PriorT>implements LabeledInstance<ResultT> {
 	/**
 	 * This object holds the (human) labeled, correct result, that should be
 	 * used during training and evaluation.

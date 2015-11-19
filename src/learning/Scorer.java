@@ -1,6 +1,6 @@
 package learning;
 
-import java.util.Set;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,25 +32,13 @@ public class Scorer<StateT extends AbstractState> {
 		// compute the score of the state according to all templates and all
 		// respective factors
 		double score = 1;
-		// Collection<Template<StateT>> templates = model.getTemplates();
-		// // boolean factorsApplied = false;
-		// // log.debug("Score state: %s", state);
-		// for (Template<StateT> template : templates) {
-		// log.debug("\tTemplate %s", template.getClass().getSimpleName());
 
-		Set<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		// Vector weightVector = template.getWeightVector();
-
+		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
 		for (AbstractFactor factor : factors) {
-			// log.debug("\t\tFactor Features:\n\t\t%s",
-			// factor.getFeatureVector());
 			Vector featureVector = factor.getFeatureVector();
 			double factorScore = Math.exp(featureVector.dotProduct(factor.getTemplate().getWeightVector()));
 			score *= factorScore;
-			// factorsApplied = true;
-			// log.debug("\t\tfactor with score = %s applied", factorScore);
 		}
-		// }
 		state.setModelScore(score);
 		return score;
 

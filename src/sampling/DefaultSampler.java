@@ -9,75 +9,90 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.LabeledDocument;
-import corpus.Document;
 import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Scorer;
+import sampling.stoppingcriterion.StepLimitCriterion;
+import sampling.stoppingcriterion.StoppingCriterion;
 import variables.AbstractState;
 
-public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
-		extends AbstractSampler<PriorT, StateT, ResultT> {
+public class DefaultSampler<StateT extends AbstractState, ResultT> implements AbstractSampler<StateT, ResultT> {
 
 	enum SamplingStrategy {
 		GREEDY, LINEAR_SAMPLING, SOFTMAX_SAMPLING;
 	}
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
-
 	protected Model<StateT> model;
 	protected Scorer<StateT> scorer;
 	protected ObjectiveFunction<StateT, ResultT> objective;
-	private Initializer<PriorT, StateT> initializer;
 	private List<Explorer<StateT>> explorers;
+	private StoppingCriterion<StateT> stoppingCriterion;
 
 	protected final boolean multiThreaded = true;
-	private SamplingStrategy samplintStrategy = SamplingStrategy.GREEDY;
+	private SamplingStrategy samplingStrategy = SamplingStrategy.GREEDY;
 
 	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
-			Initializer<PriorT, StateT> initializer, List<Explorer<StateT>> explorers) {
+			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
 		this.objective = objective;
-		this.initializer = initializer;
 		this.explorers = explorers;
+		this.stoppingCriterion = stoppingCriterion;
+	}
+
+	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
+			List<Explorer<StateT>> explorers, int samplingSteps) {
+		super();
+		this.model = model;
+		this.scorer = scorer;
+		this.objective = objective;
+		this.explorers = explorers;
+		this.stoppingCriterion = new StepLimitCriterion<>(samplingSteps);
 	}
 
 	@Override
-	public List<StateT> generateChain(LabeledDocument<PriorT, ResultT> document, int steps, Learner<StateT> learner) {
+	public List<StateT> generateChain(StateT initialState, ResultT goldResult, Learner<StateT> learner) {
 		List<StateT> generatedChain = new ArrayList<>();
-		ResultT goldResult = document.getGoldResult();
-		StateT currentState = initializer.getInitialState(document);
 
-		for (int s = 0; s < steps; s++) {
+		StateT currentState = initialState;
+		int step = 0;
+		while (!stoppingCriterion.checkCondition(generatedChain, step)) {
 			log.info("---------------------------");
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
-				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
-				generatedChain.add(currentState = performTrainingStep(learner, explorer, goldResult, currentState));
+				log.info("TRAINING Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				currentState = performTrainingStep(learner, explorer, goldResult, currentState);
+				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
 			}
+			step++;
 		}
+		log.info("Stop sampling after step %s", step);
 		return generatedChain;
 	}
 
 	@Override
-	public List<StateT> generateChain(Document<PriorT> document, int steps) {
+	public List<StateT> generateChain(StateT initialState) {
 		List<StateT> generatedChain = new ArrayList<>();
-		StateT currentState = initializer.getInitialState(document);
+		StateT currentState = initialState;
 
-		for (int s = 0; s < steps; s++) {
+		int step = 0;
+		while (!stoppingCriterion.checkCondition(generatedChain, step)) {
 			log.info("---------------------------");
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
-				log.info("Step: %s/%s; Explorer: %s", s + 1, steps, explorer.getClass().getSimpleName());
-				generatedChain.add(currentState = performPredictionStep(explorer, currentState));
+				log.info("PREDICTION Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				currentState = performPredictionStep(explorer, currentState);
+				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
 			}
+			step++;
 		}
+		log.info("Stop sampling after step %s", step);
 		return generatedChain;
 	}
 
@@ -95,7 +110,7 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 		allStates.add(currentState);
 		scoreWithModel(allStates);
 
-		currentState = selectNextState(nextStates, false, samplintStrategy);
+		currentState = selectNextState(currentState, nextStates, false, samplingStrategy);
 
 		return currentState;
 	}
@@ -108,8 +123,7 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 		List<StateT> allStates = new ArrayList<>(nextStates);
 		allStates.add(currentState);
 		scoreWithModel(allStates);
-
-		currentState = selectNextState(nextStates, true, SamplingStrategy.GREEDY);
+		currentState = selectNextState(currentState, nextStates, true, SamplingStrategy.GREEDY);
 
 		return currentState;
 	}
@@ -184,21 +198,55 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 		TaggedTimer.stop(scID);
 	}
 
-	protected StateT selectNextState(List<StateT> states, boolean model, SamplingStrategy strategy) {
+	protected StateT selectNextState(StateT currentState, List<StateT> states, boolean useModel,
+			SamplingStrategy strategy) {
+		StateT selectedNextState = null;
 		switch (strategy) {
 		case GREEDY:
-			if (model) {
+			if (useModel) {
 				Collections.sort(states, AbstractState.modelScoreComparator);
 			} else {
 				Collections.sort(states, AbstractState.objectiveScoreComparator);
 			}
-			return states.get(0);
+			selectedNextState = states.get(0);
+			break;
 		case LINEAR_SAMPLING:
-			return drawRandomlyFrom(states, model, false);
+			selectedNextState = drawRandomlyFrom(states, useModel, false);
+			break;
 		case SOFTMAX_SAMPLING:
-			return drawRandomlyFrom(states, model, true);
+			selectedNextState = drawRandomlyFrom(states, useModel, true);
+			break;
 		}
-		return null;
+		/*
+		 * Decide if selected state should be accepted as next state.
+		 */
+		if (accept(selectedNextState, currentState, useModel)) {
+			return selectedNextState;
+		} else {
+			return currentState;
+		}
+	}
+
+	// TODO implement a "temperature" approach (simulated annealing)
+	private boolean accept(StateT selectedNextState, StateT currentState, boolean useModel) {
+		double Ec = 0;
+		double En = 0;
+		if (useModel) {
+			Ec = currentState.getObjectiveScore();
+			En = selectedNextState.getObjectiveScore();
+		} else {
+			Ec = currentState.getModelScore();
+			En = selectedNextState.getModelScore();
+		}
+		// double k = 1;
+		// double T = 1;
+		// // Simulated Annealing
+		// double p = Math.exp(-(En - Ec) / (k * T));
+		// // always accept when p>0 otherwise accept with probability p
+		// return Math.random() < p;
+
+		return En >= Ec;
+		// return true;
 	}
 
 	protected Model<StateT> getModel() {
@@ -256,5 +304,13 @@ public class DefaultSampler<PriorT, StateT extends AbstractState, ResultT>
 			}
 		}
 		return nextStates.get(Math.max(0, i - 1));
+	}
+
+	public StoppingCriterion<StateT> getStoppingCriterion() {
+		return stoppingCriterion;
+	}
+
+	public void setStoppingCriterion(StoppingCriterion<StateT> stoppingCriterion) {
+		this.stoppingCriterion = stoppingCriterion;
 	}
 }

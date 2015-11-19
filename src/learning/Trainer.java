@@ -6,70 +6,71 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.LabeledDocument;
+import corpus.Instance;
+import corpus.LabeledInstance;
 import sampling.AbstractSampler;
+import sampling.Initializer;
 import variables.AbstractState;
 
-public class Trainer<StateT extends AbstractState> {
+public class Trainer {
 
 	private static Logger log = LogManager.getFormatterLogger(Trainer.class.getName());
 
-	enum LearningProcedure {
-		SAMPLE_RANK, PERCEPTRON;
-	}
-
-	private double initialAlpha;
-	private double finalAlpha;
-	private double initialOmega;
-	private double finalOmega;
-
-	private Model<StateT> model;
-	private Scorer<StateT> scorer;
-	// private AbstractSampler<StateT, QueryT> sampler;
-
-	public Trainer(Model<StateT> model, Scorer<StateT> scorer) {
+	/**
+	 * This object is a basically a helper that iterates over data instances and
+	 * triggers the generation of sampling chains for the provided
+	 * documents. </br>
+	 * The <b>train</b> function should be used for training while <b>test</b>
+	 * and <b>predict</b> can be used to evaluate the trained model.
+	 */
+	public Trainer() {
 		super();
-		this.model = model;
-		this.scorer = scorer;
-		// this.sampler = sampler;
 	}
 
-	public <PriorT, ResultT> List<StateT> train(AbstractSampler<PriorT, StateT, ResultT> sampler,
-			Learner<StateT> learner, List<? extends LabeledDocument<PriorT, ResultT>> documents, int numberOfEpochs,
-			int steps) {
+	/**
+	 * This method iterates over the provided training instances and generates
+	 * for each such instance a sampling chain of <i>steps</i> steps, using the
+	 * <i>sampler</i> object. The chain is initialized by the <i>initializer</i>
+	 * which creates an initial state based on the training instance. After each
+	 * step in the sampling chain, the sampler notifies the <i>learner</i> to
+	 * update the model w.r.t. the generated next states. The overall training
+	 * iterates <i>numberOfEpochs</i> times over the training data. The final
+	 * sampling state for each document is returned.
+	 * 
+	 * @param sampler
+	 * @param initializer
+	 * @param learner
+	 * @param documents
+	 * @param numberOfEpochs
+	 * @param steps
+	 * @return
+	 */
+	public <StateT extends AbstractState, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> train(
+			AbstractSampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
+			Learner<StateT> learner, List<InstanceT> documents, int numberOfEpochs) {
 		List<StateT> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
-		/**
-		 * This variable represents the probability for the learner to select
-		 * the next state for the sampling procedure according to the (best)
-		 * objective function score (in contrast to the (best) model score).
-		 * This probability decreases during the training, so that the learner,
-		 * in the end, favors the decisions of the model.
-		 */
-		double omegaStep = (initialOmega - finalOmega) / (steps * documents.size() * numberOfEpochs - 1);
-
-		double alphaStep = (initialAlpha - finalAlpha) / (steps * documents.size() * numberOfEpochs - 1);
-		log.info("#Epochs=%s, #Documents=%s, #Steps=%s", numberOfEpochs, documents.size(), steps);
-		log.info("iO=%s, fO=%s, Os=%s; iA=%s, fA=%s, As=%s", initialOmega, finalOmega, omegaStep, initialAlpha,
-				finalAlpha, alphaStep);
+		log.info("#Epochs=%s, #Documents=%s", numberOfEpochs, documents.size());
 		for (int e = 0; e < numberOfEpochs; e++) {
 			log.info("##############################");
 			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
 			log.info("##############################");
 			for (int d = 0; d < documents.size(); d++) {
-				LabeledDocument<PriorT, ResultT> document = documents.get(d);
-				log.info("===========================");
+				InstanceT document = documents.get(d);
+				ResultT goldResult = document.getGoldResult();
+				log.info("===========TRAIN===========");
 				log.info("Epoch: %s/%s; Document: %s/%s", e + 1, numberOfEpochs, d + 1, documents.size());
-				log.info("Content   : %s", document.getContent());
-				log.info("Gold State: %s", document.getGoldResult());
+				log.info("Content   : %s", document);
+				log.info("Gold State: %s", goldResult);
 				log.info("===========================");
 
-				List<StateT> generatedChain = sampler.generateChain(document, steps, learner);
+				StateT initialState = initializer.getInitialState(document);
+				List<StateT> generatedChain = sampler.generateChain(initialState, goldResult, learner);
 				StateT finalState = generatedChain.get(generatedChain.size() - 1);
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold State:   %s", document.getGoldResult());
+				log.info("Gold State:   %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -88,16 +89,34 @@ public class Trainer<StateT extends AbstractState> {
 		return finalStates;
 	}
 
-	public <PriorT, QueryT> List<StateT> test(AbstractSampler<PriorT, StateT, QueryT> sampler,
-			List<? extends LabeledDocument<PriorT, QueryT>> documents, int steps) {
+	/**
+	 * This method iterates over the provided training instances and generates
+	 * for each such instance a sampling chain of <i>steps</i> steps, using the
+	 * <i>sampler</i> object. The chain is initialized by the <i>initializer</i>
+	 * which creates an initial state based on the training instance. The final
+	 * sampling state for each document is returned. This method differs from
+	 * the <b>predict</b> only by a more detailed logging, since it has
+	 * knowledge about the expected result for each document.
+	 * 
+	 * @param sampler
+	 * @param initializer
+	 * @param documents
+	 * @param steps
+	 * @return
+	 */
+	public <StateT extends AbstractState, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
+			AbstractSampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
+			List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
-			LabeledDocument<PriorT, QueryT> document = documents.get(d);
-			log.info("===========================");
-			log.info("Content   : %s", document.getContent());
+			InstanceT document = documents.get(d);
+			log.info("===========TEST============");
+			log.info("Document: %s/%s", d + 1, documents.size());
+			log.info("Content   : %s", document);
 			log.info("Gold State: %s", document.getGoldResult());
 			log.info("===========================");
-			List<StateT> generatedChain = sampler.generateChain(document, steps);
+			StateT initialState = initializer.getInitialState(document);
+			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
@@ -108,12 +127,37 @@ public class Trainer<StateT extends AbstractState> {
 		return finalStates;
 	}
 
-	public Model<StateT> getModel() {
-		return model;
-	}
-
-	public Scorer<StateT> getScorer() {
-		return scorer;
+	/**
+	 * This method iterates over the provided instances and generates for each
+	 * such instance a sampling chain of <i>steps</i> steps, using the
+	 * <i>sampler</i> object. The chain is initialized by the <i>initializer</i>
+	 * which creates an initial state based on the training instance. The final
+	 * sampling state for each document is returned.
+	 * 
+	 * @param sampler
+	 * @param initializer
+	 * @param documents
+	 * @param steps
+	 * @return
+	 */
+	public <StateT extends AbstractState, InstanceT extends Instance> List<StateT> predict(
+			AbstractSampler<StateT, ?> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
+		List<StateT> finalStates = new ArrayList<>();
+		for (int d = 0; d < documents.size(); d++) {
+			InstanceT document = documents.get(d);
+			log.info("===========================");
+			log.info("Document: %s/%s", d + 1, documents.size());
+			log.info("Content   : %s", document);
+			log.info("===========================");
+			StateT initialState = initializer.getInitialState(document);
+			List<StateT> generatedChain = sampler.generateChain(initialState);
+			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+			finalStates.add(finalState);
+			log.info("++++++++++++++++");
+			log.info("Final State:  %s", finalState);
+			log.info("++++++++++++++++");
+		}
+		return finalStates;
 	}
 
 }

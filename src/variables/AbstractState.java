@@ -5,7 +5,6 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import corpus.Document;
 import factors.FactorGraph;
 import utility.StateID;
 
@@ -74,18 +73,5 @@ public abstract class AbstractState implements Serializable {
 		String id = STATE_ID_FORMATTER.format(currentID);
 		return new StateID(id);
 	}
-	// public abstract Multimap<VariableID, StateChange> getChangedVariables();
-
-	// public abstract void markAsUnchanged();
-
-	// /**
-	// * This state should duplicate the whole state. Don't forget to create a
-	// * cloned FactorGraph (like newFG = new FactorGraph(oldFG))
-	// *
-	// * @return
-	// */
-	// public abstract <StateT extends AbstractState> StateT duplicate();
-
-	public abstract Document getDocument();
 
 }

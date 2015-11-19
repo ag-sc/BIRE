@@ -2,16 +2,17 @@
 <Configuration status="WARN">
 	<Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level - %msg%n" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level : %msg%n" />
 			<!-- PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} 
 				- %msg%n" / -->
 		</Console>
 		<File name="LogFile" fileName="gen/log/all.log" immediateFlush="false"
 			append="false">
-<!-- 			<PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level - %msg%n" /> -->
+			<!-- <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level 
+				- %msg%n" /> -->
 			<PatternLayout
 				pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} 
-				- %msg%n" />
+				: %msg%n" />
 		</File>
 	</Appenders>
 	<Loggers>
@@ -25,17 +26,21 @@
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
-
-		<Logger name="learning.Trainer" level="INFO" additivity="false">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="LogFile" />
-		</Logger>
-		<Logger name="sampling.AbstractSampler" level="DEBUG"
+		<Logger name="templates.AbstractTemplate" level="WARN"
 			additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
 
+		<Logger name="learning.Trainer" level="INFO" additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="LogFile" />
+		</Logger>
+		<Logger name="sampling.DefaultSampler" level="WARN"
+			additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="LogFile" />
+		</Logger>
 		<Logger name="evaluation.EvaluationUtil" level="INFO"
 			additivity="false">
 			<AppenderRef ref="Console" />
@@ -48,6 +53,14 @@
 
 		<Logger name="learning.callbacks.SimpleLogCallback" level="INFO"
 			additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="LogFile" />
+		</Logger>
+		<Logger name="examples" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="LogFile" />
+		</Logger>
+		<Logger name="examples.TokenBoundaryExplorer" level="WARN" additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>

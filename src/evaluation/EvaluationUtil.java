@@ -22,9 +22,17 @@ public class EvaluationUtil {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
+	public static Comparator<Entry<String, Double>> featureWeightComparator = new Comparator<Map.Entry<String, Double>>() {
+		@Override
+		public int compare(Entry<String, Double> o1, Entry<String, Double> o2) {
+			return (int) -Math.signum(o1.getValue() - o2.getValue());
+		}
+	};
+
 	private static final String MODEL_NAME_PATTERN = "Model_%s_%s-%s-%s_%s-%s-%s";
-	private static final String RECORDS_NAME_PATTERN = "%s-Records_N=%s_%s-%s-%s_%s-%s-%s";
-	private static final String RECORD_NAME_PATTERN = "Record_%s_%s-%s-%s_%s-%s-%s";
+
+	public static DecimalFormat featureWeightFormat = new DecimalFormat("0.000000");
+	public static DecimalFormat SCORE_FORMAT = new DecimalFormat("0.0000");
 
 	public static String generateFilenameForModel(int numberOfTrainingSamples) {
 		Calendar now = Calendar.getInstance();
@@ -46,17 +54,12 @@ public class EvaluationUtil {
 		int count = 0;
 		for (AbstractState s : predictedStates) {
 			meanModelScore += s.getModelScore();
-			// meanPrecision += s.getObjectiveScore().precision;
-			// meanRecall += s.getObjectiveScore().recall;
 			meanObjectiveScore += s.getObjectiveScore();
 
-			// log.info("Document %s:\tmodel=%s; precision=%s, recall=%s,
-			// score=%s", s.getDocument().getName(),
-			// s.getModelScore(), s.getObjectiveScore().precision,
-			// s.getObjectiveScore().recall,
-			// s.getObjectiveScore().score);
-			log.info("Document %s:\tmodel=%s; objective=%s", s.getDocument().getName(), s.getModelScore(),
-					s.getObjectiveScore());
+			log.info("model=%s; objective=%s", s.getModelScore(), s.getObjectiveScore());
+			// log.info("Document %s:\tmodel=%s; objective=%s",
+			// s.getDocument().getName(), s.getModelScore(),
+			// s.getObjectiveScore());
 			count++;
 		}
 		meanModelScore /= count;
@@ -72,15 +75,6 @@ public class EvaluationUtil {
 		score /= scores.size();
 		return score;
 	}
-
-	public static Comparator<Entry<String, Double>> featureWeightComparator = new Comparator<Map.Entry<String, Double>>() {
-		@Override
-		public int compare(Entry<String, Double> o1, Entry<String, Double> o2) {
-			return (int) -Math.signum(o1.getValue() - o2.getValue());
-		}
-	};
-
-	public static DecimalFormat featureWeightFormat = new DecimalFormat("0.000000");
 
 	/**
 	 * Prints all weights of the model model in descending order, discarding all
@@ -111,8 +105,6 @@ public class EvaluationUtil {
 			log.info("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
 		}
 	}
-
-	public static DecimalFormat SCORE_FORMAT = new DecimalFormat("0.0000");
 
 	public static void printScores(List<Double> scores) {
 		for (double score : scores) {

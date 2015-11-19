@@ -1,16 +1,15 @@
 package learning.callbacks;
 
-import corpus.Document;
-import learning.Learner;
+import corpus.Instance;
 
 public interface IDocumentCallback<T> {
 
-	default void onStartDocument(T caller, Document document, int indexOfDocument, int numberOfDocuments,
-			int epoch, int numberOfEpochs) {
+	default <InstanceT extends Instance> void onStartDocument(T caller, InstanceT document, int indexOfDocument,
+			int numberOfDocuments, int epoch, int numberOfEpochs) {
 	}
 
-	default void onEndDocument(T caller, Document document, int indexOfDocument, int numberOfDocuments,
-			int epoch, int numberOfEpochs) {
+	default <InstanceT extends Instance> void onEndDocument(T caller, InstanceT document, int indexOfDocument,
+			int numberOfDocuments, int epoch, int numberOfEpochs) {
 	}
 
 }

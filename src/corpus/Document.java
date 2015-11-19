@@ -4,30 +4,29 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class Document<PriorT> implements Serializable {
+public class Document<PriotT> implements Serializable, Instance {
 
 	protected String name;
 	protected String content;
 	protected List<Token> tokens;
-	protected PriorT priorKnowledge;
+	protected PriotT priorKnowledge;
 
 	public Document(String name, String content, List<Token> tokens) {
 		this.name = name;
 		this.content = content;
 		this.tokens = tokens;
-		// this.priorKnowledge = priorKnowledge;
+	}
+
+	public PriotT getPriorKnowledge() {
+		return priorKnowledge;
+	}
+
+	public void setPriorKnowledge(PriotT priorKnowledge) {
+		this.priorKnowledge = priorKnowledge;
 	}
 
 	public String getContent() {
 		return content;
-	}
-
-	public PriorT getPriorKnowledge() {
-		return priorKnowledge;
-	}
-
-	public void setPriorKnowledge(PriorT priorKnowledge) {
-		this.priorKnowledge = priorKnowledge;
 	}
 
 	public List<Token> getTokens() {
