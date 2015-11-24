@@ -1,4 +1,4 @@
-package examples;
+package examples.tokenization;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -14,19 +14,26 @@ public class TokenState extends AbstractState {
 
 	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00000");
 	public Sentence sentence;
-	// TODO make this a list and keep in sorted!
-	public Set<Integer> tokenBoundaries;
+	// TODO make this a list and keep it sorted!
+	public Tokenization tokenization;
 
+	/**
+	 * This class presents an implementation of an AbstractState for the
+	 * tokenization of sentences. The state stores token boundaries as a
+	 * collection of integer indices.
+	 * 
+	 * @param sentence
+	 */
 	public TokenState(Sentence sentence) {
 		super();
 		this.sentence = sentence;
-		this.tokenBoundaries = new HashSet<>();
+		this.tokenization = new Tokenization();
 	}
 
 	public TokenState(TokenState state) {
 		super();
 		this.sentence = state.sentence;
-		this.tokenBoundaries = new HashSet<>(state.tokenBoundaries);
+		this.tokenization = new Tokenization(state.tokenization);
 		this.modelScore = state.modelScore;
 		this.objectiveScore = state.objectiveScore;
 		this.factorGraph = new FactorGraph(state.factorGraph);
@@ -34,7 +41,7 @@ public class TokenState extends AbstractState {
 
 	@Override
 	public String toString() {
-		List<Integer> sorted = new ArrayList<>(tokenBoundaries);
+		List<Integer> sorted = new ArrayList<>(tokenization.tokenBoundaries);
 		Collections.sort(sorted);
 		StringBuilder builder = new StringBuilder();
 		int last = 0;
@@ -45,7 +52,7 @@ public class TokenState extends AbstractState {
 		}
 		builder.append(sentence.text.subSequence(last, sentence.text.length()));
 		return "TokenState [[" + SCORE_FORMAT.format(getModelScore()) + "][" + SCORE_FORMAT.format(getObjectiveScore())
-				+ "][" + builder.toString() + "] " + tokenBoundaries + "]";
+				+ "][" + builder.toString() + "] " + sorted + "]";
 	}
 
 }

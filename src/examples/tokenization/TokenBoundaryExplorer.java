@@ -1,4 +1,4 @@
-package examples;
+package examples.tokenization;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ public class TokenBoundaryExplorer implements Explorer<TokenState> {
 	private static Logger log = LogManager.getFormatterLogger();
 
 	/**
-	 * This explorer creates possible successor states, inserting a new token
+	 * This explorer creates possible successor states by inserting a new token
 	 * boundary at every possible character position. Additionally, every
 	 * existing boundary is removed.
 	 */
@@ -23,27 +23,28 @@ public class TokenBoundaryExplorer implements Explorer<TokenState> {
 	public List<TokenState> getNextStates(TokenState currentState) {
 		List<TokenState> nextStates = new ArrayList<>();
 		for (int i = 0; i < currentState.sentence.text.length(); i++) {
-			if (currentState.tokenBoundaries.contains(i)) {
+			if (currentState.tokenization.tokenBoundaries.contains(i)) {
 				{
 					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenBoundaries.remove(i);
+					generatedState.tokenization.tokenBoundaries.remove(i);
 					nextStates.add(generatedState);
 				}
-				if (i > 0 && !currentState.tokenBoundaries.contains(i - 1)) {
+				if (i > 0 && !currentState.tokenization.tokenBoundaries.contains(i - 1)) {
 					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenBoundaries.remove(i);
-					generatedState.tokenBoundaries.add(i - 1);
+					generatedState.tokenization.tokenBoundaries.remove(i);
+					generatedState.tokenization.tokenBoundaries.add(i - 1);
 					nextStates.add(generatedState);
 				}
-				if (i < currentState.sentence.text.length() - 1 && !currentState.tokenBoundaries.contains(i + 1)) {
+				if (i < currentState.sentence.text.length() - 1
+						&& !currentState.tokenization.tokenBoundaries.contains(i + 1)) {
 					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenBoundaries.remove(i);
-					generatedState.tokenBoundaries.add(i + 1);
+					generatedState.tokenization.tokenBoundaries.remove(i);
+					generatedState.tokenization.tokenBoundaries.add(i + 1);
 					nextStates.add(generatedState);
 				}
 			} else {
 				TokenState generatedState = new TokenState(currentState);
-				generatedState.tokenBoundaries.add(i);
+				generatedState.tokenization.tokenBoundaries.add(i);
 				nextStates.add(generatedState);
 			}
 		}

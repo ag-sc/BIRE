@@ -1,4 +1,4 @@
-package examples;
+package examples.tokenization;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,6 +11,13 @@ import templates.AbstractTemplate;
 public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 
 	public int windowSize = 5;
+
+	/**
+	 * This template generates factors for each character position and computes
+	 * features for the local neighborhood.
+	 */
+	public TokenizationTemplate() {
+	}
 
 	@Override
 	protected void computeFactor(TokenState state, AbstractFactor factor) {
@@ -50,7 +57,7 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 	@Override
 	protected Collection<AbstractFactor> generateFactors(TokenState state) {
 		Set<AbstractFactor> factors = new HashSet<>();
-		for (int i : state.tokenBoundaries) {
+		for (int i : state.tokenization.tokenBoundaries) {
 			int from = i - windowSize / 2;
 			int to = i + windowSize / 2;
 			// int from = Math.max(0, i - windowSize / 2);

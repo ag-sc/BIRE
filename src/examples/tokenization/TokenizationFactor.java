@@ -1,4 +1,4 @@
-package examples;
+package examples.tokenization;
 
 import java.util.Set;
 
@@ -10,6 +10,14 @@ public class TokenizationFactor extends AbstractFactor {
 	public int from;
 	public int to;
 
+	/**
+	 * This factor applies to the characters in the region specified by
+	 * <i>from</i> and <i>to</i>.
+	 * 
+	 * @param template
+	 * @param from
+	 * @param to
+	 */
 	public TokenizationFactor(TokenizationTemplate template, int from, int to) {
 		super(template);
 		this.from = from;

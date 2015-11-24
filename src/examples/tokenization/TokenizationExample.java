@@ -1,4 +1,4 @@
-package examples;
+package examples.tokenization;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class TokenizationExample {
 		/*
 		 * Define an objective function that guides the training procedure.
 		 */
-		ObjectiveFunction<TokenState, TokenState> objective = new TokenizationObjectiveFunction();
+		ObjectiveFunction<TokenState, Tokenization> objective = new TokenizationObjectiveFunction();
 
 		/*
 		 * Define templates that are responsible to generate factors/features to
@@ -98,7 +98,7 @@ public class TokenizationExample {
 		 */
 		int numberOfSamplingSteps = 50;
 		StoppingCriterion<TokenState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-		DefaultSampler<TokenState, TokenState> sampler = new DefaultSampler<>(model, scorer, objective, explorers,
+		DefaultSampler<TokenState, Tokenization> sampler = new DefaultSampler<>(model, scorer, objective, explorers,
 				stoppingCriterion);
 
 		/*
@@ -124,8 +124,8 @@ public class TokenizationExample {
 		 * predictions, we do that here, manually, before we print the results.
 		 */
 		for (TokenState state : testResults) {
-			TokenState goldState = ((TokenizedSentence) state.sentence).getGoldResult();
-			double s = objective.score(state, goldState);
+			Tokenization goldResult = ((TokenizedSentence) state.sentence).getGoldResult();
+			double s = objective.score(state, goldResult);
 		}
 		/*
 		 * Now, that the predicted states have there objective score computed
@@ -160,7 +160,7 @@ public class TokenizationExample {
 		Pattern p = Pattern.compile("\\w+|\\s+");
 		for (String line : lines) {
 			TokenizedSentence tokenizedSentence = new TokenizedSentence(line);
-			TokenState tokenization = new TokenState(tokenizedSentence);
+			Tokenization tokenization = new Tokenization();
 			Matcher m = p.matcher(line);
 			while (m.find()) {
 				int from = m.start();
