@@ -1,7 +1,7 @@
 **(Work In Progress)**
 
-This descriptions of the inner workings of the BIRE Framework is still in progress and, thus, incomplete.
-However, we hope it is still helpful.
+This description of the inner workings of the BIRE Framework is still in progress and incomplete.
+However, we hope it is already helpful.
 
 
 The main components of the BIRE framework are:
