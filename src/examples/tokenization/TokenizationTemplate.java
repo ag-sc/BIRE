@@ -24,9 +24,6 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 		TokenizationFactor tokenizationFactor = (TokenizationFactor) factor;
 		int from = tokenizationFactor.from;
 		int to = tokenizationFactor.to;
-		// int from = Math.max(0, tokenizationFactor.from);
-		// int to = Math.min(state.sentence.text.length(),
-		// tokenizationFactor.to);
 		String window = state.sentence.text.substring(from, to);
 
 		Vector features = new Vector();
@@ -54,15 +51,16 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 		tokenizationFactor.setFeatures(features);
 	}
 
+	/**
+	 * This implementation creates factors for each currently predicted boundary
+	 * (except for the edge cases; these are just omitted).
+	 */
 	@Override
 	protected Collection<AbstractFactor> generateFactors(TokenState state) {
 		Set<AbstractFactor> factors = new HashSet<>();
 		for (int i : state.tokenization.tokenBoundaries) {
 			int from = i - windowSize / 2;
 			int to = i + windowSize / 2;
-			// int from = Math.max(0, i - windowSize / 2);
-			// int to = Math.min(state.sentence.text.length(), i + windowSize /
-			// 2);
 			if (from >= 0 && to <= state.sentence.text.length()) {
 				factors.add(new TokenizationFactor(this, from, to));
 			}

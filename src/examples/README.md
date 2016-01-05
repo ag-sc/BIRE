@@ -17,7 +17,7 @@ The main components of the BIRE framework are:
 * **Objective Function**: Computes a score for a state w.r.t. an expected result. 
 
 To generate states for a data instance (e.g. a sentence), the general procedure is as follows:
-* Create an intial state for the given data instance using the Initializer. This initial state can contain prior knowledge or nothing at all.
+* Create an initial state for the given data instance using the Initializer. This initial state can contain prior knowledge or nothing at all.
 * Pass this initial state to the Sampler to generate a chain of sampled states.
  * The sampler creates a list of possible successor states that all modify the initial state by some small change. For instance, these states might contain new, removed or otherwise changed annotations. The DefaultSampler uses Explorers for this.
  * During training, the generated states are used to adapt model parameters.

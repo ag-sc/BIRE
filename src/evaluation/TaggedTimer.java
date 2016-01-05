@@ -7,8 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import logging.Log;
-
 public class TaggedTimer {
 
 	private static Logger log = LogManager.getFormatterLogger();

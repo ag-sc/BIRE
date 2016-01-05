@@ -1,9 +1,9 @@
 package sampling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,11 +14,13 @@ import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Scorer;
+import learning.Trainer;
+import learning.callbacks.EpochCallback;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState, ResultT> implements AbstractSampler<StateT, ResultT> {
+public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT>, EpochCallback {
 
 	enum SamplingStrategy {
 		GREEDY, LINEAR_SAMPLING, SOFTMAX_SAMPLING;
@@ -33,7 +35,21 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 
 	protected final boolean multiThreaded = true;
 	private SamplingStrategy samplingStrategy = SamplingStrategy.GREEDY;
+	private boolean useModelDuringTraining = true;
 
+	/**
+	 * The DefaultSampler implements the Sampler interface. This sampler divides
+	 * the sampling procedure in the exploration of the search space (using
+	 * Explorers) and the actual sampling that happens in this class. It is
+	 * designed to be flexible in the actual sampling strategy and the stopping
+	 * criterion.
+	 * 
+	 * @param model
+	 * @param scorer
+	 * @param objective
+	 * @param explorers
+	 * @param stoppingCriterion
+	 */
 	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
@@ -44,6 +60,20 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		this.stoppingCriterion = stoppingCriterion;
 	}
 
+	/**
+	 * The DefaultSampler implements the Sampler interface. This sampler divides
+	 * the sampling procedure in the exploration of the search space (using
+	 * Explorers) and the actual sampling that happens in this class. It is
+	 * designed to be flexible in the actual sampling strategy and the stopping
+	 * criterion. This constructor uses a simple step limit as the stopping
+	 * criterion.
+	 * 
+	 * @param model
+	 * @param scorer
+	 * @param objective
+	 * @param explorers
+	 * @param samplingSteps
+	 */
 	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, int samplingSteps) {
 		super();
@@ -52,6 +82,11 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingSteps);
+	}
+
+	@Override
+	public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+		useModelDuringTraining = !useModelDuringTraining;
 	}
 
 	@Override
@@ -96,25 +131,109 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		return generatedChain;
 	}
 
+	/**
+	 * Generates states, computes features, scores states, and updates the
+	 * model. After that a successor state is selected.
+	 * 
+	 * @param learner
+	 * @param explorer
+	 * @param goldResult
+	 * @param currentState
+	 * @return
+	 */
+	// protected StateT performTrainingStep(Learner<StateT> learner,
+	// Explorer<StateT> explorer, ResultT goldResult,
+	// StateT currentState) {
+	// log.debug("TRAINING:");
+	// List<StateT> nextStates = explorer.getNextStates(currentState);
+	//
+	// unroll(currentState, nextStates);
+	//
+	// scoreWithObjective(currentState, nextStates, goldResult);
+	// learner.update(currentState, nextStates);
+	// log.debug("(Re)Score:");
+	// List<StateT> allStates = new ArrayList<>(nextStates);
+	// allStates.add(currentState);
+	// scoreWithModel(allStates);
+	//
+	// currentState = selectNextState(currentState, nextStates,
+	// useModelDuringTraining, samplingStrategy);
+	//
+	// return currentState;
+	// }
+
+	// protected StateT performTrainingStep(Learner<StateT> learner,
+	// Explorer<StateT> explorer, ResultT goldResult,
+	// StateT currentState) {
+	// log.debug("TRAINING:");
+	// List<StateT> allNextStates = explorer.getNextStates(currentState);
+	// List<StateT> nextStates = SamplingUtils.nRandomElements(allNextStates,
+	// 5);
+	//
+	// unroll(currentState, nextStates);
+	//
+	// scoreWithObjective(currentState, nextStates, goldResult);
+	// learner.update(currentState, nextStates);
+	// log.debug("(Re)Score:");
+	// List<StateT> allStates = new ArrayList<>(nextStates);
+	// allStates.add(currentState);
+	// scoreWithModel(allStates);
+	//
+	// currentState = selectNextState(currentState, nextStates,
+	// useModelDuringTraining, samplingStrategy);
+	//
+	// return currentState;
+	// }
+
 	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, ResultT goldResult,
 			StateT currentState) {
 		log.debug("TRAINING:");
+		/**
+		 * Generate possible successor states.
+		 */
 		List<StateT> nextStates = explorer.getNextStates(currentState);
-
+		/**
+		 * Apply templates to states and thus generate factors and features
+		 */
 		unroll(currentState, nextStates);
-
-		scoreWithObjective(currentState, nextStates, goldResult);
-		learner.update(currentState, nextStates);
-		log.debug("(Re)Score:");
+		/**
+		 * Score all states according to the model.
+		 */
 		List<StateT> allStates = new ArrayList<>(nextStates);
 		allStates.add(currentState);
 		scoreWithModel(allStates);
+		/**
+		 * Sample one possible successor from model distribution
+		 */
+		StateT candidateState = SamplingUtils.drawFromDistribution(nextStates, true, false);
+		/**
+		 * Compute objective function scores
+		 */
+		scoreWithObjective(currentState, Arrays.asList(candidateState), goldResult);
+		/**
+		 * Update model with selected state
+		 */
+		learner.update(currentState, candidateState);
+		/**
+		 * Recompute model score to reflect last update in score.
+		 */
+		log.debug("(Re)Score:");
+		scoreWithModel(Arrays.asList(currentState, candidateState));
 
-		currentState = selectNextState(currentState, nextStates, false, samplingStrategy);
-
-		return currentState;
+		/**
+		 * Choose to accept or reject selected state
+		 */
+		return SamplingUtils.accept(candidateState, currentState, true) ? candidateState : currentState;
 	}
 
+	/**
+	 * Generates states, computes features and scores states. After that a
+	 * successor state is selected.
+	 * 
+	 * @param explorer
+	 * @param currentState
+	 * @return
+	 */
 	protected StateT performPredictionStep(Explorer<StateT> explorer, StateT currentState) {
 		log.debug("PREDICTION:");
 		List<StateT> nextStates = explorer.getNextStates(currentState);
@@ -123,8 +242,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		List<StateT> allStates = new ArrayList<>(nextStates);
 		allStates.add(currentState);
 		scoreWithModel(allStates);
-		currentState = selectNextState(currentState, nextStates, true, SamplingStrategy.GREEDY);
-
+		currentState = selectNextState(currentState, nextStates, true, SamplingStrategy.LINEAR_SAMPLING);
 		return currentState;
 	}
 
@@ -198,12 +316,15 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		TaggedTimer.stop(scID);
 	}
 
-	protected StateT selectNextState(StateT currentState, List<StateT> states, boolean useModel,
+	protected StateT selectNextState(StateT currentState, List<StateT> states, boolean useModelDistribution,
 			SamplingStrategy strategy) {
+		if (states.isEmpty()) {
+			return currentState;
+		}
 		StateT selectedNextState = null;
 		switch (strategy) {
 		case GREEDY:
-			if (useModel) {
+			if (useModelDistribution) {
 				Collections.sort(states, AbstractState.modelScoreComparator);
 			} else {
 				Collections.sort(states, AbstractState.objectiveScoreComparator);
@@ -211,42 +332,20 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 			selectedNextState = states.get(0);
 			break;
 		case LINEAR_SAMPLING:
-			selectedNextState = drawRandomlyFrom(states, useModel, false);
+			selectedNextState = SamplingUtils.drawFromDistribution(states, useModelDistribution, false);
 			break;
 		case SOFTMAX_SAMPLING:
-			selectedNextState = drawRandomlyFrom(states, useModel, true);
+			selectedNextState = SamplingUtils.drawFromDistribution(states, useModelDistribution, true);
 			break;
 		}
 		/*
 		 * Decide if selected state should be accepted as next state.
 		 */
-		if (accept(selectedNextState, currentState, useModel)) {
+		if (SamplingUtils.accept(selectedNextState, currentState, useModelDistribution)) {
 			return selectedNextState;
 		} else {
 			return currentState;
 		}
-	}
-
-	// TODO implement a "temperature" approach (simulated annealing)
-	private boolean accept(StateT selectedNextState, StateT currentState, boolean useModel) {
-		double Ec = 0;
-		double En = 0;
-		if (useModel) {
-			Ec = currentState.getObjectiveScore();
-			En = selectedNextState.getObjectiveScore();
-		} else {
-			Ec = currentState.getModelScore();
-			En = selectedNextState.getModelScore();
-		}
-		// double k = 1;
-		// double T = 1;
-		// // Simulated Annealing
-		// double p = Math.exp(-(En - Ec) / (k * T));
-		// // always accept when p>0 otherwise accept with probability p
-		// return Math.random() < p;
-
-		return En >= Ec;
-		// return true;
 	}
 
 	protected Model<StateT> getModel() {
@@ -257,60 +356,15 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Ab
 		return scorer;
 	}
 
-	/**
-	 * Selects a state from the given list according to the probability
-	 * distribution defined by the states' (model/objective) scores. Each score
-	 * is divided by the total sum of all scores, in order to create a
-	 * probability distribution across states. If "softmax" is true, the
-	 * probability distribution is computed using the softmax formula.
-	 * 
-	 * @param nextStates
-	 * @param model
-	 * @param softmax
-	 * @return
-	 */
-	public static <StateT extends AbstractState> StateT drawRandomlyFrom(List<StateT> nextStates, boolean model,
-			boolean softmax) {
-		// compute total sum of scores
-		Function<StateT, Double> toScore = null;
-		if (model) {
-			toScore = s -> s.getModelScore();
-		} else {
-			toScore = d -> d.getObjectiveScore();
-		}
-		Function<Double, Double> toProbability = null;
-		if (softmax) {
-			toProbability = d -> Math.exp(d);
-		} else {
-			toProbability = d -> d;
-		}
-		double totalSum = 0;
-		for (StateT s : nextStates) {
-			if (model) {
-				totalSum += toProbability.apply(toScore.apply(s));
-			} else {
-				totalSum += toProbability.apply(toScore.apply(s));
-			}
-		}
-
-		double index = Math.random() * totalSum;
-		double sum = 0;
-		int i = 0;
-		while (sum < index) {
-			if (model) {
-				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
-			} else {
-				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
-			}
-		}
-		return nextStates.get(Math.max(0, i - 1));
-	}
-
 	public StoppingCriterion<StateT> getStoppingCriterion() {
 		return stoppingCriterion;
 	}
 
 	public void setStoppingCriterion(StoppingCriterion<StateT> stoppingCriterion) {
 		this.stoppingCriterion = stoppingCriterion;
+	}
+
+	public void setStepLimit(int samplingLimit) {
+		this.stoppingCriterion = new StepLimitCriterion<>(samplingLimit);
 	}
 }

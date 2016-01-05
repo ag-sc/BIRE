@@ -13,6 +13,15 @@ public class Scorer<StateT extends AbstractState> {
 	private static Logger log = LogManager.getFormatterLogger(Scorer.class.getName());
 	private Model<StateT> model;
 
+	/**
+	 * The scorer scores a state w.r.t. the model. It retrieves all factors
+	 * related to the state and multiplies their individual scores. These
+	 * individual factor scores are basically the exponential of the dot product
+	 * of the feature values and the weights of the template of the factor:
+	 * <i>exp(factor.features * factor.template.weights)</i> for all factors.
+	 * 
+	 * @param model
+	 */
 	public Scorer(Model<StateT> model) {
 		this.model = model;
 	}
@@ -31,8 +40,20 @@ public class Scorer<StateT extends AbstractState> {
 
 		// compute the score of the state according to all templates and all
 		// respective factors
-		double score = 1;
 
+		// double score = 0;
+		// Collection<AbstractFactor> factors =
+		// state.getFactorGraph().getFactors();
+		// for (AbstractFactor factor : factors) {
+		// Vector featureVector = factor.getFeatureVector();
+		// double factorScore =
+		// featureVector.dotProduct(factor.getTemplate().getWeightVector());
+		// score += factorScore;
+		// }
+		// state.setModelScore(score);
+		// return score;
+
+		double score = 1;
 		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
 		for (AbstractFactor factor : factors) {
 			Vector featureVector = factor.getFeatureVector();

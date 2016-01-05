@@ -24,6 +24,10 @@ public class TokenizationFactor extends AbstractFactor {
 		this.to = to;
 	}
 
+	/**
+	 * Since this function is currently not yet needed i the framework we simply
+	 * neglect it here.
+	 */
 	@Override
 	public Set<VariableID> getVariableIDs() {
 		return null;

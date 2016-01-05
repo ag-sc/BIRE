@@ -10,12 +10,14 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.Instance;
 import evaluation.TaggedTimer;
 import factors.AbstractFactor;
+import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
-public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT> {
+public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT>, InstanceCallback {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
@@ -25,10 +27,21 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	public double currentAlpha;
 	public int updates = 0;
 
+	/**
+	 * This implementation of the learner implements the SampleRank learning
+	 * scheme. Very generally speaking, given a pair of states, the learner
+	 * changes the weights of the model such that the scores of the model are
+	 * aligned with the preference of the objective function. As a slight
+	 * modification, this implementation allows mini-batch updates.
+	 * 
+	 * @param model
+	 * @param alpha
+	 */
 	public DefaultLearner(Model<StateT> model, double alpha) {
 		super();
 		this.model = model;
-		this.currentAlpha = alpha;
+		this.alpha = alpha;
+		this.currentAlpha = this.alpha;
 	}
 
 	/**
@@ -64,6 +77,13 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		updates++;
 	}
 
+	/**
+	 * Updates the weights of each template according to the SampleRank scheme.
+	 * 
+	 * @param currentState
+	 * @param possibleNextState
+	 * @param weightUpdates
+	 */
 	private void sampleRankUpdate(StateT currentState, StateT possibleNextState,
 			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
 		log.trace("Current:\t%s", currentState);
@@ -191,6 +211,20 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 
 	public Model<StateT> getModel() {
 		return model;
+	}
+
+	@Override
+	public <InstanceT extends Instance> void onStartInstance(Trainer caller, InstanceT instance, int indexOfInstance,
+			int numberOfInstances, int epoch, int numberOfEpochs) {
+		double fraction = ((float) (indexOfInstance + epoch * numberOfInstances))
+				/ (numberOfEpochs * numberOfInstances);
+		currentAlpha = (alpha * 0.99) * (1 - fraction) + alpha * 0.01;
+	}
+
+	@Override
+	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT instance, int indexOfInstance,
+			int numberOfInstances, int epoch, int numberOfEpochs) {
+
 	}
 
 }

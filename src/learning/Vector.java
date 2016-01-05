@@ -11,13 +11,21 @@ public class Vector implements Serializable {
 	private static final double DEFAULT_VALUE = 0;
 	private HashMap<String, Double> features;
 
+	/**
+	 * This class basically wraps a Map of feature names and values.
+	 * Additionally, it provides convenience functions for some of the
+	 * computations during the learning process.
+	 */
 	public Vector() {
 		features = new HashMap<String, Double>();
 	}
 
 	public void set(String feature, Double value) {
 		features.put(feature, value);
+	}
 
+	public void set(String feature, boolean flag) {
+		features.put(feature, flag ? 1.0 : 0.0);
 	}
 
 	public void remove(String feature) {

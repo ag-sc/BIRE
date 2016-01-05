@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +44,7 @@ public class TokenizationExample {
 		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 0);
 		List<TokenizedSentence> train = dataSplit.getTrain();
 		List<TokenizedSentence> test = dataSplit.getTest();
-		List<Sentence> predict = getSentences();
+		// List<Sentence> predict = getSentences();
 
 		train.forEach(s -> log.debug("%s", s));
 		test.forEach(s -> log.debug("%s", s));

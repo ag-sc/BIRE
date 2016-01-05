@@ -12,7 +12,6 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import logging.Log;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
@@ -21,6 +20,13 @@ public class Model<StateT extends AbstractState> implements Serializable {
 
 	private Collection<AbstractTemplate<StateT>> templates;
 
+	/**
+	 * The model contains a collection of templates that can generate factors
+	 * (and features) for a given state. The model's weights are stored in the
+	 * templates and shared across all their respective factors.
+	 * 
+	 * @param templates
+	 */
 	public Model(Collection<AbstractTemplate<StateT>> templates) {
 		this.templates = templates;
 	}
@@ -63,37 +69,6 @@ public class Model<StateT extends AbstractState> implements Serializable {
 			t.applyTo(state, false);
 		}
 	}
-	// public void update(StateT state, double alpha) {
-	// // log.debug("Update state: %s", state);
-	// for (Template<StateT> template : templates) {
-	// template.update(state, alpha);
-	// }
-	// }
-
-	// /**
-	// * Drops all factors from the memory that are not part of this state (in
-	// * order to save memory). This is useful at the end of a sampling step,
-	// * where only one state is kept to proceed the training.
-	// *
-	// * @param state
-	// */
-	// public void trimToState(StateT state) {
-	// for (Template<StateT> template : templates) {
-	// template.trimToState(state);
-	// }
-	// }
-	// /**
-	// * This function removes all references to previously created states. This
-	// * includes that every template clears it's mapping between states and
-	// * factors, since they are no more needed after a complete sampling step
-	// *
-	// * @param unneededStates
-	// */
-	// public void clean() {
-	// for (Template<StateT> template : templates) {
-	// template.clean();
-	// }
-	// }
 
 	@Override
 	public String toString() {

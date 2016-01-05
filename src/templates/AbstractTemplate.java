@@ -2,7 +2,6 @@ package templates;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,7 +51,6 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 		// TODO only update changed factors
 		log.debug("(Re)compute Factors: %s", allPossibleFactors);
 		allPossibleFactors.forEach(f -> computeFactor(state, f));
-
 	}
 
 	/**

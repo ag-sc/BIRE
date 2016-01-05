@@ -56,10 +56,7 @@ public class EvaluationUtil {
 			meanModelScore += s.getModelScore();
 			meanObjectiveScore += s.getObjectiveScore();
 
-			log.info("model=%s; objective=%s", s.getModelScore(), s.getObjectiveScore());
-			// log.info("Document %s:\tmodel=%s; objective=%s",
-			// s.getDocument().getName(), s.getModelScore(),
-			// s.getObjectiveScore());
+			log.info("ID: %s; model=%s; objective=%s", s.getID(), s.getModelScore(), s.getObjectiveScore());
 			count++;
 		}
 		meanModelScore /= count;

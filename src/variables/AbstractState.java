@@ -5,17 +5,21 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import factors.FactorGraph;
 import utility.StateID;
 
 public abstract class AbstractState implements Serializable {
 
+	private static Logger log = LogManager.getFormatterLogger();
 	public static final Comparator<AbstractState> modelScoreComparator = new Comparator<AbstractState>() {
 
 		@Override
 		public int compare(AbstractState s1, AbstractState s2) {
 			// TODO
-			return (int) -Math.signum(s1.getModelScore() - s2.getModelScore());
+			return -Double.compare(s1.getModelScore(), s2.getModelScore());
 		}
 	};
 	public static final Comparator<AbstractState> objectiveScoreComparator = new Comparator<AbstractState>() {
@@ -23,7 +27,7 @@ public abstract class AbstractState implements Serializable {
 		@Override
 		public int compare(AbstractState s1, AbstractState s2) {
 			// TODO
-			return (int) -Math.signum(s1.getObjectiveScore() - s2.getObjectiveScore());
+			return -Double.compare(s1.getObjectiveScore(), s2.getObjectiveScore());
 		}
 	};
 	private static final DecimalFormat STATE_ID_FORMATTER = new DecimalFormat("000000000");
@@ -34,12 +38,23 @@ public abstract class AbstractState implements Serializable {
 	protected FactorGraph factorGraph = new FactorGraph();
 	protected final StateID id;
 
+	/**
+	 * The AbstractState is the super class of all state implementations. It
+	 * provides functions to store and retrieve model and objective scores. It
+	 * contains a factor graph that stores its factors. It provides a unique
+	 * state ID.
+	 */
 	public AbstractState() {
 		this.id = generateStateID();
 
 	}
 
 	public void setModelScore(double modelScore) {
+		if (Double.isNaN(modelScore)) {
+			log.error("Model score of state with ID %s is NaN. State: %s", id, this);
+		} else if (Double.isInfinite(modelScore)) {
+			log.warn("Model score of state with ID %s is infinite. State: %s", id, this);
+		}
 		this.modelScore = modelScore;
 	}
 
@@ -48,6 +63,11 @@ public abstract class AbstractState implements Serializable {
 	}
 
 	public void setObjectiveScore(double score) {
+		if (Double.isNaN(score)) {
+			log.error("Objective score of state with ID %s is NaN. State: %s", id, this);
+		} else if (Double.isInfinite(score)) {
+			log.warn("Objective score of state with ID %s is infinite. State: %s", id, this);
+		}
 		this.objectiveScore = score;
 	}
 
