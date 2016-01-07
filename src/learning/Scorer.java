@@ -41,18 +41,6 @@ public class Scorer<StateT extends AbstractState> {
 		// compute the score of the state according to all templates and all
 		// respective factors
 
-		// double score = 0;
-		// Collection<AbstractFactor> factors =
-		// state.getFactorGraph().getFactors();
-		// for (AbstractFactor factor : factors) {
-		// Vector featureVector = factor.getFeatureVector();
-		// double factorScore =
-		// featureVector.dotProduct(factor.getTemplate().getWeightVector());
-		// score += factorScore;
-		// }
-		// state.setModelScore(score);
-		// return score;
-
 		double score = 1;
 		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
 		for (AbstractFactor factor : factors) {

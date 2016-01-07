@@ -18,15 +18,15 @@ public class SamplingUtils {
 	 * probability distribution is computed using the softmax formula.
 	 * 
 	 * @param nextStates
-	 * @param model
+	 * @param useModelDistribution
 	 * @param softmax
 	 * @return
 	 */
-	public static <StateT extends AbstractState> StateT drawFromDistribution(List<StateT> nextStates, boolean model,
-			boolean softmax) {
+	public static <StateT extends AbstractState> StateT drawFromDistribution(List<StateT> nextStates,
+			boolean useModelDistribution, boolean softmax) {
 		// compute total sum of scores
 		Function<StateT, Double> toScore = null;
-		if (model) {
+		if (useModelDistribution) {
 			toScore = s -> s.getModelScore();
 		} else {
 			toScore = d -> d.getObjectiveScore();
@@ -39,7 +39,7 @@ public class SamplingUtils {
 		}
 		double totalSum = 0;
 		for (StateT s : nextStates) {
-			if (model) {
+			if (useModelDistribution) {
 				totalSum += toProbability.apply(toScore.apply(s));
 			} else {
 				totalSum += toProbability.apply(toScore.apply(s));
@@ -50,7 +50,7 @@ public class SamplingUtils {
 		double sum = 0;
 		int i = 0;
 		while (sum < index) {
-			if (model) {
+			if (useModelDistribution) {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
 			} else {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));

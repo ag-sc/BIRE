@@ -14,7 +14,7 @@ public class StepLimitCriterion<StateT extends AbstractState> implements Stoppin
 
 	@Override
 	public boolean checkCondition(List<StateT> chain, int step) {
-		return maxSteps < step;
+		return maxSteps <= step;
 	}
 
 }

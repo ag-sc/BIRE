@@ -66,13 +66,13 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextState) {
-		Map<AbstractTemplate<StateT>, Vector> weightUpdates = new HashMap<>();
-		model.getTemplates().forEach(t -> weightUpdates.put(t, new Vector()));
-		possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightUpdates));
+		Map<AbstractTemplate<StateT>, Vector> weightGradients = new HashMap<>();
+		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
+		possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightGradients));
 		if (normalize) {
-			applyWeightUpdate(weightUpdates, possibleNextState.size());
+			applyWeightUpdate(weightGradients, possibleNextState.size());
 		} else {
-			applyWeightUpdate(weightUpdates, 1);
+			applyWeightUpdate(weightGradients, 1);
 		}
 		updates++;
 	}
@@ -104,9 +104,9 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		TaggedTimer.stop(diffID);
 
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState)) {
-			updateFeatures(featureDifferences, -currentAlpha, weightUpdates);
+			updateFeatures(featureDifferences, -1, weightUpdates);
 		} else if (weightedDifferenceSum <= 0 && preference(possibleNextState, currentState)) {
-			updateFeatures(featureDifferences, +currentAlpha, weightUpdates);
+			updateFeatures(featureDifferences, +1, weightUpdates);
 		} else {
 		}
 	}
@@ -155,14 +155,14 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
-			Vector updates = weightUpdates.get(t);
+			Vector gradients = weightUpdates.get(t);
 			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				// only update for real differences
 				if (featureDifference.getValue() != 0) {
-					double learningStep = learningDirection * featureDifference.getValue();
-					log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), learningStep,
+					double weightGradient = learningDirection * featureDifference.getValue();
+					log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient,
 							featureDifference.getKey());
-					updates.addToValue(featureDifference.getKey(), learningStep);
+					gradients.addToValue(featureDifference.getKey(), weightGradient);
 				}
 			}
 		}
@@ -172,20 +172,21 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	/**
 	 * Applies the previously collected weight updates in one step.
 	 * 
-	 * @param weightUpdates
+	 * @param weightGradients
 	 * @param numberOfUpdates
 	 */
-	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightUpdates, int numberOfUpdates) {
+	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightGradients, int numberOfUpdates) {
 		long upID = TaggedTimer.start("UP-UPDATE");
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
-			Vector weightUpdatesForTemplate = weightUpdates.get(t);
-			for (Entry<String, Double> weightUpdate : weightUpdatesForTemplate.getFeatures().entrySet()) {
-				// only update for real differences
-				if (weightUpdate.getValue() != 0) {
-					double learningStep = weightUpdate.getValue() / numberOfUpdates;
-					log.trace("\t%s -> %s:\t%s", weightUpdate.getValue(), learningStep, weightUpdate.getKey());
-					t.update(weightUpdate.getKey(), learningStep);
+			Vector weightUpdatesForTemplate = weightGradients.get(t);
+			for (Entry<String, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {
+				// only update for actual differences
+				if (weightGradient.getValue() != 0) {
+					double gradient = weightGradient.getValue() / numberOfUpdates;
+					log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
+							weightGradient.getKey());
+					t.update(weightGradient.getKey(), gradient, currentAlpha);
 				}
 			}
 		}

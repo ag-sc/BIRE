@@ -14,6 +14,9 @@ import utility.StateID;
 public abstract class AbstractState implements Serializable {
 
 	private static Logger log = LogManager.getFormatterLogger();
+	/**
+	 * A comparator implementation that allows to sort states in descending order with respect to their model score.
+	 */
 	public static final Comparator<AbstractState> modelScoreComparator = new Comparator<AbstractState>() {
 
 		@Override
@@ -22,6 +25,9 @@ public abstract class AbstractState implements Serializable {
 			return -Double.compare(s1.getModelScore(), s2.getModelScore());
 		}
 	};
+	/**
+	 * A comparator implementation that allows to sort states in descending order with respect to their objective score.
+	 */
 	public static final Comparator<AbstractState> objectiveScoreComparator = new Comparator<AbstractState>() {
 
 		@Override

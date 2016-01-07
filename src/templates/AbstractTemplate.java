@@ -16,15 +16,19 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	private static Logger log = LogManager.getFormatterLogger(AbstractTemplate.class.getName());
 
 	protected Vector weights = new Vector();
+	protected double l2 = 0.01;
 
 	/**
 	 * Updates the weight of the given feature by adding the given alpha value.
 	 * 
 	 * @param feature
-	 * @param alpha
+	 * @param gradient
+	 * @param currentAlpha
 	 */
-	public void update(String feature, double alpha) {
-		weights.addToValue(feature, alpha);
+	public void update(String feature, double gradient, double learningRate) {
+		double weight = weights.getValueOfFeature(feature);
+		double update = learningRate * (gradient - l2 * weight);
+		weights.addToValue(feature, update);
 	}
 
 	public Vector getWeightVector() {
