@@ -31,6 +31,13 @@ import templates.AbstractTemplate;
 public class Main {
 	private static Logger log = LogManager.getFormatterLogger();
 
+	/**
+	 * This example shows how to use the BIRE Framework for a simple toy
+	 * problem. The task is to evaluate a weather observation (here a set of
+	 * weather conditions e.g. {SUNNY, WINDY}) to predict its suitability to
+	 * play outside. By that, the use of States, Variables, Explorers, Templates
+	 * and objective functions is shown.
+	 */
 	public static void main(String[] args) {
 		/*
 		 * Load training and test data.
@@ -39,7 +46,6 @@ public class Main {
 		DataSplit<PlayOutsideInstance> dataSplit = new DataSplit<>(samples, 0.7, 0);
 		List<PlayOutsideInstance> train = dataSplit.getTrain();
 		List<PlayOutsideInstance> test = dataSplit.getTest();
-		// List<Sentence> predict = getSentences();
 
 		train.forEach(s -> log.debug("%s", s));
 		test.forEach(s -> log.debug("%s", s));
