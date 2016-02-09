@@ -102,7 +102,7 @@ public class Trainer {
 				log.info("===========TRAIN===========");
 				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
 				log.info("Content   : %s", instance);
-				log.info("Gold State: %s", goldResult);
+				log.info("Gold Result: %s", goldResult);
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
 					c.onStartInstance(this, instance, i, instances.size(), e, numberOfEpochs);
@@ -114,7 +114,7 @@ public class Trainer {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold State:   %s", goldResult);
+				log.info("Gold Result:   %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -163,14 +163,14 @@ public class Trainer {
 			log.info("===========TEST============");
 			log.info("Document: %s/%s", d + 1, documents.size());
 			log.info("Content   : %s", document);
-			log.info("Gold State: %s", document.getGoldResult());
+			log.info("Gold Result: %s", document.getGoldResult());
 			log.info("===========================");
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
-			log.info("Gold State:   %s", document.getGoldResult());
+			log.info("Gold Result:   %s", document.getGoldResult());
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 		}
