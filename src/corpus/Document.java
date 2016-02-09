@@ -4,6 +4,15 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This class implements the Instance interface for documents. Each document is
+ * (mainly) represented as a list of tokens. Additionally, prior knowledge is
+ * given that can be used to initialize sampled states for this document.
+ * 
+ * @author sjebbara
+ *
+ * @param <PriotT>
+ */
 public class Document<PriotT> implements Serializable, Instance {
 
 	protected String name;

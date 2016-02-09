@@ -38,4 +38,22 @@ public class FactorGraph implements Serializable {
 	public void reset() {
 		init();
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("FactorGraph:");
+		builder.append("\n");
+		for (AbstractTemplate<?> template : factors.keySet()) {
+			builder.append("-------------- ");
+			builder.append(template.getClass().getSimpleName());
+			builder.append(" --------------");
+			builder.append("\n");
+			for (AbstractFactor factor : factors.get(template)) {
+				builder.append(factor);
+				builder.append("\n");
+			}
+		}
+		return builder.toString();
+	}
+	
 }

@@ -15,8 +15,9 @@ import evaluation.EvaluationUtil;
 import learning.DefaultLearner;
 import learning.Model;
 import learning.ObjectiveFunction;
-import learning.Scorer;
 import learning.Trainer;
+import learning.scorer.DefaultScorer;
+import learning.scorer.Scorer;
 import sampling.DefaultSampler;
 import sampling.Explorer;
 import sampling.stoppingcriterion.StepLimitCriterion;
@@ -71,7 +72,7 @@ public class TokenizationExample {
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.
 		 */
-		Scorer<TokenState> scorer = new Scorer<>(model);
+		Scorer<TokenState> scorer = new DefaultScorer<>();
 
 		/*
 		 * Create an Initializer that is responsible for providing an initial

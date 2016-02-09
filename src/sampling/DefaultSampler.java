@@ -1,8 +1,6 @@
 package sampling;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -13,18 +11,35 @@ import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
-import learning.Scorer;
-import learning.Trainer;
-import learning.callbacks.EpochCallback;
+import learning.scorer.Scorer;
+import sampling.samplingstrategies.SamplingStrategy;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT>, EpochCallback {
+public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT> {
 
-	enum SamplingStrategy {
-		GREEDY, LINEAR_SAMPLING, SOFTMAX_SAMPLING;
-	}
+	public final SamplingStrategy<StateT> greedyStrategy = candidates -> {
+		return candidates.stream().max((s1, s2) -> Double.compare(s1.getModelScore(), s2.getModelScore())).get();
+	};
+	public final SamplingStrategy<StateT> greedyObjectiveStrategy = candidates -> {
+		return candidates.stream().max((s1, s2) -> Double.compare(s1.getObjectiveScore(), s2.getObjectiveScore()))
+				.get();
+	};
+	public final SamplingStrategy<StateT> top5UniformSamplingStrategy = candidates -> {
+		candidates.sort(AbstractState.modelScoreComparator);
+		return SamplingUtils.drawRandomElement(candidates.subList(0, 5));
+	};
+	public final SamplingStrategy<StateT> top5ModelSamplingStrategy = candidates -> {
+		candidates.sort(AbstractState.modelScoreComparator);
+		return SamplingUtils.drawFromDistribution(candidates.subList(0, 5), true, false);
+	};
+	public final SamplingStrategy<StateT> linearSamplingStrategy = candidates -> SamplingUtils
+			.drawFromDistribution(candidates, true, false);
+	public final SamplingStrategy<StateT> linearSamplingObjectiveStrategy = candidates -> SamplingUtils
+			.drawFromDistribution(candidates, false, false);
+	public final SamplingStrategy<StateT> softmaxSamplingStrategy = candidates -> SamplingUtils
+			.drawFromDistribution(candidates, true, true);
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
 	protected Model<StateT> model;
@@ -35,10 +50,10 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 
 	protected final boolean multiThreaded = true;
 	/**
-	 * Defines the sampling strategy for the training phase. The test phase currently always uses the greedy variant.
+	 * Defines the sampling strategy for the training phase. The test phase
+	 * currently always uses the greedy variant.
 	 */
-	private SamplingStrategy samplingStrategy = SamplingStrategy.LINEAR_SAMPLING;
-	private boolean useModelDuringTraining = true;
+	private SamplingStrategy<StateT> samplingStrategy = linearSamplingStrategy;
 
 	/**
 	 * The DefaultSampler implements the Sampler interface. This sampler divides
@@ -85,11 +100,6 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingSteps);
-	}
-
-	@Override
-	public void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
-		useModelDuringTraining = !useModelDuringTraining;
 	}
 
 	@Override
@@ -155,49 +165,70 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		 */
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 		List<StateT> allStates = new ArrayList<>(nextStates);
-		allStates.add(currentState);
-		/**
-		 * Compute objective function scores
-		 */
-		scoreWithObjective(allStates, goldResult);
-		/**
-		 * Apply templates to states and, thus generate factors and features
-		 */
-		unroll(allStates);
-		/**
-		 * Score all states according to the model.
-		 */
-		scoreWithModel(allStates);
-		/**
-		 * Sample one possible successor from model distribution
-		 */
-		StateT candidateState = null;
-		switch (samplingStrategy) {
-		case GREEDY:
-			nextStates.sort(AbstractState.modelScoreComparator);
-			candidateState = nextStates.get(0);
-			break;
-		case LINEAR_SAMPLING:
-			candidateState = SamplingUtils.drawFromDistribution(nextStates, true, false);
-			break;
-		case SOFTMAX_SAMPLING:
-			candidateState = SamplingUtils.drawFromDistribution(nextStates, true, true);
-			break;
-		}
-		/**
-		 * Update model with selected state
-		 */
-		learner.update(currentState, candidateState);
-		/**
-		 * Recompute model score to reflect last update in score.
-		 */
-		log.debug("(Re)Score:");
-		scoreWithModel(Arrays.asList(currentState, candidateState));
+		if (nextStates.size() > 0) {
+			allStates.add(currentState);
+			/**
+			 * Compute objective function scores
+			 */
+			scoreWithObjective(allStates, goldResult);
+			/**
+			 * Apply templates to states and, thus generate factors and features
+			 */
+			unroll(allStates);
+			/**
+			 * Score all states according to the model.
+			 */
+			scoreWithModel(allStates);
+			/**
+			 * Sample one possible successor from model distribution
+			 */
+			StateT candidateState = samplingStrategy.sampleCandidate(nextStates);
+			/**
+			 * Update model with selected state
+			 */
+			// nextStates.sort(AbstractState.modelScoreComparator);
+			// List<StateT> train = new ArrayList<>();
+			// train.addAll(nextStates.subList(0, Math.min(10,
+			// nextStates.size())));
+			// train.addAll(nextStates.subList(Math.max(0, nextStates.size() -
+			// 10),
+			// nextStates.size()));
+			// learner.update(currentState, nextStates);
+			learner.update(currentState, candidateState);
+			/**
+			 * Recompute model score to reflect last update in score.
+			 */
+			// log.debug("(Re)Score:");
+			// scoreWithModel(Arrays.asList(currentState, candidateState));
 
-		/**
-		 * Choose to accept or reject selected state
-		 */
-		return SamplingUtils.accept(candidateState, currentState, true) ? candidateState : currentState;
+			// EvaluationUtil.printWeights(model, 0);
+			// nextStates.sort(AbstractState.modelScoreComparator);
+			// double sum = 0;
+			// for (StateT state : nextStates) {
+			// sum += state.getModelScore();
+			// }
+			// if (sum == 0)
+			// sum = 1;
+			// System.out.println(String.format("CURRENT: %s", currentState));
+			// System.out.println(String.format("CANDIDATE: %s: %s",
+			// candidateState.getModelScore() / sum, candidateState));
+			// for (StateT state : nextStates) {
+			// System.out.println(String.format("%s: %s", state.getModelScore()
+			// /
+			// sum, state));
+			// }
+			// StateT candidateState =
+			// greedyObjectiveStrategy.sampleCandidate(nextStates);
+			// System.out
+			// .println(String.format("NEW CANDIDATE: %s: %s",
+			// candidateState.getModelScore() / sum, candidateState));
+			/**
+			 * Choose to accept or reject selected state
+			 */
+			// return candidateState;
+			return SamplingUtils.accept(candidateState, currentState, true) ? candidateState : currentState;
+		}
+		return currentState;
 	}
 
 	/**
@@ -214,21 +245,44 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		 * Generate possible successor states.
 		 */
 		List<StateT> nextStates = explorer.getNextStates(currentState);
-		List<StateT> allStates = new ArrayList<>(nextStates);
-		allStates.add(currentState);
-		/**
-		 * Apply templates to states and thus generate factors and features
-		 */
-		unroll(allStates);
-		/**
-		 * Score all states according to the model.
-		 */
-		scoreWithModel(allStates);
-		/**
-		 * Select a successor state from the list of possible successors.
-		 */
-		currentState = selectNextState(currentState, nextStates, true, SamplingStrategy.GREEDY);
-		return currentState;
+		if (nextStates.size() > 0) {
+			List<StateT> allStates = new ArrayList<>(nextStates);
+			allStates.add(currentState);
+			/**
+			 * Apply templates to states and thus generate factors and features
+			 */
+			unroll(allStates);
+			/**
+			 * Score all states according to the model.
+			 */
+			scoreWithModel(allStates);
+			/**
+			 * Select a candidate state from the list of possible successors.
+			 */
+			StateT candidateState = greedyStrategy.sampleCandidate(nextStates);
+			/**
+			 * Decide to accept or reject the selected state
+			 */
+
+			// EvaluationUtil.printWeights(model, 0);
+			// nextStates.sort(AbstractState.modelScoreComparator);
+			// double sum = 0;
+			// for (StateT state : nextStates) {
+			// sum += state.getModelScore();
+			// }
+			// log.debug("CURRENT: %s", currentState);
+			// log.debug("CANDIDATE: %s: %s", candidateState.getModelScore() /
+			// sum, candidateState);
+			// for (StateT state : nextStates) {
+			// log.debug("%s: %s", state.getModelScore() / sum, state);
+			// }
+
+			currentState = SamplingUtils.strictAccept(candidateState, currentState, true) ? candidateState
+					: currentState;
+			return currentState;
+		} else {
+			return currentState;
+		}
 	}
 
 	/**
@@ -296,34 +350,38 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		TaggedTimer.stop(scID);
 	}
 
-	protected StateT selectNextState(StateT currentState, List<StateT> states, boolean useModelDistribution,
-			SamplingStrategy strategy) {
-		if (states.isEmpty()) {
-			return currentState;
-		}
-		StateT selectedNextState = null;
-		switch (strategy) {
-		case GREEDY:
-			if (useModelDistribution) {
-				Collections.sort(states, AbstractState.modelScoreComparator);
-			} else {
-				Collections.sort(states, AbstractState.objectiveScoreComparator);
-			}
-			selectedNextState = states.get(0);
-			break;
-		case LINEAR_SAMPLING:
-			selectedNextState = SamplingUtils.drawFromDistribution(states, useModelDistribution, false);
-			break;
-		case SOFTMAX_SAMPLING:
-			selectedNextState = SamplingUtils.drawFromDistribution(states, useModelDistribution, true);
-			break;
-		}
-		/*
-		 * Decide if selected state should be accepted as next state.
-		 */
-		return SamplingUtils.accept(selectedNextState, currentState, useModelDistribution) ? selectedNextState
-				: currentState;
-	}
+	// protected StateT selectNextState(StateT currentState, List<StateT>
+	// states, boolean useModelDistribution,
+	// SamplingStrategy strategy) {
+	// if (states.isEmpty()) {
+	// return currentState;
+	// }
+	// StateT selectedNextState = null;
+	// switch (strategy) {
+	// case GREEDY:
+	// if (useModelDistribution) {
+	// Collections.sort(states, AbstractState.modelScoreComparator);
+	// } else {
+	// Collections.sort(states, AbstractState.objectiveScoreComparator);
+	// }
+	// selectedNextState = states.get(0);
+	// break;
+	// case LINEAR_SAMPLING:
+	// selectedNextState = SamplingUtils.drawFromDistribution(states,
+	// useModelDistribution, false);
+	// break;
+	// case SOFTMAX_SAMPLING:
+	// selectedNextState = SamplingUtils.drawFromDistribution(states,
+	// useModelDistribution, true);
+	// break;
+	// }
+	// /*
+	// * Decide if selected state should be accepted as next state.
+	// */
+	// return SamplingUtils.accept(selectedNextState, currentState,
+	// useModelDistribution) ? selectedNextState
+	// : currentState;
+	// }
 
 	protected Model<StateT> getModel() {
 		return model;
@@ -351,7 +409,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingLimit);
 	}
 
-	public SamplingStrategy getSamplingStrategy() {
+	public SamplingStrategy<StateT> getSamplingStrategy() {
 		return samplingStrategy;
 	}
 
@@ -362,8 +420,16 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * 
 	 * @param samplingStrategy
 	 */
-	public void setSamplingStrategy(SamplingStrategy samplingStrategy) {
+	public void setSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.samplingStrategy = samplingStrategy;
+	}
+
+	public List<Explorer<StateT>> getExplorers() {
+		return explorers;
+	}
+
+	public void setExplorers(List<Explorer<StateT>> explorers) {
+		this.explorers = explorers;
 	}
 
 }

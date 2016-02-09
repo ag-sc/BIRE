@@ -35,7 +35,8 @@ public class SingleVariableFactor extends AbstractFactor {
 
 	@Override
 	public String toString() {
-		return "SingleEntityFactor [factorID=" + factorID + ", template=" + template + ", entityID=" + entityID + "]";
+		return "SingleVariableFactor [factorID=" + factorID + ", template=" + template.getClass().getSimpleName()
+				+ ", entityID=" + entityID + ", features=" + features + "]";
 	}
 
 }

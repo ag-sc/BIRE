@@ -58,12 +58,7 @@ public class Vector implements Serializable {
 	 * @return
 	 */
 	public double getValueOfFeature(String feature) {
-		if (features.containsKey(feature)) {
-			return features.get(feature);
-		} else {
-			return DEFAULT_VALUE;
-		}
-
+		return features.getOrDefault(feature, DEFAULT_VALUE);
 	}
 
 	public Map<String, Double> getFeatures() {
@@ -96,20 +91,21 @@ public class Vector implements Serializable {
 		}
 	}
 
-	// public static Vector substract(Vector v1, Vector v2) {
-	// Set<String> allFeatures = new HashSet<String>();
-	// allFeatures.addAll(v1.getFeatureNames());
-	// allFeatures.addAll(v2.getFeatureNames());
-	// Vector sub = new Vector();
-	// for (String f : allFeatures) {
-	// sub.set(f, v1.getValueOfFeature(f) - v2.getValueOfFeature(f));
-	// }
-	// return sub;
-	// }
-
 	@Override
 	public String toString() {
 		return features.toString();
 	}
 
+	public void normalize() {
+		double length = 0;
+		for (Entry<String, Double> feature : features.entrySet()) {
+			length += Math.pow(feature.getValue(), 2);
+		}
+		length = Math.sqrt(length);
+		if (length > 0) {
+			for (Entry<String, Double> feature : features.entrySet()) {
+				features.put(feature.getKey(), feature.getValue() / length);
+			}
+		}
+	}
 }

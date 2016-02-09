@@ -13,11 +13,12 @@ import org.apache.logging.log4j.Logger;
 import corpus.Instance;
 import evaluation.TaggedTimer;
 import factors.AbstractFactor;
+import learning.callbacks.EpochCallback;
 import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
-public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT>, InstanceCallback {
+public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT>, InstanceCallback, EpochCallback {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
@@ -68,6 +69,9 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	public void update(final StateT currentState, List<StateT> possibleNextState) {
 		Map<AbstractTemplate<StateT>, Vector> weightGradients = new HashMap<>();
 		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
+		/**
+		 * Rank each possible next state against the current state
+		 */
 		possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightGradients));
 		if (normalize) {
 			applyWeightUpdate(weightGradients, possibleNextState.size());
@@ -124,7 +128,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		Vector diff = new Vector();
 		Collection<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
 		Collection<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
-
 		for (AbstractFactor factor : factors1) {
 			if (factor.getTemplate() == template) {
 				diff.add(factor.getFeatureVector());
@@ -152,10 +155,12 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
 		long upID = TaggedTimer.start("UP-COLLECT");
 		log.trace("UPDATE: learning direction: %s", learningDirection);
+
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
 			Vector gradients = weightUpdates.get(t);
+
 			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				// only update for real differences
 				if (featureDifference.getValue() != 0) {
@@ -228,4 +233,9 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 
 	}
 
+	@Override
+	public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+		double fraction = ((float) epoch) / (numberOfEpochs);
+		currentAlpha = (alpha * 0.9) * (1 - fraction) + alpha * 0.01;
+	}
 }

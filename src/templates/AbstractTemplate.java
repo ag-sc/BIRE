@@ -15,7 +15,15 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 
 	private static Logger log = LogManager.getFormatterLogger(AbstractTemplate.class.getName());
 
+	/**
+	 * Initializes the feature weights for this template. The default values for
+	 * the weights are sampled from a uniform distribution in the range of
+	 * INIT_WEIGHT_RANGE.
+	 */
 	protected Vector weights = new Vector();
+	/**
+	 * A regularization parameter to punish big feature weights.
+	 */
 	protected double l2 = 0.01;
 
 	/**

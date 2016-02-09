@@ -1,4 +1,4 @@
-package learning;
+package learning.scorer;
 
 import java.util.Collection;
 
@@ -6,12 +6,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import factors.AbstractFactor;
+import learning.Vector;
 import variables.AbstractState;
 
-public class Scorer<StateT extends AbstractState> {
+public class DefaultScorer<StateT extends AbstractState> implements Scorer<StateT> {
 
-	private static Logger log = LogManager.getFormatterLogger(Scorer.class.getName());
-	private Model<StateT> model;
+	private static Logger log = LogManager.getFormatterLogger();
 
 	/**
 	 * The scorer scores a state w.r.t. the model. It retrieves all factors
@@ -22,8 +22,7 @@ public class Scorer<StateT extends AbstractState> {
 	 * 
 	 * @param model
 	 */
-	public Scorer(Model<StateT> model) {
-		this.model = model;
+	public DefaultScorer() {
 	}
 
 	/**
@@ -45,20 +44,13 @@ public class Scorer<StateT extends AbstractState> {
 		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
 		for (AbstractFactor factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
-			double factorScore = Math.exp(featureVector.dotProduct(factor.getTemplate().getWeightVector()));
+			Vector weights = factor.getTemplate().getWeightVector();
+			double dotProduct = featureVector.dotProduct(weights);
+			double factorScore = Math.exp(dotProduct);
 			score *= factorScore;
 		}
 		state.setModelScore(score);
 		return score;
-
-	}
-
-	public Model<StateT> getModel() {
-		return model;
-	}
-
-	public void setModel(Model<StateT> model) {
-		this.model = model;
 	}
 
 }

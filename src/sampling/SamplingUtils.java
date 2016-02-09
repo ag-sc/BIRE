@@ -1,7 +1,6 @@
 package sampling;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -89,14 +88,38 @@ public class SamplingUtils {
 		// // always accept when p>0 otherwise accept with probability p
 		// return Math.random() < p;
 
-		double ratio = pCandidate / pCurrent;
-		if (ratio >= 1) {
-			return true;
-		} else {
-			return Math.random() < ratio;
-		}
-		// return En >= Ec;
+		// double ratio = pCandidate / pCurrent;
+		// if (ratio > 1) {
 		// return true;
+		// } else {
+		// // return Math.random() < Math.pow(ratio, 2);
+		// return Math.random() < ratio;
+		// }
+		return pCandidate > pCurrent;
+		// return true;
+	}
+
+	/**
+	 * Accepts the candidate State only when its score is greater than the score
+	 * of the current state.
+	 * 
+	 * @param candidateState
+	 * @param currentState
+	 * @param useModelDistribution
+	 * @return
+	 */
+	public static <StateT extends AbstractState> boolean strictAccept(StateT candidateState, StateT currentState,
+			boolean useModelDistribution) {
+		Function<StateT, Double> getScore = null;
+		if (useModelDistribution) {
+			getScore = s -> s.getModelScore();
+		} else {
+			getScore = s -> s.getObjectiveScore();
+		}
+
+		double pCurrent = getScore.apply(currentState);
+		double pCandidate = getScore.apply(candidateState);
+		return pCandidate > pCurrent;
 	}
 
 	public static <T> T drawRandomElement(List<T> allNextStates) {

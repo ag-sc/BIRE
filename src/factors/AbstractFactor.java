@@ -102,11 +102,6 @@ public abstract class AbstractFactor implements Serializable {
 		return template;
 	}
 
-	@Override
-	public String toString() {
-		return "Factor [template=" + template + ",\n" + "features=" + features + "]";
-	}
-
 	// TODO Check if hashCode and equals work this way
 	@Override
 	public int hashCode() {
@@ -135,6 +130,11 @@ public abstract class AbstractFactor implements Serializable {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Factor [template=" + template + ",\n" + "features=" + features + "]";
 	}
 
 }
