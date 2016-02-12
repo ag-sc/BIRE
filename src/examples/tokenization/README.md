@@ -4,18 +4,18 @@ We demonstrate the usage of the BIRE framework given a tokenization problem.
 Our data consists of natural language sentences that are labeled with an expected tokenization.
 **Note:** We define "tokenization" as finding the correct token boundaries, i.e. character offsets.
 We create a Sentence class that implements the Instance interface and that contains a String representation of the actual sentence:
-'''java
+```java
 public class Sentence implements Instance {
 
 	public String text;
 
 	...
 }
-'''
+```
 
 Then we define our tokenization.
 We create a class Tokenization that consist of a set of Integers:
-'''java
+```java
 
 public class Tokenization {
 	public Set<Integer> tokenBoundaries;
@@ -25,7 +25,7 @@ public class Tokenization {
 	}
     ...
 }
-'''
+```
 
 The whole set of Integers describes the complete tokenization of the Sentence while each individual Integer represents a single token boundary.
 Example:
@@ -33,7 +33,7 @@ Sentence:   "The cat is black."
 Boundaries: [0,3,4,7,8,10,11,16,17]
 
 We combine Sentence and Tokenization into a single object that we call TokenizedSentence:
-'''java
+```java
 public class TokenizedSentence extends Sentence implements LabeledInstance<Tokenization> {
 
 	private Tokenization tokenization;
@@ -44,7 +44,7 @@ public class TokenizedSentence extends Sentence implements LabeledInstance<Token
 	}
 	...
 }
-'''
+```
 The TokenizedSentence is our labeled training data and needs to implement LabeledInstance.
 The interface requires the implementation of the getGoldResult() method which returns the expected Tokenization of the Sentence.
 In our case the type of the "generic" result is fixed to Tokenization.
@@ -52,7 +52,7 @@ In our case the type of the "generic" result is fixed to Tokenization.
 
 In this examples, the BIRE framework uses TokenStates to represent the current tokenization of a Sentence.
 Each TokenState extends the AbstractState class and references the sentence that it relates to and contains a preliminary tokenization (in the form of character offsets).
-'''java
+```java
 public class TokenState extends AbstractState {
 
 	public Sentence sentence;
@@ -65,14 +65,14 @@ public class TokenState extends AbstractState {
 	}
 	...
 }
-'''
+```
 
 Up until this point, we defined all the basic classes to represent our data.
 The BIRE framework uses sampling strategies to infer a tokenization from a given sentence.
 Before we can implement the exploration of our search space (tokenizations) we need to provide an initial TokenState.
 We implement the Initializer interface in the TokenizationInitializer class.
 Given a Sentence, this class provides an initial TokenState:
-'''java
+```java
 public class TokenizationInitializer<SentenceT extends Sentence> implements Initializer<SentenceT, TokenState> {
 
 	@Override
@@ -80,13 +80,13 @@ public class TokenizationInitializer<SentenceT extends Sentence> implements Init
 		return new TokenState(sentence);
 	}
 }
-'''
+```
 **Note:** For simplicity, we always initialize the TokenState with no boundaries.
 However, it is possible to use heuristics and prior knowledge for token boundaries at this point, e.g. another tokenization tool. 
 
 Next we define our exploration strategy that explores the search space around a given TokenState.
 For this, we implement the Explorer interface that requires the getNextStates() method:
-'''
+```java
 public class TokenBoundaryExplorer implements Explorer<TokenState> {
 
 	@Override
@@ -106,7 +106,7 @@ public class TokenBoundaryExplorer implements Explorer<TokenState> {
 		return nextStates;
 	}
 }
-'''
+```
 Given a current TokenState, we generate a set of slightly modified candidate states by applying atomic changes to the current state.
 We iterate of all the characters in the sentence and create a modified state with the following rules:
 if that specific character position is already marked as a token boundary:
@@ -121,7 +121,7 @@ This naive exploration strategy allows us to reach every possible tokenization f
 At this point, we implemented the necessary components for the sampling procedure.
 Following, we set up the components for the learning procedure.
 We start with the objective function, that scores a TokenState w.r.t. a preferred Tokenization:
-'''
+```java
 public class TokenizationObjectiveFunction extends ObjectiveFunction<TokenState, Tokenization> {
 
 	@Override
@@ -146,7 +146,7 @@ public class TokenizationObjectiveFunction extends ObjectiveFunction<TokenState,
 		return g1;
 	}
 }
-'''
+```
 The TokenizationObjectiveFunction computes the overlap between the expected gold tokenization and the tokenization that is proposed by the given TokenState.
 The G1-Measure (very similar to F1-measure) is computed to account for missing and  wrongly placed token boundaries.
 
@@ -154,7 +154,7 @@ The objective function gives us a method to score a state at training time.
 However, we need to define means to score a state at test time, without the objective function.
 For this, we implement a key component of our model: the template.
 Our solution for the tokenization problem only uses a single Template:
-'''
+```java
 public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 
 	public int windowSize = 5;
@@ -203,16 +203,16 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 		tokenizationFactor.setFeatures(features);
 	}
 }
-'''
+```
 The functionality of each template is split into two methods that need to be implemented, the generateFactors() and the computeFactor() method.
 The generateFactors() introduces a factor for each boundary position that is proposed by the given state. The TokenizationFactor simply extends the AbtractFactor class and, additionally, stores the boundary position that it was assigned to:
-'''java
+```java
 public class TokenizationFactor extends AbstractFactor {
 
 	public int position;
 	...
 }
-'''
+```
 
 Then, the computeFactor() method receives each of the created factors and computes feature values for this specific factor.
 In this implementation we decided on computing lexical features on a window of 5 characters around the token boundary in question. By this, we can capture and evaluate a (small) context around the boundary position.
