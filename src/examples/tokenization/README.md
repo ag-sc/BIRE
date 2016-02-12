@@ -2,6 +2,7 @@
 
 We demonstrate the usage of the BIRE framework given a tokenization problem.
 Our data consists of natural language sentences that are labeled with an expected tokenization.
+
 **Note:** We define "tokenization" as finding the correct token boundaries, i.e. character offsets.
 We create a Sentence class that implements the Instance interface and that contains a String representation of the actual sentence:
 ```java
@@ -28,10 +29,11 @@ public class Tokenization {
 ```
 
 The whole set of Integers describes the complete tokenization of the Sentence while each individual Integer represents a single token boundary.
+```
 Example:
 Sentence:   "The cat is black."
 Boundaries: [0,3,4,7,8,10,11,16,17]
-
+```
 We combine Sentence and Tokenization into a single object that we call TokenizedSentence:
 ```java
 public class TokenizedSentence extends Sentence implements LabeledInstance<Tokenization> {
@@ -81,6 +83,7 @@ public class TokenizationInitializer<SentenceT extends Sentence> implements Init
 	}
 }
 ```
+
 **Note:** For simplicity, we always initialize the TokenState with no boundaries.
 However, it is possible to use heuristics and prior knowledge for token boundaries at this point, e.g. another tokenization tool. 
 
@@ -116,6 +119,7 @@ if not
 	
 This results in exactly one state for each character in the sentence.
 This naive exploration strategy allows us to reach every possible tokenization from every state in our sampling procedure.
+
 **Note:** The exploration could easily be optimized, e.g. by only creating boundaries at specific locations such as whitespaces, punctuation, ... . 
 
 At this point, we implemented the necessary components for the sampling procedure.
