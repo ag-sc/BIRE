@@ -7,21 +7,18 @@ import utility.VariableID;
 
 public class TokenizationFactor extends AbstractFactor {
 
-	public int from;
-	public int to;
+	public int position;
 
 	/**
 	 * This factor applies to the characters in the region specified by
 	 * <i>from</i> and <i>to</i>.
 	 * 
 	 * @param template
-	 * @param from
-	 * @param to
+	 * @param position
 	 */
-	public TokenizationFactor(TokenizationTemplate template, int from, int to) {
+	public TokenizationFactor(TokenizationTemplate template, int position) {
 		super(template);
-		this.from = from;
-		this.to = to;
+		this.position = position;
 	}
 
 	/**
@@ -37,8 +34,7 @@ public class TokenizationFactor extends AbstractFactor {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + from;
-		result = prime * result + to;
+		result = prime * result + position;
 		return result;
 	}
 
@@ -51,9 +47,7 @@ public class TokenizationFactor extends AbstractFactor {
 		if (getClass() != obj.getClass())
 			return false;
 		TokenizationFactor other = (TokenizationFactor) obj;
-		if (from != other.from)
-			return false;
-		if (to != other.to)
+		if (position != other.position)
 			return false;
 		return true;
 	}

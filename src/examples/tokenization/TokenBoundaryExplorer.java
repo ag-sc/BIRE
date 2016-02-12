@@ -24,32 +24,15 @@ public class TokenBoundaryExplorer implements Explorer<TokenState> {
 		List<TokenState> nextStates = new ArrayList<>();
 		for (int i = 0; i < currentState.sentence.text.length(); i++) {
 			if (currentState.tokenization.tokenBoundaries.contains(i)) {
-				{
-					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenization.tokenBoundaries.remove(i);
-					nextStates.add(generatedState);
-				}
-				if (i > 0 && !currentState.tokenization.tokenBoundaries.contains(i - 1)) {
-					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenization.tokenBoundaries.remove(i);
-					generatedState.tokenization.tokenBoundaries.add(i - 1);
-					nextStates.add(generatedState);
-				}
-				if (i < currentState.sentence.text.length() - 1
-						&& !currentState.tokenization.tokenBoundaries.contains(i + 1)) {
-					TokenState generatedState = new TokenState(currentState);
-					generatedState.tokenization.tokenBoundaries.remove(i);
-					generatedState.tokenization.tokenBoundaries.add(i + 1);
-					nextStates.add(generatedState);
-				}
+				TokenState generatedState = new TokenState(currentState);
+				generatedState.tokenization.tokenBoundaries.remove(i);
+				nextStates.add(generatedState);
 			} else {
 				TokenState generatedState = new TokenState(currentState);
 				generatedState.tokenization.tokenBoundaries.add(i);
 				nextStates.add(generatedState);
 			}
 		}
-		TokenState generatedState = new TokenState(currentState);
-		nextStates.add(generatedState);
 		return nextStates;
 	}
 

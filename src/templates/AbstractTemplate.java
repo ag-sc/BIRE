@@ -66,17 +66,6 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	}
 
 	/**
-	 * This method receives the previously created "empty" factors and computes
-	 * the features for this factor. Therefore, the factor object implementation
-	 * should remember which variables are needed and retrieve them from the
-	 * given state.
-	 * 
-	 * @param state
-	 * @param factor
-	 */
-	protected abstract void computeFactor(StateT state, AbstractFactor factor);
-
-	/**
 	 * Returns all possible factors that can be applied to the given state. Note
 	 * that this function should only return "empty" factors but does not need
 	 * to compute the features yet. The "empty" factor only needs to remember
@@ -87,6 +76,17 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	 * @return
 	 */
 	protected abstract Collection<AbstractFactor> generateFactors(StateT state);
+
+	/**
+	 * This method receives the previously created "empty" factors and computes
+	 * the features for this factor. Therefore, the factor object implementation
+	 * should remember which variables are needed and retrieve them from the
+	 * given state.
+	 * 
+	 * @param state
+	 * @param factor
+	 */
+	protected abstract void computeFactor(StateT state, AbstractFactor factor);
 
 	@Override
 	public String toString() {

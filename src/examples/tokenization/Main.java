@@ -114,7 +114,7 @@ public class Main {
 		 * The trainer will loop over the data and invoke sampling and learning.
 		 * Additionally, it can invoke predictions on new data.
 		 */
-		int numberOfEpochs = 1;
+		int numberOfEpochs = 10;
 		Trainer trainer = new Trainer();
 		List<TokenState> trainingResults = trainer.train(sampler, initializer, learner, train, numberOfEpochs);
 		List<TokenState> testResults = trainer.test(sampler, initializer, test);

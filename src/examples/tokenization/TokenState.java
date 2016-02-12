@@ -3,9 +3,7 @@ package examples.tokenization;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import factors.FactorGraph;
 import variables.AbstractState;
@@ -47,7 +45,7 @@ public class TokenState extends AbstractState {
 		int last = 0;
 		for (Integer i : sorted) {
 			builder.append(sentence.text.subSequence(last, i));
-			builder.append(" | ");
+			builder.append("|");
 			last = i;
 		}
 		builder.append(sentence.text.subSequence(last, sentence.text.length()));
