@@ -45,7 +45,7 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 
 		for (int i = 0; i < window.length(); i++) {
 			char c = window.charAt(i);
-			boolean isPunctuation = c == '.' || c == '!' || c == '?';
+			boolean isPunctuation = c == '.' || c == '!' || c == '?' || c == ',';
 			boolean isWhitespace = c == ' ' || c == '\t' || c == '\n';
 			boolean isHyphen = c == '-';
 			boolean isDigit = Character.isDigit(c);
@@ -54,15 +54,15 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 			boolean isUpper = Character.isUpperCase(c);
 
 			int relativePosition = from - position + i;
-			features.set("CHAR@" + relativePosition + "_IS_PUNCTUATION", isPunctuation ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_WHITESPACE", isWhitespace ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_HYPHEN", isHyphen ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_DIGIT", isDigit ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_LETTER", isLetter ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_LOWER", isLower ? 1.0 : 0.0);
-			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper ? 1.0 : 0.0);
+			features.set("CHAR@" + relativePosition + "_IS_PUNCTUATION", isPunctuation);
+			features.set("CHAR@" + relativePosition + "_IS_WHITESPACE", isWhitespace);
+			features.set("CHAR@" + relativePosition + "_IS_HYPHEN", isHyphen);
+			features.set("CHAR@" + relativePosition + "_IS_DIGIT", isDigit);
+			features.set("CHAR@" + relativePosition + "_IS_LETTER", isLetter);
+			features.set("CHAR@" + relativePosition + "_IS_LOWER", isLower);
+			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper);
 
-			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
+			features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
 		tokenizationFactor.setFeatures(features);
 	}
