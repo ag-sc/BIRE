@@ -44,7 +44,7 @@ public class PlayOutsideState extends AbstractState {
 
 	@Override
 	public String toString() {
-		return "PlayOutsideState [" + this.id + ": " + weatherInstance.weather + ", playOutside=" + playOutside + "]";
+		return "PlayOutsideState [" + this.id + ": " + weatherInstance + ", playOutside=" + playOutside + "]";
 	}
 
 	protected VariableID generateVariableID() {

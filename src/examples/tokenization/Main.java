@@ -24,7 +24,7 @@ import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
 import templates.AbstractTemplate;
 
-public class TokenizationExample {
+public class Main {
 	private static Logger log = LogManager.getFormatterLogger();
 
 	/**

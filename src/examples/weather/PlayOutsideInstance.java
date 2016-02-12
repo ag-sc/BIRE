@@ -3,10 +3,15 @@ package examples.weather;
 import java.util.Set;
 
 import corpus.LabeledInstance;
+import examples.weather.WeatherInstance.Humidity;
+import examples.weather.WeatherInstance.Outlook;
+import examples.weather.WeatherInstance.Temperature;
+import examples.weather.WeatherInstance.Windy;
 
 public class PlayOutsideInstance extends WeatherInstance implements LabeledInstance<Boolean> {
-	public PlayOutsideInstance(Set<WeatherCondition> weather, boolean playOutside) {
-		super(weather);
+	public PlayOutsideInstance(Outlook outlook, Temperature temperature, Humidity humidity, Windy windy,
+			boolean playOutside) {
+		super(outlook, temperature, humidity, windy);
 		this.playOutside = playOutside;
 	}
 
@@ -19,6 +24,8 @@ public class PlayOutsideInstance extends WeatherInstance implements LabeledInsta
 
 	@Override
 	public String toString() {
-		return "[" + weather + ", playOutside=" + playOutside + "]";
+		return "[outlook=" + outlook + ", temperature=" + temperature + ", humidity=" + humidity + ", windy=" + windy
+				+ ", playOutside=" + playOutside + "]";
 	}
+
 }

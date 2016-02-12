@@ -23,7 +23,6 @@ public class SamplingUtils {
 	 */
 	public static <StateT extends AbstractState> StateT drawFromDistribution(List<StateT> nextStates,
 			boolean useModelDistribution, boolean softmax) {
-		// compute total sum of scores
 		Function<StateT, Double> toScore = null;
 		if (useModelDistribution) {
 			toScore = s -> s.getModelScore();
@@ -36,19 +35,24 @@ public class SamplingUtils {
 		} else {
 			toProbability = d -> d;
 		}
+		// compute total sum of scores
 		double totalSum = 0;
 		for (StateT s : nextStates) {
+			double prob = 0;
 			if (useModelDistribution) {
-				totalSum += toProbability.apply(toScore.apply(s));
+				prob = toProbability.apply(toScore.apply(s));
 			} else {
-				totalSum += toProbability.apply(toScore.apply(s));
+				prob = toProbability.apply(toScore.apply(s));
 			}
+			totalSum += prob;
 		}
 
-		double index = Math.random() * totalSum;
+		double randomIndex = Math.random() * totalSum;
 		double sum = 0;
 		int i = 0;
-		while (sum < index) {
+		while (sum < randomIndex)
+
+		{
 			if (useModelDistribution) {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
 			} else {
@@ -56,6 +60,7 @@ public class SamplingUtils {
 			}
 		}
 		return nextStates.get(Math.max(0, i - 1));
+
 	}
 
 	// TODO implement a "temperature" approach (simulated annealing)
