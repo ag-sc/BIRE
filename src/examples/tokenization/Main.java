@@ -3,6 +3,7 @@ package examples.tokenization;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,7 @@ import learning.ObjectiveFunction;
 import learning.Trainer;
 import learning.scorer.DefaultScorer;
 import learning.scorer.Scorer;
+import learning.scorer.SoftplusScorer;
 import sampling.DefaultSampler;
 import sampling.Explorer;
 import sampling.stoppingcriterion.StepLimitCriterion;
@@ -38,6 +40,7 @@ public class Main {
 	 * @throws InterruptedException
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
+
 		/*
 		 * Load training and test data.
 		 */
@@ -72,6 +75,7 @@ public class Main {
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.
 		 */
+//		Scorer<TokenState> scorer = new SoftplusScorer<>();
 		Scorer<TokenState> scorer = new DefaultScorer<>();
 
 		/*
@@ -114,15 +118,20 @@ public class Main {
 		 * The trainer will loop over the data and invoke sampling and learning.
 		 * Additionally, it can invoke predictions on new data.
 		 */
-		int numberOfEpochs = 10;
+		int numberOfEpochs = 3;
 		Trainer trainer = new Trainer();
-		List<TokenState> trainingResults = trainer.train(sampler, initializer, learner, train, numberOfEpochs);
+		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
+		List<TokenState> trainingResults = trainer.test(sampler, initializer, train);
 		List<TokenState> testResults = trainer.test(sampler, initializer, test);
 
 		/*
 		 * Since the test function does not compute the objective score of its
 		 * predictions, we do that here, manually, before we print the results.
 		 */
+		for (TokenState state : trainingResults) {
+			Tokenization goldResult = ((TokenizedSentence) state.sentence).getGoldResult();
+			double s = objective.score(state, goldResult);
+		}
 		for (TokenState state : testResults) {
 			Tokenization goldResult = ((TokenizedSentence) state.sentence).getGoldResult();
 			double s = objective.score(state, goldResult);
@@ -132,6 +141,9 @@ public class Main {
 		 * and set to their internal variable, we can print the prediction
 		 * outcome.
 		 */
+		log.info("Training results:");
+		EvaluationUtil.printPredictionPerformance(trainingResults);
+		log.info("Test results:");
 		EvaluationUtil.printPredictionPerformance(testResults);
 		/*
 		 * Finally, print the models weights.

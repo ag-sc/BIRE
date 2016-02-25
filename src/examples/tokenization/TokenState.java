@@ -39,18 +39,16 @@ public class TokenState extends AbstractState {
 
 	@Override
 	public String toString() {
-		List<Integer> sorted = new ArrayList<>(tokenization.tokenBoundaries);
-		Collections.sort(sorted);
 		StringBuilder builder = new StringBuilder();
 		int last = 0;
-		for (Integer i : sorted) {
+		for (Integer i : tokenization.tokenBoundaries) {
 			builder.append(sentence.text.subSequence(last, i));
 			builder.append("|");
 			last = i;
 		}
 		builder.append(sentence.text.subSequence(last, sentence.text.length()));
 		return "TokenState [[" + SCORE_FORMAT.format(getModelScore()) + "][" + SCORE_FORMAT.format(getObjectiveScore())
-				+ "][" + builder.toString() + "] " + sorted + "]";
+				+ "][" + builder.toString() + "] " + tokenization.tokenBoundaries + "]";
 	}
 
 }

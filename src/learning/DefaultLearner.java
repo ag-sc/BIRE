@@ -63,18 +63,19 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * normalized with the number of states in this batch.
 	 * 
 	 * @param currentState
-	 * @param possibleNextState
+	 * @param possibleNextStates
 	 */
 	@Override
-	public void update(final StateT currentState, List<StateT> possibleNextState) {
+	public void update(final StateT currentState, List<StateT> possibleNextStates) {
 		Map<AbstractTemplate<StateT>, Vector> weightGradients = new HashMap<>();
 		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
 		/**
 		 * Rank each possible next state against the current state
 		 */
-		possibleNextState.forEach(s -> sampleRankUpdate(currentState, s, weightGradients));
+		possibleNextStates.forEach(
+				possibleNextState -> collectSampleRankGradients(currentState, possibleNextState, weightGradients));
 		if (normalize) {
-			applyWeightUpdate(weightGradients, possibleNextState.size());
+			applyWeightUpdate(weightGradients, possibleNextStates.size());
 		} else {
 			applyWeightUpdate(weightGradients, 1);
 		}
@@ -88,7 +89,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param possibleNextState
 	 * @param weightUpdates
 	 */
-	private void sampleRankUpdate(StateT currentState, StateT possibleNextState,
+	private void collectSampleRankGradients(StateT currentState, StateT possibleNextState,
 			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
 		log.trace("Current:\t%s", currentState);
 		log.trace("Next:\t%s", possibleNextState);
@@ -98,15 +99,13 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		 * Collect differences of features for both states and remember
 		 * respective template
 		 */
-		long diffID = TaggedTimer.start("UP-DIFF");
 		Map<AbstractTemplate<StateT>, Vector> featureDifferences = new HashMap<>();
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
 			Vector differences = getFeatureDifferences(t, possibleNextState, currentState);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeightVector());
 		}
-		TaggedTimer.stop(diffID);
-
+		
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState)) {
 			updateFeatures(featureDifferences, -1, weightUpdates);
 		} else if (weightedDifferenceSum <= 0 && preference(possibleNextState, currentState)) {
@@ -115,6 +114,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		}
 	}
 
+	
 	/**
 	 * Computes the differences of all features of both states. For this, the
 	 * template uses features from all factors that are not associated to both
@@ -153,7 +153,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 */
 	private void updateFeatures(Map<AbstractTemplate<StateT>, Vector> featureDifferences, double learningDirection,
 			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
-		long upID = TaggedTimer.start("UP-COLLECT");
 		log.trace("UPDATE: learning direction: %s", learningDirection);
 
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
@@ -171,7 +170,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 				}
 			}
 		}
-		TaggedTimer.stop(upID);
 	}
 
 	/**
@@ -181,7 +179,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param numberOfUpdates
 	 */
 	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightGradients, int numberOfUpdates) {
-		long upID = TaggedTimer.start("UP-UPDATE");
 		for (AbstractTemplate<StateT> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector weightUpdatesForTemplate = weightGradients.get(t);
@@ -195,7 +192,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 				}
 			}
 		}
-		TaggedTimer.stop(upID);
 	}
 
 	/**

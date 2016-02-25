@@ -1,6 +1,7 @@
 package learning;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -96,6 +97,7 @@ public class Trainer {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
 
+			Collections.shuffle(instances);
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = instance.getGoldResult();

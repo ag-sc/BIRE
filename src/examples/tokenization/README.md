@@ -4,7 +4,7 @@ We demonstrate the usage of the BIRE framework given a tokenization problem.
 Our data consists of natural language sentences that are labeled with an expected tokenization.
 **Note:** We define "tokenization" as finding the correct token boundaries, i.e. character offsets.
 We create a Sentence class that implements the Instance interface and that contains a String representation of the actual sentence:
-'''java
+'''
 public class Sentence implements Instance {
 
 	public String text;

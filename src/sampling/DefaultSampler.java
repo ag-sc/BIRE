@@ -12,6 +12,9 @@ import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.scorer.Scorer;
+import sampling.samplingstrategies.AcceptStrategies;
+import sampling.samplingstrategies.AcceptStrategy;
+import sampling.samplingstrategies.SamplingStrategies;
 import sampling.samplingstrategies.SamplingStrategy;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
@@ -19,29 +22,7 @@ import variables.AbstractState;
 
 public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT> {
 
-	public final SamplingStrategy<StateT> greedyStrategy = candidates -> {
-		return candidates.stream().max((s1, s2) -> Double.compare(s1.getModelScore(), s2.getModelScore())).get();
-	};
-	public final SamplingStrategy<StateT> greedyObjectiveStrategy = candidates -> {
-		return candidates.stream().max((s1, s2) -> Double.compare(s1.getObjectiveScore(), s2.getObjectiveScore()))
-				.get();
-	};
-	public final SamplingStrategy<StateT> top5UniformSamplingStrategy = candidates -> {
-		candidates.sort(AbstractState.modelScoreComparator);
-		return SamplingUtils.drawRandomElement(candidates.subList(0, 5));
-	};
-	public final SamplingStrategy<StateT> top5ModelSamplingStrategy = candidates -> {
-		candidates.sort(AbstractState.modelScoreComparator);
-		return SamplingUtils.drawFromDistribution(candidates.subList(0, 5), true, false);
-	};
-	public final SamplingStrategy<StateT> linearSamplingStrategy = candidates -> SamplingUtils
-			.drawFromDistribution(candidates, true, false);
-	public final SamplingStrategy<StateT> linearSamplingObjectiveStrategy = candidates -> SamplingUtils
-			.drawFromDistribution(candidates, false, false);
-	public final SamplingStrategy<StateT> softmaxSamplingStrategy = candidates -> SamplingUtils
-			.drawFromDistribution(candidates, true, true);
-
-	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class.getName());
+	private static Logger log = LogManager.getFormatterLogger();
 	protected Model<StateT> model;
 	protected Scorer<StateT> scorer;
 	protected ObjectiveFunction<StateT, ResultT> objective;
@@ -53,7 +34,19 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * Defines the sampling strategy for the training phase. The test phase
 	 * currently always uses the greedy variant.
 	 */
-	private SamplingStrategy<StateT> samplingStrategy = linearSamplingStrategy;
+	private SamplingStrategy<StateT> samplingStrategy = SamplingStrategies.linearSamplingStrategy();
+
+	private AcceptStrategy<StateT> acceptStrategy = AcceptStrategies.strictModelAccept();
+
+	/**
+	 * Greedy sampling strategy for test phase.
+	 */
+	private final SamplingStrategy<StateT> greedySamplingStrategy = SamplingStrategies.greedyStrategy();
+
+	/**
+	 * Strict accept strategy for test phase.
+	 */
+	private final AcceptStrategy<StateT> strictAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	/**
 	 * The DefaultSampler implements the Sampler interface. This sampler divides
@@ -159,7 +152,8 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 
 	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, ResultT goldResult,
 			StateT currentState) {
-		log.debug("TRAINING:");
+		log.debug("TRAINING Step:");
+		log.debug("Current State:\n%s", currentState);
 		/**
 		 * Generate possible successor states.
 		 */
@@ -226,7 +220,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			 * Choose to accept or reject selected state
 			 */
 			// return candidateState;
-			return SamplingUtils.accept(candidateState, currentState, true) ? candidateState : currentState;
+			return acceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
 		}
 		return currentState;
 	}
@@ -259,11 +253,13 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
-			StateT candidateState = greedyStrategy.sampleCandidate(nextStates);
+			StateT candidateState = greedySamplingStrategy.sampleCandidate(nextStates);
 			/**
 			 * Decide to accept or reject the selected state
 			 */
 
+			// TokenState s = (TokenState) currentState;
+			// if (s.sentence.text.startsWith("He")) {
 			// EvaluationUtil.printWeights(model, 0);
 			// nextStates.sort(AbstractState.modelScoreComparator);
 			// double sum = 0;
@@ -276,8 +272,9 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			// for (StateT state : nextStates) {
 			// log.debug("%s: %s", state.getModelScore() / sum, state);
 			// }
-
-			currentState = SamplingUtils.strictAccept(candidateState, currentState, true) ? candidateState
+			// log.debug("");
+			// }
+			currentState = strictAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
 					: currentState;
 			return currentState;
 		} else {
@@ -350,39 +347,6 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		TaggedTimer.stop(scID);
 	}
 
-	// protected StateT selectNextState(StateT currentState, List<StateT>
-	// states, boolean useModelDistribution,
-	// SamplingStrategy strategy) {
-	// if (states.isEmpty()) {
-	// return currentState;
-	// }
-	// StateT selectedNextState = null;
-	// switch (strategy) {
-	// case GREEDY:
-	// if (useModelDistribution) {
-	// Collections.sort(states, AbstractState.modelScoreComparator);
-	// } else {
-	// Collections.sort(states, AbstractState.objectiveScoreComparator);
-	// }
-	// selectedNextState = states.get(0);
-	// break;
-	// case LINEAR_SAMPLING:
-	// selectedNextState = SamplingUtils.drawFromDistribution(states,
-	// useModelDistribution, false);
-	// break;
-	// case SOFTMAX_SAMPLING:
-	// selectedNextState = SamplingUtils.drawFromDistribution(states,
-	// useModelDistribution, true);
-	// break;
-	// }
-	// /*
-	// * Decide if selected state should be accepted as next state.
-	// */
-	// return SamplingUtils.accept(selectedNextState, currentState,
-	// useModelDistribution) ? selectedNextState
-	// : currentState;
-	// }
-
 	protected Model<StateT> getModel() {
 		return model;
 	}
@@ -396,7 +360,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	}
 
 	/**
-	 * Set the stopping criterion for the sampling chain. This Function can be
+	 * Set the stopping criterion for the sampling chain. This function can be
 	 * used to change the stopping criterion for the test phase.
 	 * 
 	 * @param stoppingCriterion
@@ -422,6 +386,20 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 */
 	public void setSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.samplingStrategy = samplingStrategy;
+	}
+
+	public AcceptStrategy<StateT> getAcceptStrategy() {
+		return acceptStrategy;
+	}
+
+	/**
+	 * Sets the strategy for accepting a sampled candidate state as the next
+	 * state in the training phase.
+	 * 
+	 * @return
+	 */
+	public void setAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+		this.acceptStrategy = acceptStrategy;
 	}
 
 	public List<Explorer<StateT>> getExplorers() {

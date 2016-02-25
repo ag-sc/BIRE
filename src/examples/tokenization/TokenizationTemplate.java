@@ -61,8 +61,10 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 			features.set("CHAR@" + relativePosition + "_IS_LETTER", isLetter);
 			features.set("CHAR@" + relativePosition + "_IS_LOWER", isLower);
 			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper);
+			features.set("CHAR@" + relativePosition + "_IS_OTHER",
+					(!isPunctuation && !isWhitespace && !isHyphen && !isDigit && !isLetter && !isLower && !isUpper));
 
-			features.set("CHAR@" + relativePosition + "=" + c, 1.0);
+			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
 		tokenizationFactor.setFeatures(features);
 	}

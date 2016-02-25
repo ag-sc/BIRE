@@ -1,17 +1,16 @@
 package examples.tokenization;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.TreeSet;
 
 public class Tokenization {
-	public Set<Integer> tokenBoundaries;
+	public TreeSet<Integer> tokenBoundaries;
 
 	public Tokenization() {
-		this.tokenBoundaries = new HashSet<>();
+		this.tokenBoundaries = new TreeSet<>();
 	}
 
 	public Tokenization(Tokenization tokenization) {
-		this.tokenBoundaries = new HashSet<>(tokenization.tokenBoundaries);
+		this.tokenBoundaries = new TreeSet<>(tokenization.tokenBoundaries);
 	}
 
 	@Override
