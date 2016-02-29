@@ -1,18 +1,30 @@
 package variables;
 
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicLong;
+
 import utility.VariableID;
 
-public class AbstractVariable<StateT extends AbstractState> implements Variable<StateT> {
+public class AbstractVariable implements Serializable {
+	private final static AtomicLong variableIDIndex = new AtomicLong();
 
-	protected final VariableID id;
+	protected VariableID id;
 
-	public AbstractVariable(VariableID id) {
-		this.id = id;
+	public AbstractVariable() {
+		this.id = generateVariableID();
 	}
 
-	@Override
 	public VariableID getID() {
 		return id;
 	}
 
+	public void markAsModified() {
+		id = generateVariableID();
+	}
+
+	private VariableID generateVariableID() {
+		long currentID = variableIDIndex.getAndIncrement();
+		String id = "V" + String.valueOf(currentID);
+		return new VariableID(id);
+	}
 }

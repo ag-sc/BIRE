@@ -8,10 +8,9 @@ import java.util.List;
 import factors.FactorGraph;
 import variables.AbstractState;
 
-public class TokenState extends AbstractState {
+public class TokenState extends AbstractState<Sentence> {
 
 	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00000");
-	public Sentence sentence;
 	// TODO make this a list and keep it sorted!
 	public Tokenization tokenization;
 
@@ -23,32 +22,27 @@ public class TokenState extends AbstractState {
 	 * @param sentence
 	 */
 	public TokenState(Sentence sentence) {
-		super();
-		this.sentence = sentence;
+		super(sentence);
 		this.tokenization = new Tokenization();
 	}
 
 	public TokenState(TokenState state) {
-		super();
-		this.sentence = state.sentence;
+		super(state);
 		this.tokenization = new Tokenization(state.tokenization);
-		this.modelScore = state.modelScore;
-		this.objectiveScore = state.objectiveScore;
-		this.factorGraph = new FactorGraph(state.factorGraph);
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		int last = 0;
-		for (Integer i : tokenization.tokenBoundaries) {
-			builder.append(sentence.text.subSequence(last, i));
+		for (BoundaryVariable b : tokenization.tokenBoundaries.values()) {
+			builder.append(instance.text.subSequence(last, b.boundaryPosition));
 			builder.append("|");
-			last = i;
+			last = b.boundaryPosition;
 		}
-		builder.append(sentence.text.subSequence(last, sentence.text.length()));
+		builder.append(instance.text.subSequence(last, instance.text.length()));
 		return "TokenState [[" + SCORE_FORMAT.format(getModelScore()) + "][" + SCORE_FORMAT.format(getObjectiveScore())
-				+ "][" + builder.toString() + "] " + tokenization.tokenBoundaries + "]";
+				+ "][" + builder.toString() + "] " + tokenization.tokenBoundaries.values() + "]";
 	}
 
 }

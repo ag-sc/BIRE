@@ -1,59 +1,125 @@
 package factors;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
-import templates.AbstractTemplate;
-
 public class FactorGraph implements Serializable {
 
-	private Multimap<AbstractTemplate<?>, AbstractFactor> factors;
+	/**
+	 * The factor pool stores computed factors w.r.t their patterns. This object
+	 * is shared across several factor graphs so that individual states do not
+	 * need to recompute existing, previously computed factors.
+	 */
+	private FactorPool factorPool;
+	// private Map<FactorPattern, Factor<? extends FactorPattern>>
+	// factorPattern2Factor;
+	private Set<FactorPattern> factorPatterns;
 
 	public FactorGraph() {
-		init();
-	}
-
-	private void init() {
-		factors = HashMultimap.create();
+		this.factorPool = new FactorPool();
+		// this.factorPattern2Factor = new HashMap<>();
+		this.factorPatterns = new HashSet<>();
 	}
 
 	public FactorGraph(FactorGraph factorGraph) {
-		this.factors = HashMultimap.create(factorGraph.factors);
+		this.factorPool = factorGraph.factorPool;
+		// this.factorPattern2Factor = new
+		// HashMap<>(factorGraph.factorPattern2Factor);
+		this.factorPatterns = new HashSet<>(factorGraph.factorPatterns);
 	}
 
-	public void updateFactors(AbstractTemplate<?> template, Collection<AbstractFactor> factors) {
-		this.factors.removeAll(template);
-		this.factors.putAll(template, factors);
+	//
+	// /**
+	// * Removes obsolete factors from the graph. Obsolete Factors are the ones
+	// * that are not among the provided factors.
+	// *
+	// * @param generatedFactors
+	// * @return
+	// */
+	// public <FactorPatternT extends FactorPattern> void
+	// removeObsoleteFactors(Set<FactorPatternT> generatedFactors) {
+	// Set<FactorPattern> patternsFromMap = (Set<FactorPattern>)
+	// this.factorPattern2Factor.keySet();
+	//
+	// Set<FactorPattern> obsoleteFactors = new
+	// HashSet<>(Sets.difference(patternsFromMap, generatedFactors));
+	//
+	// /*
+	// * Drop all obsolete factors.
+	// */
+	// for (FactorPattern obsoleteFactorPattern : obsoleteFactors) {
+	// this.factorPattern2Factor.remove(obsoleteFactorPattern);
+	// }
+	// }
+
+	public void setFactorPatterns(Set<FactorPattern> generatedFactorPatterns) {
+		this.factorPatterns = generatedFactorPatterns;
 	}
 
-	public Collection<AbstractFactor> getFactors() {
-		return new HashSet<>(factors.values());
+	public Set<FactorPattern> getFactorPatterns() {
+		return factorPatterns;
 	}
 
-	public void reset() {
-		init();
+	/**
+	 * Returns the subset of patterns from the provided set of patterns for
+	 * which there is no factor stored in the factor pool of this factor graph.
+	 * 
+	 * @param generatedFactors
+	 * @return
+	 */
+	public <FactorPatternT extends FactorPattern> Set<FactorPatternT> extractNewFactorPatterns(
+			Set<FactorPatternT> generatedFactors) {
+		return factorPool.extractNewFactorPatterns(generatedFactors);
+	}
+	// /**
+	// * Removes obsolete factors and returns the novel factor patterns within
+	// the
+	// * provided set of patterns.
+	// *
+	// * @param generatedFactors
+	// * @return
+	// */
+	// public <FactorPatternT extends FactorPattern> Set<FactorPatternT>
+	// extractNewFactorPatterns(
+	// Set<FactorPatternT> generatedFactors) {
+	//
+	// Set<FactorPattern> patternsFromMap = (Set<FactorPattern>)
+	// this.factorPool.keySet();
+	//
+	// Set<FactorPatternT> newFactors = Sets.difference(generatedFactors,
+	// patternsFromMap);
+	//
+	// return newFactors;
+	// }
+
+	/**
+	 * Inserts a compute factor into the graph. The factor is store in the
+	 * factor pool object of this graph so that it is shared across states and
+	 * can be used by each of them.
+	 * 
+	 * @param newFactors
+	 */
+	public <FactorPatternT extends FactorPattern> void addFactors(Set<Factor<FactorPatternT>> newFactors) {
+		factorPool.addFactors(newFactors);
+		// for (Factor<? extends FactorPattern> factor : newFactors) {
+		// this.factorPatterns.add(factor.getFactorPattern());
+		// }
+	}
+	// public <FactorPatternT extends FactorPattern> void
+	// addFactors(Set<Factor<FactorPatternT>> newFactors) {
+	// factorPool.addFactors(newFactors);
+	// for (Factor<FactorPatternT> factor : newFactors) {
+	// this.factorPattern2Factor.put(factor.getFactorPattern(), factor);
+	// }
+	// }
+
+	public Set<Factor<? extends FactorPattern>> getFactors() {
+		return factorPool.getFactors(factorPatterns);
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder("FactorGraph:");
-		builder.append("\n");
-		for (AbstractTemplate<?> template : factors.keySet()) {
-			builder.append("-------------- ");
-			builder.append(template.getClass().getSimpleName());
-			builder.append(" --------------");
-			builder.append("\n");
-			for (AbstractFactor factor : factors.get(template)) {
-				builder.append(factor);
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
+	public FactorPool getFactorPool() {
+		return factorPool;
 	}
-	
+
 }

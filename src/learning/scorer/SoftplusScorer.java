@@ -5,7 +5,7 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.Vector;
 import variables.AbstractState;
 
@@ -41,8 +41,8 @@ public class SoftplusScorer<StateT extends AbstractState> implements Scorer<Stat
 		// respective factors
 
 		double score = 1;
-		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors) {
+		Collection<Factor<?>> factors = state.getFactorGraph().getFactors();
+		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeightVector();
 			double dotProduct = featureVector.dotProduct(weights);

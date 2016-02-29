@@ -11,8 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
-import evaluation.TaggedTimer;
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.callbacks.EpochCallback;
 import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
@@ -67,7 +66,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
-		Map<AbstractTemplate<StateT>, Vector> weightGradients = new HashMap<>();
+		Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients = new HashMap<>();
 		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
 		/**
 		 * Rank each possible next state against the current state
@@ -90,7 +89,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param weightUpdates
 	 */
 	private void collectSampleRankGradients(StateT currentState, StateT possibleNextState,
-			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
+			Map<AbstractTemplate<?, StateT, ?>, Vector> weightUpdates) {
 		log.trace("Current:\t%s", currentState);
 		log.trace("Next:\t%s", possibleNextState);
 
@@ -99,13 +98,13 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		 * Collect differences of features for both states and remember
 		 * respective template
 		 */
-		Map<AbstractTemplate<StateT>, Vector> featureDifferences = new HashMap<>();
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
+		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = getFeatureDifferences(t, possibleNextState, currentState);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeightVector());
 		}
-		
+
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState)) {
 			updateFeatures(featureDifferences, -1, weightUpdates);
 		} else if (weightedDifferenceSum <= 0 && preference(possibleNextState, currentState)) {
@@ -114,7 +113,6 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		}
 	}
 
-	
 	/**
 	 * Computes the differences of all features of both states. For this, the
 	 * template uses features from all factors that are not associated to both
@@ -124,16 +122,16 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param state2
 	 * @return
 	 */
-	public Vector getFeatureDifferences(AbstractTemplate<StateT> template, StateT state1, StateT state2) {
+	public Vector getFeatureDifferences(AbstractTemplate<?, StateT, ?> template, StateT state1, StateT state2) {
 		Vector diff = new Vector();
-		Collection<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
-		Collection<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors1) {
+		Collection<Factor<?>> factors1 = state1.getFactorGraph().getFactors();
+		Collection<Factor<?>> factors2 = state2.getFactorGraph().getFactors();
+		for (Factor<?> factor : factors1) {
 			if (factor.getTemplate() == template) {
 				diff.add(factor.getFeatureVector());
 			}
 		}
-		for (AbstractFactor factor : factors2) {
+		for (Factor<?> factor : factors2) {
 			if (factor.getTemplate() == template) {
 				diff.sub(factor.getFeatureVector());
 			}
@@ -151,11 +149,11 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param featureDifferences
 	 * @param learningDirection
 	 */
-	private void updateFeatures(Map<AbstractTemplate<StateT>, Vector> featureDifferences, double learningDirection,
-			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
+	private void updateFeatures(Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences,
+			double learningDirection, Map<AbstractTemplate<?, StateT, ?>, Vector> weightUpdates) {
 		log.trace("UPDATE: learning direction: %s", learningDirection);
 
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
 			Vector gradients = weightUpdates.get(t);
@@ -178,8 +176,8 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param weightGradients
 	 * @param numberOfUpdates
 	 */
-	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightGradients, int numberOfUpdates) {
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
+	private void applyWeightUpdate(Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients, int numberOfUpdates) {
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector weightUpdatesForTemplate = weightGradients.get(t);
 			for (Entry<String, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {

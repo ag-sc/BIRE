@@ -300,7 +300,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		} else {
 			stream = allStates.stream();
 		}
-		stream.forEach(s -> model.unroll(s));
+		stream.forEach(s -> model.applyTo(s));
 		TaggedTimer.stop(unrollID);
 	}
 

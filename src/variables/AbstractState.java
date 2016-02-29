@@ -1,47 +1,49 @@
 package variables;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.Comparator;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.Instance;
 import factors.FactorGraph;
 import utility.StateID;
 
-public abstract class AbstractState implements Serializable {
+public abstract class AbstractState<InstanceT extends Instance> implements Serializable {
 
-	private static Logger log = LogManager.getFormatterLogger();
 	/**
-	 * A comparator implementation that allows to sort states in descending order with respect to their model score.
+	 * A comparator implementation that allows to sort states in descending
+	 * order with respect to their model score.
 	 */
-	public static final Comparator<AbstractState> modelScoreComparator = new Comparator<AbstractState>() {
+	public static final Comparator<AbstractState<?>> modelScoreComparator = new Comparator<AbstractState<?>>() {
 
 		@Override
-		public int compare(AbstractState s1, AbstractState s2) {
+		public int compare(AbstractState<?> s1, AbstractState<?> s2) {
 			// TODO
 			return -Double.compare(s1.getModelScore(), s2.getModelScore());
 		}
 	};
 	/**
-	 * A comparator implementation that allows to sort states in descending order with respect to their objective score.
+	 * A comparator implementation that allows to sort states in descending
+	 * order with respect to their objective score.
 	 */
-	public static final Comparator<AbstractState> objectiveScoreComparator = new Comparator<AbstractState>() {
+	public static final Comparator<AbstractState<?>> objectiveScoreComparator = new Comparator<AbstractState<?>>() {
 
 		@Override
-		public int compare(AbstractState s1, AbstractState s2) {
+		public int compare(AbstractState<?> s1, AbstractState<?> s2) {
 			// TODO
 			return -Double.compare(s1.getObjectiveScore(), s2.getObjectiveScore());
 		}
 	};
-	private static final DecimalFormat STATE_ID_FORMATTER = new DecimalFormat("000000000");
 
-	private static AtomicInteger stateIDIndex = new AtomicInteger();
+	private static Logger log = LogManager.getFormatterLogger();
+	private final static AtomicLong stateIDIndex = new AtomicLong();
 	protected double modelScore = 1;
 	protected double objectiveScore = 0;
 	protected FactorGraph factorGraph = new FactorGraph();
+	protected final InstanceT instance;
 	protected final StateID id;
 
 	/**
@@ -50,9 +52,17 @@ public abstract class AbstractState implements Serializable {
 	 * contains a factor graph that stores its factors. It provides a unique
 	 * state ID.
 	 */
-	public AbstractState() {
+	public AbstractState(InstanceT instance) {
 		this.id = generateStateID();
+		this.instance = instance;
 
+	}
+
+	public AbstractState(AbstractState<InstanceT> state) {
+		this(state.instance);
+		this.modelScore = state.modelScore;
+		this.objectiveScore = state.objectiveScore;
+		this.factorGraph = new FactorGraph(state.factorGraph);
 	}
 
 	public void setModelScore(double modelScore) {
@@ -90,13 +100,17 @@ public abstract class AbstractState implements Serializable {
 		return factorGraph;
 	}
 
+	public InstanceT getInstance() {
+		return instance;
+	}
+
 	public StateID getID() {
 		return id;
 	}
 
 	private StateID generateStateID() {
-		int currentID = stateIDIndex.getAndIncrement();
-		String id = STATE_ID_FORMATTER.format(currentID);
+		long currentID = stateIDIndex.getAndIncrement();
+		String id = "S" + String.valueOf(currentID);
 		return new StateID(id);
 	}
 

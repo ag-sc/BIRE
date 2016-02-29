@@ -5,7 +5,7 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.Vector;
 import variables.AbstractState;
 
@@ -41,14 +41,19 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 		// respective factors
 
 		double score = 1;
-		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors) {
+		// TODO normalize scores
+		// double normalization = 0;
+		Collection<Factor<?>> factors = state.getFactorGraph().getFactors();
+		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeightVector();
 			double dotProduct = featureVector.dotProduct(weights);
 			double factorScore = Math.exp(dotProduct);
 			score *= factorScore;
+			// normalization += factorScore;
 		}
+		// score /= normalization;
+
 		state.setModelScore(score);
 		return score;
 	}
