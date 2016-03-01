@@ -35,7 +35,7 @@ public class TokenizationTemplate
 	}
 
 	@Override
-	protected void computeFactor(Sentence instance, Factor<SingleVariablePattern<BoundaryVariable>> factor) {
+	public void computeFactor(Sentence instance, Factor<SingleVariablePattern<BoundaryVariable>> factor) {
 		Vector features = factor.getFeatureVector();
 		int position = factor.getFactorPattern().getVariable().boundaryPosition;
 		int from = Math.max(position - windowSize / 2, 0);
@@ -63,7 +63,6 @@ public class TokenizationTemplate
 			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper);
 			features.set("CHAR@" + relativePosition + "_IS_OTHER",
 					(!isPunctuation && !isWhitespace && !isHyphen && !isDigit && !isLetter && !isLower && !isUpper));
-
 			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
 

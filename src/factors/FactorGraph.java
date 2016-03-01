@@ -14,7 +14,7 @@ public class FactorGraph implements Serializable {
 	private FactorPool factorPool;
 	// private Map<FactorPattern, Factor<? extends FactorPattern>>
 	// factorPattern2Factor;
-	private Set<FactorPattern> factorPatterns;
+	private Set<? extends FactorPattern> factorPatterns;
 
 	public FactorGraph() {
 		this.factorPool = new FactorPool();
@@ -53,11 +53,11 @@ public class FactorGraph implements Serializable {
 	// }
 	// }
 
-	public void setFactorPatterns(Set<FactorPattern> generatedFactorPatterns) {
+	public void setFactorPatterns(Set<? extends FactorPattern> generatedFactorPatterns) {
 		this.factorPatterns = generatedFactorPatterns;
 	}
 
-	public Set<FactorPattern> getFactorPatterns() {
+	public Set<? extends FactorPattern> getFactorPatterns() {
 		return factorPatterns;
 	}
 

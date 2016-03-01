@@ -45,7 +45,6 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 		// double normalization = 0;
 		Collection<Factor<?>> factors = state.getFactorGraph().getFactors();
 		for (Factor<?> factor : factors) {
-			factor.getFeatureVector().getFeatures().entrySet().forEach(e -> log.warn("%s", e));
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeightVector();
 			double dotProduct = featureVector.dotProduct(weights);

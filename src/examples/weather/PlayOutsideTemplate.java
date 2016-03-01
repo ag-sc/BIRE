@@ -32,7 +32,7 @@ public class PlayOutsideTemplate
 	}
 
 	@Override
-	protected void computeFactor(WeatherInstance instance, Factor<SingleVariablePattern<PlayOutsideVariable>> factor) {
+	public void computeFactor(WeatherInstance instance, Factor<SingleVariablePattern<PlayOutsideVariable>> factor) {
 		Vector features = factor.getFeatureVector();
 		boolean isPlayingOutside = factor.getFactorPattern().getVariable().isPlayingOutside();
 

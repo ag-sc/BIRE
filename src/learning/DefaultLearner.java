@@ -17,12 +17,13 @@ import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
-public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT>, InstanceCallback, EpochCallback {
+public class DefaultLearner<StateT extends AbstractState<?>>
+		implements Learner<StateT>, InstanceCallback, EpochCallback {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
 	private double alpha;
-	private Model<StateT> model;
+	private Model<?, StateT> model;
 	private boolean normalize = true;
 	public double currentAlpha;
 	public int updates = 0;
@@ -37,7 +38,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param model
 	 * @param alpha
 	 */
-	public DefaultLearner(Model<StateT> model, double alpha) {
+	public DefaultLearner(Model<?, StateT> model, double alpha) {
 		super();
 		this.model = model;
 		this.alpha = alpha;
@@ -209,7 +210,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		return O1 > O2;
 	}
 
-	public Model<StateT> getModel() {
+	public Model<?, StateT> getModel() {
 		return model;
 	}
 

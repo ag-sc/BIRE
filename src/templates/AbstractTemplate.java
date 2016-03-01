@@ -104,7 +104,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * @param state
 	 * @param factor
 	 */
-	protected abstract void computeFactor(InstanceT instance, Factor<FactorPatternT> factor);
+	public abstract void computeFactor(InstanceT instance, Factor<FactorPatternT> factor);
 
 	// public Factor<FactorPatternT> computeFactor(StateT state, FactorPatternT
 	// factorPattern) {

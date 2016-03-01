@@ -81,7 +81,7 @@ public class EvaluationUtil {
 	 * @param model
 	 * @param minAbsValue
 	 */
-	public static void printWeights(Model<?> model, double minAbsValue) {
+	public static void printWeights(Model<?, ?> model, double minAbsValue) {
 		Map<String, Double> allWeights = new HashMap<String, Double>();
 		for (AbstractTemplate<?, ?, ?> t : model.getTemplates()) {
 			Vector weights = t.getWeightVector();

@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.Instance;
 import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
@@ -18,12 +19,14 @@ import sampling.samplingstrategies.SamplingStrategies;
 import sampling.samplingstrategies.SamplingStrategy;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
+import utility.Utils;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT> {
+public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractState<InstanceT>, ResultT>
+		implements Sampler<StateT, ResultT> {
 
 	private static Logger log = LogManager.getFormatterLogger();
-	protected Model<StateT> model;
+	protected Model<InstanceT, StateT> model;
 	protected Scorer<StateT> scorer;
 	protected ObjectiveFunction<StateT, ResultT> objective;
 	private List<Explorer<StateT>> explorers;
@@ -61,8 +64,9 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @param explorers
 	 * @param stoppingCriterion
 	 */
-	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
-			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
+	public DefaultSampler(Model<InstanceT, StateT> model, Scorer<StateT> scorer,
+			ObjectiveFunction<StateT, ResultT> objective, List<Explorer<StateT>> explorers,
+			StoppingCriterion<StateT> stoppingCriterion) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
@@ -85,8 +89,8 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @param explorers
 	 * @param samplingSteps
 	 */
-	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
-			List<Explorer<StateT>> explorers, int samplingSteps) {
+	public DefaultSampler(Model<InstanceT, StateT> model, Scorer<StateT> scorer,
+			ObjectiveFunction<StateT, ResultT> objective, List<Explorer<StateT>> explorers, int samplingSteps) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
@@ -168,7 +172,8 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			/**
 			 * Apply templates to states and, thus generate factors and features
 			 */
-			unroll(allStates);
+			// unroll(allStates);
+			model.applyToBatch(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
 			/**
 			 * Score all states according to the model.
 			 */
@@ -245,7 +250,8 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			/**
 			 * Apply templates to states and thus generate factors and features
 			 */
-			unroll(allStates);
+			// unroll(allStates);
+			model.applyToBatch(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
 			/**
 			 * Score all states according to the model.
 			 */
@@ -281,28 +287,25 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			return currentState;
 		}
 	}
-
-	/**
-	 * Applies the model's template to each of the given states, thus unrolling
-	 * (computing) the features. The <i>multiThreaded</i> flag determines if the
-	 * computation is performed in parallel or sequentially.
-	 * 
-	 * @param currentState
-	 * @param nextStates
-	 */
-	protected void unroll(List<StateT> allStates) {
-		long unrollID = TaggedTimer.start("SC-UNROLL");
-		log.debug("Unroll features for %s states...", allStates.size() + 1);
-
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = allStates.parallelStream();
-		} else {
-			stream = allStates.stream();
-		}
-		stream.forEach(s -> model.applyTo(s));
-		TaggedTimer.stop(unrollID);
-	}
+	//
+	// /**
+	// * Applies the model's template to each of the given states, thus
+	// unrolling
+	// * (computing) the features. The <i>multiThreaded</i> flag determines if
+	// the
+	// * computation is performed in parallel or sequentially.
+	// *
+	// * @param currentState
+	// * @param nextStates
+	// */
+	// protected void unroll(List<StateT> allStates) {
+	// long unrollID = TaggedTimer.start("SC-UNROLL");
+	// log.debug("Unroll features for %s states...", allStates.size() + 1);
+	//
+	// Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
+	// stream.forEach(s -> model.applyTo(s));
+	// TaggedTimer.stop(unrollID);
+	// }
 
 	/**
 	 * Computes the model scores for each of the given states. The
@@ -315,12 +318,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		long scID = TaggedTimer.start("MODEL-SCORE");
 		log.debug("Score %s states according to model...", nextStates.size());
 
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = nextStates.parallelStream();
-		} else {
-			stream = nextStates.stream();
-		}
+		Stream<StateT> stream = Utils.getStream(nextStates, multiThreaded);
 		stream.forEach(s -> scorer.score(s));
 		TaggedTimer.stop(scID);
 	}
@@ -337,17 +335,12 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	protected void scoreWithObjective(List<StateT> allStates, ResultT goldResult) {
 		long scID = TaggedTimer.start("OBJ-SCORE");
 		log.debug("Score %s states according to objective...", allStates.size() + 1);
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = allStates.parallelStream();
-		} else {
-			stream = allStates.stream();
-		}
+		Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
 		stream.forEach(s -> objective.score(s, goldResult));
 		TaggedTimer.stop(scID);
 	}
 
-	protected Model<StateT> getModel() {
+	protected Model<?, StateT> getModel() {
 		return model;
 	}
 

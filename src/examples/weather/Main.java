@@ -78,13 +78,13 @@ public class Main {
 			 * Define templates that are responsible to generate
 			 * factors/features to score intermediate, generated states.
 			 */
-			List<AbstractTemplate<?, PlayOutsideState, ?>> templates = new ArrayList<>();
+			List<AbstractTemplate<WeatherInstance, PlayOutsideState, ?>> templates = new ArrayList<>();
 			templates.add(new PlayOutsideTemplate(3));
 
 			/*
 			 * Define a model and provide it with the necessary templates.
 			 */
-			Model<PlayOutsideState> model = new Model<>(templates);
+			Model<WeatherInstance, PlayOutsideState> model = new Model<>(templates);
 			/*
 			 * Create the scorer object that computes a score from the features
 			 * of a factor and the weight vectors of the templates.
@@ -117,7 +117,7 @@ public class Main {
 			 */
 			int numberOfSamplingSteps = 2;
 			StoppingCriterion<PlayOutsideState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-			DefaultSampler<PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, scorer, objective,
+			DefaultSampler<WeatherInstance, PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, scorer, objective,
 					explorers, stoppingCriterion);
 
 			/*

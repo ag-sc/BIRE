@@ -9,24 +9,34 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.rmi.CORBA.Util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.Instance;
 import factors.Factor;
 import factors.FactorGraph;
 import factors.FactorPattern;
+import factors.FactorPool;
 import templates.AbstractTemplate;
+import utility.Utils;
 import variables.AbstractState;
 
-public class Model<StateT extends AbstractState<?>> implements Serializable {
+public class Model<InstanceT extends Instance, StateT extends AbstractState<InstanceT>> implements Serializable {
 
 	private static Logger log = LogManager.getFormatterLogger(Model.class.getName());
 
-	private Collection<AbstractTemplate<?, StateT, ?>> templates;
+	private Collection<AbstractTemplate<InstanceT, StateT, ?>> templates;
 	private boolean forceFactorComputation = false;
+
+	private boolean multiThreaded = true;
 
 	/**
 	 * The model contains a collection of templates that can generate factors
@@ -35,7 +45,7 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 	 * 
 	 * @param templates
 	 */
-	public Model(Collection<AbstractTemplate<?, StateT, ?>> templates) {
+	public Model(Collection<AbstractTemplate<InstanceT, StateT, ?>> templates) {
 		this.templates = templates;
 	}
 
@@ -54,6 +64,14 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 		this.forceFactorComputation = forceFactorComputation;
 	}
 
+	public boolean isMultiThreaded() {
+		return multiThreaded;
+	}
+
+	public void setMultiThreaded(boolean multiThreaded) {
+		this.multiThreaded = multiThreaded;
+	}
+
 	/**
 	 * Loads a collection of templates (each with its respective weight vector)
 	 * from the given file.
@@ -65,7 +83,7 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 	 */
 	public void loadModelfromFile(String file) throws FileNotFoundException, IOException, ClassNotFoundException {
 		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		templates = (Collection<AbstractTemplate<?, StateT, ?>>) in.readObject();
+		templates = (Collection<AbstractTemplate<InstanceT, StateT, ?>>) in.readObject();
 		in.close();
 	}
 
@@ -83,7 +101,7 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 		out.close();
 	}
 
-	public Collection<AbstractTemplate<?, StateT, ?>> getTemplates() {
+	public Collection<AbstractTemplate<InstanceT, StateT, ?>> getTemplates() {
 		return templates;
 	}
 
@@ -103,6 +121,99 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 
 		FactorGraph factorGraph = state.getFactorGraph();
 		factorGraph.setFactorPatterns(allGeneratedFactorPatterns);
+	}
+
+	public void applyToBatch(List<StateT> states, FactorPool factorPool, InstanceT instance) {
+		Stream<AbstractTemplate<InstanceT, StateT, ?>> stream = Utils.getStream(templates, multiThreaded);
+		stream.forEach(t -> applyTemplate(t, states, factorPool, instance));
+	}
+
+	private <FactorPatternT extends FactorPattern> void applyTemplate(
+			AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT> states, FactorPool factorPool,
+			InstanceT instance) {
+		log.info("Apply template \"%s\" to %s states.", t.getClass().getSimpleName(), states.size());
+		/*
+		 * Collect all pattern of all states to which this template can be
+		 * applied (in parallel).
+		 */
+		Set<FactorPatternT> allGeneratedPatternsForTemplate = generatePatterns(t, states);
+
+		log.info("%s possible Factors for template %s", allGeneratedPatternsForTemplate.size(),
+				t.getClass().getSimpleName());
+
+		/*
+		 * Select only new patterns (or all if forced) for computation.
+		 */
+		log.info("Compute %s factors ...", forceFactorComputation ? "ALL" : "NEW");
+		Set<FactorPatternT> patternsToCompute = null;
+		if (forceFactorComputation) {
+			patternsToCompute = allGeneratedPatternsForTemplate;
+		} else {
+			/*
+			 * Extract only the ones which are not already associate with a
+			 * factor.
+			 */
+			Set<FactorPatternT> newPatternsForTemplate = factorPool
+					.extractNewFactorPatterns(allGeneratedPatternsForTemplate);
+			log.info("%s new Factors for template %s", newPatternsForTemplate.size(), t.getClass().getSimpleName());
+
+			patternsToCompute = newPatternsForTemplate;
+		}
+
+		/*
+		 * Compute all selected factors (in parallel).
+		 */
+		Set<Factor<FactorPatternT>> newFactors = computeNewFactors(t, patternsToCompute, instance);
+
+		factorPool.addFactors(newFactors);
+	}
+
+	private <FactorPatternT extends FactorPattern> Set<Factor<FactorPatternT>> computeNewFactors(
+			AbstractTemplate<InstanceT, StateT, FactorPatternT> t, Set<FactorPatternT> patterns, InstanceT instance) {
+
+		Stream<FactorPatternT> stream = Utils.getStream(patterns, multiThreaded);
+
+		Set<Factor<FactorPatternT>> factors = stream.map(p -> {
+			Factor<FactorPatternT> f = new Factor<>(p);
+			t.computeFactor(instance, f);
+			return f;
+		}).collect(Collectors.toSet());
+
+		return factors;
+	}
+
+	private <FactorPatternT extends FactorPattern> Set<FactorPatternT> generatePatterns(
+			AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT> states) {
+		Stream<StateT> stream = Utils.getStream(states, multiThreaded);
+		Set<FactorPatternT> allGeneratedPatternsForTemplate = ConcurrentHashMap.newKeySet();
+		stream.forEach(state -> {
+			log.debug("Apply template \"%s\" to state %s. Force recomputation: %s", t.getClass().getSimpleName(),
+					state.getID(), forceFactorComputation);
+			log.debug("%s", state);
+			Set<FactorPatternT> generatedPatternsForState = t.generateFactorPatterns(state);
+			log.debug("%s possible Factors for state %s", generatedPatternsForState.size(), state.getID());
+
+			FactorGraph factorGraph = state.getFactorGraph();
+			factorGraph.setFactorPatterns(generatedPatternsForState);
+			allGeneratedPatternsForTemplate.addAll(generatedPatternsForState);
+		});
+		// for (StateT state : states) {
+		// log.debug("Apply template \"%s\" to state %s. Force recomputation:
+		// %s", t.getClass().getSimpleName(),
+		// state.getID(), forceFactorComputation);
+		// log.debug("%s", state);
+		// Set<FactorPatternT> generatedPatternsForState =
+		// t.generateFactorPatterns(state);
+		// log.debug("%s possible Factors for state %s",
+		// generatedPatternsForState.size(), state.getID());
+		//
+		// log.debug("Compute %s factors ...", forceFactorComputation ? "ALL" :
+		// "NEW");
+		// FactorGraph factorGraph = state.getFactorGraph();
+		// factorGraph.setFactorPatterns(generatedPatternsForState);
+		// allGeneratedPatternsForTemplate.addAll(generatedPatternsForState);
+		// }
+		return allGeneratedPatternsForTemplate;
 	}
 
 	// public void unroll(StateT state) {

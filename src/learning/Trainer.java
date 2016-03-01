@@ -17,7 +17,7 @@ import variables.AbstractState;
 
 public class Trainer {
 
-	private static Logger log = LogManager.getFormatterLogger(Trainer.class.getName());
+	private static Logger log = LogManager.getFormatterLogger();
 
 	/**
 	 * This object is a basically a helper that iterates over data instances and
