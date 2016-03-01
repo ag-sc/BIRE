@@ -15,14 +15,18 @@ public class AcceptStrategies {
 	};
 
 	/**
-	 * Returns an accept function that accepts the candidate state if its objective
-	 * score is GREATER THAN the objective score of the current state. In this case
-	 * the returned accept function returns true.
+	 * Returns an accept function that accepts the candidate state if its
+	 * objective score is GREATER THAN the objective score of the current state.
+	 * In this case the returned accept function returns true.
 	 * 
 	 * @return
 	 */
 	public static <StateT extends AbstractState> AcceptStrategy<StateT> strictObjectiveAccept() {
 		return (candidate, current) -> candidate.getObjectiveScore() > current.getObjectiveScore();
+	}
+
+	public static <StateT extends AbstractState> AcceptStrategy<StateT> objectiveAccept() {
+		return (candidate, current) -> candidate.getObjectiveScore() >= current.getObjectiveScore();
 	};
 
 }

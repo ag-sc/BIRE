@@ -1,4 +1,4 @@
-package factors.impl;
+package factors.patterns;
 
 import factors.FactorPattern;
 import templates.AbstractTemplate;
@@ -53,6 +53,11 @@ public class VariablePairPattern<VariableT extends AbstractVariable> extends Fac
 		} else if (!variable2.equals(other.variable2))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "VariablePairPattern [variable1=" + variable1 + ", variable2=" + variable2 + "]";
 	}
 
 }

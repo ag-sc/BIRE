@@ -1,4 +1,4 @@
-package factors.impl;
+package factors.patterns;
 
 import factors.FactorPattern;
 import templates.AbstractTemplate;
@@ -41,6 +41,11 @@ public class SingleVariablePattern<VariableT extends AbstractVariable> extends F
 		} else if (!variable.equals(other.variable))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "SingleVariablePattern [variable=" + variable + "]";
 	}
 
 

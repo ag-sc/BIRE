@@ -104,6 +104,7 @@ public class Model<StateT extends AbstractState<?>> implements Serializable {
 		FactorGraph factorGraph = state.getFactorGraph();
 		factorGraph.setFactorPatterns(allGeneratedFactorPatterns);
 	}
+
 	// public void unroll(StateT state) {
 	// Set<FactorPattern> allGeneratedFactorPatterns = new HashSet<>();
 	// for (AbstractTemplate<?, StateT, ?> t : templates) {

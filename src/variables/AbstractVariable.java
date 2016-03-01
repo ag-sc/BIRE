@@ -18,10 +18,6 @@ public class AbstractVariable implements Serializable {
 		return id;
 	}
 
-	public void markAsModified() {
-		id = generateVariableID();
-	}
-
 	private VariableID generateVariableID() {
 		long currentID = variableIDIndex.getAndIncrement();
 		String id = "V" + String.valueOf(currentID);

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import factors.Factor;
-import factors.impl.SingleVariablePattern;
+import factors.patterns.SingleVariablePattern;
 import learning.Vector;
 import templates.AbstractTemplate;
 

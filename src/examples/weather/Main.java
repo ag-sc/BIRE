@@ -13,7 +13,7 @@ import examples.weather.WeatherInstance.Humidity;
 import examples.weather.WeatherInstance.Outlook;
 import examples.weather.WeatherInstance.Temperature;
 import examples.weather.WeatherInstance.Windy;
-import factors.impl.SingleVariablePattern;
+import factors.patterns.SingleVariablePattern;
 import learning.DefaultLearner;
 import learning.Model;
 import learning.ObjectiveFunction;

@@ -1,5 +1,6 @@
 package factors;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,6 +49,10 @@ public class FactorPool {
 		for (Factor<FactorPatternT> factor : newFactors) {
 			this.factorPattern2Factor.put(factor.getFactorPattern(), factor);
 		}
+	}
+
+	public Collection<Factor<? extends FactorPattern>> getAllFactors() {
+		return factorPattern2Factor.values();
 	}
 
 }

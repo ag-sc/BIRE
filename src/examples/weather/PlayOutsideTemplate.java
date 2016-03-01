@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.collect.Sets;
 
 import factors.Factor;
-import factors.impl.SingleVariablePattern;
+import factors.patterns.SingleVariablePattern;
 import learning.Vector;
 import templates.AbstractTemplate;
 

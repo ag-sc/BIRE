@@ -29,14 +29,14 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	private List<Explorer<StateT>> explorers;
 	private StoppingCriterion<StateT> stoppingCriterion;
 
-	protected final boolean multiThreaded = true;
+	protected final boolean multiThreaded = false;
 	/**
 	 * Defines the sampling strategy for the training phase. The test phase
 	 * currently always uses the greedy variant.
 	 */
-	private SamplingStrategy<StateT> samplingStrategy = SamplingStrategies.linearSamplingStrategy();
+	private SamplingStrategy<StateT> trainSamplingStrategy = SamplingStrategies.linearSamplingStrategy();
 
-	private AcceptStrategy<StateT> acceptStrategy = AcceptStrategies.strictModelAccept();
+	private AcceptStrategy<StateT> trainAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	/**
 	 * Greedy sampling strategy for test phase.
@@ -176,7 +176,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			/**
 			 * Sample one possible successor from model distribution
 			 */
-			StateT candidateState = samplingStrategy.sampleCandidate(nextStates);
+			StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
 			/**
 			 * Update model with selected state
 			 */
@@ -220,7 +220,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			 * Choose to accept or reject selected state
 			 */
 			// return candidateState;
-			return acceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
+			return trainAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
 		}
 		return currentState;
 	}
@@ -374,7 +374,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	}
 
 	public SamplingStrategy<StateT> getSamplingStrategy() {
-		return samplingStrategy;
+		return trainSamplingStrategy;
 	}
 
 	/**
@@ -385,11 +385,11 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @param samplingStrategy
 	 */
 	public void setSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
-		this.samplingStrategy = samplingStrategy;
+		this.trainSamplingStrategy = samplingStrategy;
 	}
 
 	public AcceptStrategy<StateT> getAcceptStrategy() {
-		return acceptStrategy;
+		return trainAcceptStrategy;
 	}
 
 	/**
@@ -399,7 +399,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @return
 	 */
 	public void setAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
-		this.acceptStrategy = acceptStrategy;
+		this.trainAcceptStrategy = acceptStrategy;
 	}
 
 	public List<Explorer<StateT>> getExplorers() {

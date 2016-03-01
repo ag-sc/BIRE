@@ -1,4 +1,4 @@
-package factors.impl;
+package factors.patterns;
 
 import java.util.Set;
 

@@ -21,7 +21,6 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 
 		@Override
 		public int compare(AbstractState<?> s1, AbstractState<?> s2) {
-			// TODO
 			return -Double.compare(s1.getModelScore(), s2.getModelScore());
 		}
 	};
@@ -33,7 +32,6 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 
 		@Override
 		public int compare(AbstractState<?> s1, AbstractState<?> s2) {
-			// TODO
 			return -Double.compare(s1.getObjectiveScore(), s2.getObjectiveScore());
 		}
 	};
