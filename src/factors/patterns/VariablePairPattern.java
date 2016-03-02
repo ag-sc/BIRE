@@ -57,7 +57,8 @@ public class VariablePairPattern<VariableT extends AbstractVariable> extends Fac
 
 	@Override
 	public String toString() {
-		return "VariablePairPattern [variable1=" + variable1 + ", variable2=" + variable2 + "]";
+		return "VariablePairPattern [template=" + template.getClass().getSimpleName() + ", variable1=" + variable1
+				+ ", variable2=" + variable2 + "]";
 	}
 
 }

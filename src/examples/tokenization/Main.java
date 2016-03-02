@@ -65,8 +65,9 @@ public class Main {
 		 * score intermediate, generated states.
 		 */
 		List<AbstractTemplate<Sentence, TokenState, ?>> templates = new ArrayList<>();
-		TokenizationTemplate tt = new TokenizationTemplate();
-		templates.add(tt);
+		templates.add(new TokenizationTemplate());
+//		templates.add(new TokenizationTemplate2());
+//		templates.add(new TokenizationTemplate3());
 
 		/*
 		 * Define a model and provide it with the necessary templates.
@@ -79,7 +80,7 @@ public class Main {
 		 * features and the templates' weight vectors.
 		 */
 		// Scorer<TokenState> scorer = new SoftplusScorer<>();
-		Scorer<TokenState> scorer = new DefaultScorer<>();
+		Scorer scorer = new DefaultScorer();
 
 		/*
 		 * Create an Initializer that is responsible for providing an initial

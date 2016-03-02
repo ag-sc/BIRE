@@ -69,4 +69,9 @@ public class Factor<FactorPatternT extends FactorPattern> implements Serializabl
 	public AbstractTemplate<?, ?, ?> getTemplate() {
 		return factorPattern.getTemplate();
 	}
+
+	@Override
+	public String toString() {
+		return "Factor [factorID=" + factorID + ", factorPattern=" + factorPattern + ", features=" + features + "]";
+	}
 }

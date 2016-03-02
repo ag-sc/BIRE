@@ -1,6 +1,7 @@
 package learning.scorer;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +10,7 @@ import factors.Factor;
 import learning.Vector;
 import variables.AbstractState;
 
-public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT> {
+public class LinearScorer extends Scorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -33,7 +34,7 @@ public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT
 	 * @param state
 	 * @return
 	 */
-	public double score(StateT state) {
+	public double score(Set<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -41,7 +42,6 @@ public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT
 		// respective factors
 
 		double score = 0;
-		Collection<Factor<?>> factors = state.getFactorGraph().getFactors();
 		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeightVector();
@@ -49,7 +49,6 @@ public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT
 			double factorScore = dotProduct;
 			score += factorScore;
 		}
-		state.setModelScore(score);
 		return score;
 	}
 

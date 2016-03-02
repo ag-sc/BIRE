@@ -40,4 +40,10 @@ public class SetOfVariablesPattern<VariableT extends AbstractVariable> extends F
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "SetOfVariablesPattern [template=" + template.getClass().getSimpleName() + ", variables=" + variables
+				+ "]";
+	}
+
 }

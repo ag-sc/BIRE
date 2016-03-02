@@ -3,6 +3,9 @@ package factors;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import exceptions.MissingFactorException;
 
 public class FactorGraph implements Serializable {
 
@@ -14,19 +17,20 @@ public class FactorGraph implements Serializable {
 	private FactorPool factorPool;
 	// private Map<FactorPattern, Factor<? extends FactorPattern>>
 	// factorPattern2Factor;
-	private Set<? extends FactorPattern> factorPatterns;
+	private Set<FactorPattern> factorPatterns;
 
 	public FactorGraph() {
 		this.factorPool = new FactorPool();
 		// this.factorPattern2Factor = new HashMap<>();
-		this.factorPatterns = new HashSet<>();
+		this.factorPatterns = ConcurrentHashMap.newKeySet();
 	}
 
 	public FactorGraph(FactorGraph factorGraph) {
 		this.factorPool = factorGraph.factorPool;
 		// this.factorPattern2Factor = new
 		// HashMap<>(factorGraph.factorPattern2Factor);
-		this.factorPatterns = new HashSet<>(factorGraph.factorPatterns);
+		// this.factorPatterns = new HashSet<>(factorGraph.factorPatterns);
+		this.factorPatterns = ConcurrentHashMap.newKeySet();
 	}
 
 	//
@@ -53,25 +57,36 @@ public class FactorGraph implements Serializable {
 	// }
 	// }
 
-	public void setFactorPatterns(Set<? extends FactorPattern> generatedFactorPatterns) {
-		this.factorPatterns = generatedFactorPatterns;
+	// public void setFactorPatterns(Set<FactorPattern> generatedFactorPatterns)
+	// {
+	// this.factorPatterns = generatedFactorPatterns;
+	// }
+
+	public void addFactorPatterns(Set<? extends FactorPattern> generatedFactorPatterns) {
+		this.factorPatterns.addAll(generatedFactorPatterns);
 	}
 
-	public Set<? extends FactorPattern> getFactorPatterns() {
-		return factorPatterns;
+	public void clear() {
+		this.factorPatterns.clear();
 	}
 
-	/**
-	 * Returns the subset of patterns from the provided set of patterns for
-	 * which there is no factor stored in the factor pool of this factor graph.
-	 * 
-	 * @param generatedFactors
-	 * @return
-	 */
-	public <FactorPatternT extends FactorPattern> Set<FactorPatternT> extractNewFactorPatterns(
-			Set<FactorPatternT> generatedFactors) {
-		return factorPool.extractNewFactorPatterns(generatedFactors);
-	}
+	// public Set<? extends FactorPattern> getFactorPatterns() {
+	// return factorPatterns;
+	// }
+	//
+	// /**
+	// * Returns the subset of patterns from the provided set of patterns for
+	// * which there is no factor stored in the factor pool of this factor
+	// graph.
+	// *
+	// * @param generatedFactors
+	// * @return
+	// */
+	// public <FactorPatternT extends FactorPattern> Set<FactorPatternT>
+	// extractNewFactorPatterns(
+	// Set<FactorPatternT> generatedFactors) {
+	// return factorPool.extractNewFactorPatterns(generatedFactors);
+	// }
 	// /**
 	// * Removes obsolete factors and returns the novel factor patterns within
 	// the
@@ -93,19 +108,20 @@ public class FactorGraph implements Serializable {
 	// return newFactors;
 	// }
 
-	/**
-	 * Inserts a compute factor into the graph. The factor is store in the
-	 * factor pool object of this graph so that it is shared across states and
-	 * can be used by each of them.
-	 * 
-	 * @param newFactors
-	 */
-	public <FactorPatternT extends FactorPattern> void addFactors(Set<Factor<FactorPatternT>> newFactors) {
-		factorPool.addFactors(newFactors);
-		// for (Factor<? extends FactorPattern> factor : newFactors) {
-		// this.factorPatterns.add(factor.getFactorPattern());
-		// }
-	}
+	// /**
+	// * Inserts a compute factor into the graph. The factor is store in the
+	// * factor pool object of this graph so that it is shared across states and
+	// * can be used by each of them.
+	// *
+	// * @param newFactors
+	// */
+	// public <FactorPatternT extends FactorPattern> void
+	// addFactors(Set<Factor<FactorPatternT>> newFactors) {
+	// factorPool.addFactors(newFactors);
+	// // for (Factor<? extends FactorPattern> factor : newFactors) {
+	// // this.factorPatterns.add(factor.getFactorPattern());
+	// // }
+	// }
 	// public <FactorPatternT extends FactorPattern> void
 	// addFactors(Set<Factor<FactorPatternT>> newFactors) {
 	// factorPool.addFactors(newFactors);
@@ -114,7 +130,7 @@ public class FactorGraph implements Serializable {
 	// }
 	// }
 
-	public Set<Factor<? extends FactorPattern>> getFactors() {
+	public Set<Factor<? extends FactorPattern>> getFactors() throws MissingFactorException {
 		return factorPool.getFactors(factorPatterns);
 	}
 

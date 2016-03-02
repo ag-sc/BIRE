@@ -45,8 +45,8 @@ public class SingleVariablePattern<VariableT extends AbstractVariable> extends F
 
 	@Override
 	public String toString() {
-		return "SingleVariablePattern [variable=" + variable + "]";
+		return "SingleVariablePattern [template=" + template.getClass().getSimpleName() + ", variable=" + variable
+				+ "]";
 	}
-
 
 }

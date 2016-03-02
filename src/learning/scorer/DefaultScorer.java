@@ -1,15 +1,14 @@
 package learning.scorer;
 
-import java.util.Collection;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import factors.Factor;
 import learning.Vector;
-import variables.AbstractState;
 
-public class DefaultScorer<StateT extends AbstractState> implements Scorer<StateT> {
+public class DefaultScorer extends Scorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -33,7 +32,7 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 	 * @param state
 	 * @return
 	 */
-	public double score(StateT state) {
+	public double score(Set<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -43,7 +42,6 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 		double score = 1;
 		// TODO normalize scores
 		// double normalization = 0;
-		Collection<Factor<?>> factors = state.getFactorGraph().getFactors();
 		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeightVector();
@@ -54,7 +52,6 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 		}
 		// score /= normalization;
 
-		state.setModelScore(score);
 		return score;
 	}
 

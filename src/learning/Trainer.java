@@ -83,7 +83,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> train(
+	public <StateT extends AbstractState<?>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> train(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			Learner<StateT> learner, List<InstanceT> instances, int numberOfEpochs) {
 		List<StateT> finalStates = new ArrayList<>();
@@ -156,7 +156,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
+	public <StateT extends AbstractState<?>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
@@ -192,7 +192,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState, InstanceT extends Instance> List<StateT> predict(Sampler<StateT, ?> sampler,
+	public <StateT extends AbstractState<?>, InstanceT extends Instance> List<StateT> predict(Sampler<StateT, ?> sampler,
 			Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
+import exceptions.MissingFactorException;
 import factors.Factor;
 import learning.callbacks.EpochCallback;
 import learning.callbacks.InstanceCallback;
@@ -125,8 +126,14 @@ public class DefaultLearner<StateT extends AbstractState<?>>
 	 */
 	public Vector getFeatureDifferences(AbstractTemplate<?, StateT, ?> template, StateT state1, StateT state2) {
 		Vector diff = new Vector();
-		Collection<Factor<?>> factors1 = state1.getFactorGraph().getFactors();
-		Collection<Factor<?>> factors2 = state2.getFactorGraph().getFactors();
+		Collection<Factor<?>> factors1 = null;
+		Collection<Factor<?>> factors2 = null;
+		try {
+			factors1 = state1.getFactorGraph().getFactors();
+			factors2 = state2.getFactorGraph().getFactors();
+		} catch (MissingFactorException e) {
+			e.printStackTrace();
+		}
 		for (Factor<?> factor : factors1) {
 			if (factor.getTemplate() == template) {
 				diff.add(factor.getFeatureVector());

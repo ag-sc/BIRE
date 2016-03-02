@@ -89,7 +89,7 @@ public class Main {
 			 * Create the scorer object that computes a score from the features
 			 * of a factor and the weight vectors of the templates.
 			 */
-			Scorer<PlayOutsideState> scorer = new DefaultScorer<>();
+			Scorer scorer = new DefaultScorer();
 
 			/*
 			 * Create an Initializer that is responsible for providing an

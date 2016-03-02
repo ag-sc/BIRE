@@ -11,6 +11,7 @@ import corpus.Instance;
 import factors.Factor;
 import factors.FactorGraph;
 import factors.FactorPattern;
+import factors.FactorPool;
 import learning.Vector;
 import variables.AbstractState;
 
@@ -25,6 +26,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * INIT_WEIGHT_RANGE.
 	 */
 	protected Vector weights = new Vector();
+	// protected FactorPool factorPool = new FactorPool();
 	/**
 	 * A regularization parameter to punish big feature weights.
 	 */
@@ -45,41 +47,6 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 
 	public Vector getWeightVector() {
 		return weights;
-	}
-
-	/**
-	 * This function computes factors (and their features) for the given state.
-	 * It computes all possible FactorPatterns to which this template could be
-	 * applied. For new factor patterns a new factor is created. Finally, all
-	 * possible factor patterns are returned.
-	 *
-	 * @param state
-	 */
-	public Set<FactorPatternT> applyTo(StateT state, boolean force) {
-		log.debug("Apply template \"%s\" to state %s. Force recomputation: %s", this.getClass().getSimpleName(),
-				state.getID(), force);
-		log.debug("%s", state);
-		FactorGraph factorGraph = state.getFactorGraph();
-
-		Set<FactorPatternT> allPossibleFactors = generateFactorPatterns(state);
-		log.debug("%s possible Factors: %s", allPossibleFactors.size(), allPossibleFactors);
-
-		Set<FactorPatternT> newFactorPatterns = factorGraph.extractNewFactorPatterns(allPossibleFactors);
-		log.debug("%s new Factors: %s", newFactorPatterns.size(), newFactorPatterns);
-
-		log.debug("Compute %s factors ...", force ? "ALL" : "NEW");
-		Set<Factor<FactorPatternT>> newFactors = null;
-		if (force) {
-			newFactors = allPossibleFactors.stream().map(p -> new Factor<>(p)).collect(Collectors.toSet());
-		} else {
-			newFactors = newFactorPatterns.stream().map(p -> new Factor<>(p)).collect(Collectors.toSet());
-		}
-
-		// TODO use parallelization here!
-		newFactors.forEach(p -> computeFactor(state.getInstance(), p));
-		factorGraph.addFactors(newFactors);
-
-		return allPossibleFactors;
 	}
 
 	/**
@@ -105,13 +72,6 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * @param factor
 	 */
 	public abstract void computeFactor(InstanceT instance, Factor<FactorPatternT> factor);
-
-	// public Factor<FactorPatternT> computeFactor(StateT state, FactorPatternT
-	// factorPattern) {
-	// Factor<FactorPatternT> newFactor = new Factor<>(factorPattern);
-	// computeFactor(state.getInstance(), newFactor);
-	// return newFactor;
-	// }
 
 	@Override
 	public String toString() {

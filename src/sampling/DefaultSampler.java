@@ -27,7 +27,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 
 	private static Logger log = LogManager.getFormatterLogger();
 	protected Model<InstanceT, StateT> model;
-	protected Scorer<StateT> scorer;
+	protected Scorer scorer;
 	protected ObjectiveFunction<StateT, ResultT> objective;
 	private List<Explorer<StateT>> explorers;
 	private StoppingCriterion<StateT> stoppingCriterion;
@@ -64,9 +64,8 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * @param explorers
 	 * @param stoppingCriterion
 	 */
-	public DefaultSampler(Model<InstanceT, StateT> model, Scorer<StateT> scorer,
-			ObjectiveFunction<StateT, ResultT> objective, List<Explorer<StateT>> explorers,
-			StoppingCriterion<StateT> stoppingCriterion) {
+	public DefaultSampler(Model<InstanceT, StateT> model, Scorer scorer, ObjectiveFunction<StateT, ResultT> objective,
+			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
@@ -89,8 +88,8 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * @param explorers
 	 * @param samplingSteps
 	 */
-	public DefaultSampler(Model<InstanceT, StateT> model, Scorer<StateT> scorer,
-			ObjectiveFunction<StateT, ResultT> objective, List<Explorer<StateT>> explorers, int samplingSteps) {
+	public DefaultSampler(Model<InstanceT, StateT> model, Scorer scorer, ObjectiveFunction<StateT, ResultT> objective,
+			List<Explorer<StateT>> explorers, int samplingSteps) {
 		super();
 		this.model = model;
 		this.scorer = scorer;
@@ -173,7 +172,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			 * Apply templates to states and, thus generate factors and features
 			 */
 			// unroll(allStates);
-			model.applyToBatch(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
+			model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
 			/**
 			 * Score all states according to the model.
 			 */
@@ -251,7 +250,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			 * Apply templates to states and thus generate factors and features
 			 */
 			// unroll(allStates);
-			model.applyToBatch(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
+			model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
 			/**
 			 * Score all states according to the model.
 			 */
@@ -344,7 +343,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 		return model;
 	}
 
-	protected Scorer<StateT> getScorer() {
+	protected Scorer getScorer() {
 		return scorer;
 	}
 
