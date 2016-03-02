@@ -66,8 +66,6 @@ public class Main {
 		 */
 		List<AbstractTemplate<Sentence, TokenState, ?>> templates = new ArrayList<>();
 		templates.add(new TokenizationTemplate());
-//		templates.add(new TokenizationTemplate2());
-//		templates.add(new TokenizationTemplate3());
 
 		/*
 		 * Define a model and provide it with the necessary templates.
