@@ -1,12 +1,14 @@
 package learning;
 
-import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -15,19 +17,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.parsers.FactoryConfigurationError;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
+import exceptions.UnkownTemplateRequestedException;
 import factors.Factor;
 import factors.FactorGraph;
 import factors.FactorPattern;
 import factors.FactorPool;
 import templates.AbstractTemplate;
+import templates.TemplateFactory;
 import utility.Utils;
 import variables.AbstractState;
 
 public class Model<InstanceT extends Instance, StateT extends AbstractState<InstanceT>> implements Serializable {
+
+	private static final String TEMPLATE_WEIGHTS_FILE_SUFFIX = ".weights.tsv";
 
 	private static Logger log = LogManager.getFormatterLogger(Model.class.getName());
 
@@ -70,33 +78,92 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 		this.multiThreaded = multiThreaded;
 	}
 
-	/**
-	 * Loads a collection of templates (each with its respective weight vector)
-	 * from the given file.
-	 * 
-	 * @param file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public void loadModelfromFile(String file) throws FileNotFoundException, IOException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
-		templates = (Collection<AbstractTemplate<InstanceT, StateT, ?>>) in.readObject();
-		in.close();
+	public void loadModelFromDir(String modelDirPath, TemplateFactory<InstanceT, StateT> factory)
+			throws FileNotFoundException, IOException, ClassNotFoundException, UnkownTemplateRequestedException {
+
+		File modelDir = new File(modelDirPath);
+		loadModelFromDir(modelDir, factory);
 	}
 
-	/**
-	 * Stores the collection of templates (each with its respective weight
-	 * vector) to the specified file.
-	 * 
-	 * @param file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-	public void saveModelToFile(String file) throws FileNotFoundException, IOException {
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
-		out.writeObject(templates);
-		out.close();
+	public void loadModelFromDir(File modelDir, TemplateFactory<InstanceT, StateT> factory)
+			throws FileNotFoundException, IOException, ClassNotFoundException, UnkownTemplateRequestedException {
+		log.info("Load model from directory %s ...", modelDir);
+		File[] templateFiles = modelDir.listFiles(f -> f.getName().endsWith(TEMPLATE_WEIGHTS_FILE_SUFFIX));
+		for (File templateFile : templateFiles) {
+			AbstractTemplate<InstanceT, StateT, ?> template = loadTemplateWeights(templateFile, factory);
+			templates.add(template);
+		}
+		log.info("Model successfully loaded!");
+	}
+
+	private AbstractTemplate<InstanceT, StateT, ?> loadTemplateWeights(File templateFile,
+			TemplateFactory<InstanceT, StateT> factory) throws IOException, UnkownTemplateRequestedException {
+		System.out.println(templateFile.getName());
+		System.out.println(Arrays.toString(templateFile.getName().split("\\.", 2)));
+		String templateName = templateFile.getName().split("\\.", 2)[0];
+
+		log.info("Load Template %s from file %s ...", templateName, templateFile);
+
+		AbstractTemplate<InstanceT, StateT, ?> template = factory.newInstance(templateName);
+
+		Vector weights = template.getWeights();
+
+		FileReader fReader = new FileReader(templateFile);
+		BufferedReader bReader = new BufferedReader(fReader);
+
+		bReader.lines().forEach(line -> {
+			String[] parts = line.split("\t", 2);
+			String featureName = parts[0];
+			Double featureValue = Double.valueOf(parts[1]);
+			weights.set(featureName, featureValue);
+		});
+		bReader.close();
+
+		log.info("%s feature weights restored.", weights.getFeatureNames().size());
+		log.info("Template successfully loaded!");
+		return template;
+	}
+
+	public void saveModelToFile(String modelsDirPath, String modelDirName) throws FileNotFoundException, IOException {
+		File modelsDir = new File(modelsDirPath);
+		saveModelToFile(modelsDir, modelDirName);
+	}
+
+	public void saveModelToFile(File modelsDir, String modelDirName) throws FileNotFoundException, IOException {
+		File modelDir = new File(modelsDir, modelDirName);
+		saveModelToFile(modelDir);
+	}
+
+	public void saveModelToFile(String modelDirPath) throws FileNotFoundException, IOException {
+		File modelDir = new File(modelDirPath);
+		saveModelToFile(modelDir);
+	}
+
+	public void saveModelToFile(File modelDir) throws FileNotFoundException, IOException {
+		if (!modelDir.exists())
+			modelDir.mkdirs();
+
+		log.info("Save Model to directory %s ...", modelDir);
+		for (AbstractTemplate<InstanceT, StateT, ?> template : templates) {
+			saveTemplateWeights(modelDir, template);
+		}
+		log.info("Model successfully saved!");
+	}
+
+	private void saveTemplateWeights(File modelDir, AbstractTemplate<InstanceT, StateT, ?> template)
+			throws IOException {
+		File templateFile = new File(modelDir, template.getClass().getSimpleName() + TEMPLATE_WEIGHTS_FILE_SUFFIX);
+		log.info("Save Template %s to file %s ...", template.getClass().getSimpleName(), templateFile);
+
+		FileWriter fWriter = new FileWriter(templateFile);
+		BufferedWriter bWriter = new BufferedWriter(fWriter);
+		for (Entry<String, Double> feature : template.getWeights().getFeatures().entrySet()) {
+			bWriter.write(feature.getKey() + "\t" + feature.getValue());
+			bWriter.newLine();
+		}
+		bWriter.flush();
+		bWriter.close();
+		log.info("Template successfully saved!");
 	}
 
 	public Collection<AbstractTemplate<InstanceT, StateT, ?>> getTemplates() {
@@ -104,7 +171,7 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 	}
 
 	public void applyToStates(List<StateT> states, FactorPool factorPool, InstanceT instance) {
-		log.info("Apply %s templates to %s states.", templates.size(), states.size());
+		log.debug("Apply %s templates to %s states.", templates.size(), states.size());
 		for (StateT state : states) {
 			state.getFactorGraph().clear();
 		}
@@ -115,20 +182,20 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 	private <FactorPatternT extends FactorPattern> Set<FactorPatternT> applyTemplate(
 			AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT> states, FactorPool factorPool,
 			InstanceT instance) {
-		log.info("Apply template \"%s\" to %s states.", t.getClass().getSimpleName(), states.size());
+		log.debug("Apply template \"%s\" to %s states.", t.getClass().getSimpleName(), states.size());
 		/*
 		 * Collect all pattern of all states to which this template can be
 		 * applied (in parallel).
 		 */
 		Set<FactorPatternT> allGeneratedPatternsForTemplate = generatePatternsAndAddToStates(t, states);
 
-		log.info("%s possible Factors for template %s", allGeneratedPatternsForTemplate.size(),
+		log.debug("%s possible Factors for template %s", allGeneratedPatternsForTemplate.size(),
 				t.getClass().getSimpleName());
 
 		/*
 		 * Select only new patterns (or all if forced) for computation.
 		 */
-		log.info("Compute %s factors ...", forceFactorComputation ? "ALL" : "NEW");
+		log.debug("Compute %s factors ...", forceFactorComputation ? "ALL" : "NEW");
 		Set<FactorPatternT> patternsToCompute = null;
 		if (forceFactorComputation) {
 			patternsToCompute = allGeneratedPatternsForTemplate;
@@ -139,7 +206,7 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 			 */
 			Set<FactorPatternT> newPatternsForTemplate = factorPool
 					.extractNewFactorPatterns(allGeneratedPatternsForTemplate);
-			log.info("%s new Factors for template %s", newPatternsForTemplate.size(), t.getClass().getSimpleName());
+			log.debug("%s new Factors for template %s", newPatternsForTemplate.size(), t.getClass().getSimpleName());
 
 			patternsToCompute = newPatternsForTemplate;
 		}
@@ -159,11 +226,11 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 		Set<FactorPatternT> allGeneratedPatternsForTemplate = ConcurrentHashMap.newKeySet();
 
 		stream.forEach(state -> {
-			log.debug("Apply template \"%s\" to state %s. Force recomputation: %s", t.getClass().getSimpleName(),
+			log.trace("Apply template \"%s\" to state %s. Force recomputation: %s", t.getClass().getSimpleName(),
 					state.getID(), forceFactorComputation);
-			log.debug("%s", state);
+			log.trace("%s", state);
 			Set<FactorPatternT> generatedPatternsForState = t.generateFactorPatterns(state);
-			log.debug("%s possible Factors for state %s", generatedPatternsForState.size(), state.getID());
+			log.trace("%s possible Factors for state %s", generatedPatternsForState.size(), state.getID());
 
 			FactorGraph factorGraph = state.getFactorGraph();
 			factorGraph.addFactorPatterns(generatedPatternsForState);
@@ -193,7 +260,7 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 			builder.append(template.getClass().getSimpleName());
 			builder.append("\n");
 			builder.append("\t#Features: ");
-			builder.append(template.getWeightVector().getFeatureNames().size());
+			builder.append(template.getWeights().getFeatureNames().size());
 			builder.append("\n");
 		}
 		return builder.toString();
@@ -204,14 +271,14 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 		for (AbstractTemplate<?, StateT, ?> template : templates) {
 			builder.append(template.getClass().getSimpleName());
 			builder.append(" (#Features: ");
-			builder.append(template.getWeightVector().getFeatureNames().size());
+			builder.append(template.getWeights().getFeatureNames().size());
 			builder.append(")");
 			builder.append("\n");
-			for (String weight : template.getWeightVector().getFeatureNames()) {
+			for (String weight : template.getWeights().getFeatureNames()) {
 				builder.append("\t");
 				builder.append(weight);
 				builder.append(" : ");
-				builder.append(template.getWeightVector().getValueOfFeature(weight));
+				builder.append(template.getWeights().getValueOfFeature(weight));
 				builder.append("\n");
 			}
 		}

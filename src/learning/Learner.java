@@ -11,7 +11,7 @@ import variables.AbstractState;
  *
  * @param <StateT>
  */
-public interface Learner<StateT extends AbstractState> {
+public interface Learner<StateT extends AbstractState<?>> {
 
 	public void update(StateT currentState, StateT possibleNextState);
 

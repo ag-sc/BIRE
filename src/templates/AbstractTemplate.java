@@ -2,16 +2,13 @@ package templates;
 
 import java.io.Serializable;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
 import factors.Factor;
-import factors.FactorGraph;
 import factors.FactorPattern;
-import factors.FactorPool;
 import learning.Vector;
 import variables.AbstractState;
 
@@ -26,6 +23,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * INIT_WEIGHT_RANGE.
 	 */
 	protected Vector weights = new Vector();
+
 	// protected FactorPool factorPool = new FactorPool();
 	/**
 	 * A regularization parameter to punish big feature weights.
@@ -45,8 +43,12 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 		weights.addToValue(feature, update);
 	}
 
-	public Vector getWeightVector() {
+	public Vector getWeights() {
 		return weights;
+	}
+
+	public void setWeights(Vector weights) {
+		this.weights = weights;
 	}
 
 	/**

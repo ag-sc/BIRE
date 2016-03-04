@@ -104,7 +104,7 @@ public class DefaultLearner<StateT extends AbstractState<?>>
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = getFeatureDifferences(t, possibleNextState, currentState);
 			featureDifferences.put(t, differences);
-			weightedDifferenceSum += differences.dotProduct(t.getWeightVector());
+			weightedDifferenceSum += differences.dotProduct(t.getWeights());
 		}
 
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState)) {

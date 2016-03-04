@@ -44,7 +44,7 @@ public class DefaultScorer extends Scorer {
 		// double normalization = 0;
 		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
-			Vector weights = factor.getTemplate().getWeightVector();
+			Vector weights = factor.getTemplate().getWeights();
 			double dotProduct = featureVector.dotProduct(weights);
 			double factorScore = Math.exp(dotProduct);
 			score *= factorScore;
