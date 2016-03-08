@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -16,8 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.xml.parsers.FactoryConfigurationError;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +52,10 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 	 */
 	public Model(Collection<AbstractTemplate<InstanceT, StateT, ?>> templates) {
 		this.templates = templates;
+	}
+
+	public Model() {
+		this.templates = new ArrayList<>();
 	}
 
 	public boolean isForceFactorComputation() {

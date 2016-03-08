@@ -69,7 +69,9 @@ public class DefaultLearner<StateT extends AbstractState<?>>
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
 		Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients = new HashMap<>();
-		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
+			weightGradients.put(t, new Vector());
+		}
 		/**
 		 * Rank each possible next state against the current state
 		 */
