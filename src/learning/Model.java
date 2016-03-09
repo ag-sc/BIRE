@@ -82,14 +82,15 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 	}
 
 	public void loadModelFromDir(String modelDirPath, TemplateFactory<InstanceT, StateT> factory)
-			throws FileNotFoundException, IOException, ClassNotFoundException, UnkownTemplateRequestedException {
+			throws FileNotFoundException, IOException, ClassNotFoundException, UnkownTemplateRequestedException,
+			Exception {
 
 		File modelDir = new File(modelDirPath);
 		loadModelFromDir(modelDir, factory);
 	}
 
 	public void loadModelFromDir(File modelDir, TemplateFactory<InstanceT, StateT> factory)
-			throws FileNotFoundException, IOException, ClassNotFoundException, UnkownTemplateRequestedException {
+			throws FileNotFoundException, IOException, UnkownTemplateRequestedException, Exception {
 		log.info("Load model from directory %s ...", modelDir);
 		File[] templateFiles = modelDir.listFiles(f -> f.getName().endsWith(TEMPLATE_WEIGHTS_FILE_SUFFIX));
 		for (File templateFile : templateFiles) {
@@ -100,7 +101,8 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 	}
 
 	private AbstractTemplate<InstanceT, StateT, ?> loadTemplateWeights(File templateFile,
-			TemplateFactory<InstanceT, StateT> factory) throws IOException, UnkownTemplateRequestedException {
+			TemplateFactory<InstanceT, StateT> factory)
+					throws IOException, UnkownTemplateRequestedException, Exception {
 		System.out.println(templateFile.getName());
 		System.out.println(Arrays.toString(templateFile.getName().split("\\.", 2)));
 		String templateName = templateFile.getName().split("\\.", 2)[0];
