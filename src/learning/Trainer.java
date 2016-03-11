@@ -126,6 +126,8 @@ public class Trainer {
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
+					finalState.getFactorGraph().clear();
+					finalState.getFactorGraph().getFactorPool().clear();
 					finalStates.add(finalState);
 				}
 				log.info("===========================");
@@ -170,6 +172,9 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+			
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
 			log.info("Gold Result:   %s", document.getGoldResult());
@@ -192,8 +197,8 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<?>, InstanceT extends Instance> List<StateT> predict(Sampler<StateT, ?> sampler,
-			Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
+	public <StateT extends AbstractState<?>, InstanceT extends Instance> List<StateT> predict(
+			Sampler<StateT, ?> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
 			InstanceT document = documents.get(d);
@@ -204,6 +209,9 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+			
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
 			log.info("Final State:  %s", finalState);

@@ -204,6 +204,7 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 		Set<FactorPatternT> patternsToCompute = null;
 		if (forceFactorComputation) {
 			patternsToCompute = allGeneratedPatternsForTemplate;
+			factorPool.clear();
 		} else {
 			/*
 			 * Extract only the ones which are not already associate with a

@@ -71,4 +71,8 @@ public class FactorPool {
 		return builder.toString();
 	}
 
+	public void clear() {
+		factorPattern2Factor.clear();
+	}
+
 }
