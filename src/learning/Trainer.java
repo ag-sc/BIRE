@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
 import corpus.LabeledInstance;
+import factors.FactorGraph;
+import java.lang.ref.WeakReference;
 import learning.callbacks.InstanceCallback;
 import learning.callbacks.EpochCallback;
 import sampling.Initializer;
@@ -120,16 +122,19 @@ public class Trainer {
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
-
+                                
 				/*
 				 * Store the final predicted state for the current document if
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
-					finalState.getFactorGraph().clear();
-					finalState.getFactorGraph().getFactorPool().clear();
+					//finalState.getFactorGraph().clear();
+					//finalState.getFactorGraph().getFactorPool().clear();
 					finalStates.add(finalState);
 				}
+                                
+                                finalState.resetFactorGraph();
+                                
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
 					c.onEndInstance(this, instance, i, instances.size(), e, numberOfEpochs);
