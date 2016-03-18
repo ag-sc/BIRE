@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
 import exceptions.MissingFactorException;
 import factors.Factor;
 import learning.callbacks.EpochCallback;
@@ -18,8 +17,7 @@ import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
-public class DefaultLearner<StateT extends AbstractState<?>>
-		implements Learner<StateT>, InstanceCallback, EpochCallback {
+public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
@@ -223,23 +221,4 @@ public class DefaultLearner<StateT extends AbstractState<?>>
 		return model;
 	}
 
-	@Override
-	public <InstanceT extends Instance> void onStartInstance(Trainer caller, InstanceT instance, int indexOfInstance,
-			int numberOfInstances, int epoch, int numberOfEpochs) {
-		double fraction = ((float) (indexOfInstance + epoch * numberOfInstances))
-				/ (numberOfEpochs * numberOfInstances);
-		currentAlpha = (alpha * 0.99) * (1 - fraction) + alpha * 0.01;
-	}
-
-	@Override
-	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT instance, int indexOfInstance,
-			int numberOfInstances, int epoch, int numberOfEpochs) {
-
-	}
-
-	@Override
-	public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
-		double fraction = ((float) epoch) / (numberOfEpochs);
-		currentAlpha = (alpha * 0.9) * (1 - fraction) + alpha * 0.01;
-	}
 }

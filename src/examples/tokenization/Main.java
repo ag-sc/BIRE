@@ -10,14 +10,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.FileUtils;
-import corpus.Instance;
 import evaluation.DataSplit;
 import evaluation.EvaluationUtil;
 import learning.DefaultLearner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Trainer;
-import learning.callbacks.InstanceCallback;
 import learning.scorer.DefaultScorer;
 import learning.scorer.Scorer;
 import sampling.DefaultSampler;
@@ -72,7 +70,7 @@ public class Main {
 		 */
 		Model<Sentence, TokenState> model = new Model<>(templates);
 		model.setMultiThreaded(true);
-		model.setForceFactorComputation(false);
+		model.setForceFactorComputation(true);
 		/*
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.
@@ -84,7 +82,7 @@ public class Main {
 		 * Create an Initializer that is responsible for providing an initial
 		 * state for the sampling chain given a sentence.
 		 */
-		TokenizationInitializer<Sentence> initializer = new TokenizationInitializer<>();
+		TokenizationInitializer initializer = new TokenizationInitializer();
 
 		/*
 		 * Define the explorers that will provide "neighboring" states given a

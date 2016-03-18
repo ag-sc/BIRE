@@ -2,7 +2,7 @@ package examples.tokenization;
 
 import sampling.Initializer;
 
-public class TokenizationInitializer<SentenceT extends Sentence> implements Initializer<SentenceT, TokenState> {
+public class TokenizationInitializer implements Initializer<Sentence, TokenState> {
 
 	/**
 	 * This initializer simply initializes the first state with no token
@@ -13,7 +13,7 @@ public class TokenizationInitializer<SentenceT extends Sentence> implements Init
 	}
 
 	@Override
-	public TokenState getInitialState(SentenceT sentence) {
+	public TokenState getInitialState(Sentence sentence) {
 		return new TokenState(sentence);
 	}
 

@@ -12,6 +12,8 @@ import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
+import learning.callbacks.InstanceCallback;
+import learning.callbacks.StepCallback;
 import learning.scorer.Scorer;
 import sampling.samplingstrategies.AcceptStrategies;
 import sampling.samplingstrategies.AcceptStrategy;
@@ -50,6 +52,20 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * Strict accept strategy for test phase.
 	 */
 	private final AcceptStrategy<StateT> strictAcceptStrategy = AcceptStrategies.strictModelAccept();
+
+	private List<StepCallback> stepCallbacks = new ArrayList<>();
+
+	public List<StepCallback> getStepCallbacks() {
+		return stepCallbacks;
+	}
+
+	public void addStepCallbacks(List<StepCallback> stepCallbacks) {
+		this.stepCallbacks.addAll(stepCallbacks);
+	}
+
+	public void addStepCallback(StepCallback stepCallback) {
+		this.stepCallbacks.add(stepCallback);
+	}
 
 	/**
 	 * The DefaultSampler implements the Sampler interface. This sampler divides
@@ -107,12 +123,21 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 
 		do {
 			log.info("---------------------------");
+			int e = 0;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("TRAINING Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				for (StepCallback c : stepCallbacks) {
+					c.onStartStep(this, step, e, explorers.size(), initialState);
+				}
+
 				currentState = performTrainingStep(learner, explorer, goldResult, currentState);
 				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
+				for (StepCallback c : stepCallbacks) {
+					c.onEndStep(this, step, e, explorers.size(), initialState, currentState);
+				}
+				e++;
 			}
 			step++;
 		} while (!stoppingCriterion.checkCondition(generatedChain, step));
@@ -129,12 +154,20 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 		int step = 0;
 		do {
 			log.info("---------------------------");
+			int e = 0;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("PREDICTION Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				for (StepCallback c : stepCallbacks) {
+					c.onStartStep(this, step, e, explorers.size(), initialState);
+				}
 				currentState = performPredictionStep(explorer, currentState);
 				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
+				for (StepCallback c : stepCallbacks) {
+					c.onEndStep(this, step, e, explorers.size(), initialState, currentState);
+				}
+				e++;
 			}
 			step++;
 		} while (!stoppingCriterion.checkCondition(generatedChain, step));

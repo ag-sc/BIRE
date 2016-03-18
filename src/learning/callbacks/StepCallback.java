@@ -1,15 +1,18 @@
 package learning.callbacks;
 
 import corpus.Instance;
-import learning.Trainer;
+import sampling.DefaultSampler;
+import variables.AbstractState;
 
 public interface StepCallback {
 
-	default <InstanceT extends Instance> void onStartStep(Trainer caller, int step, int numberOfSteps,
-			Instance document, int indexOfDocument, int numberOfDocuments, int epoch, int numberOfEpochs) {
+	default <InstanceT extends Instance, StateT extends AbstractState<InstanceT>> void onStartStep(
+			DefaultSampler<InstanceT, StateT, ?> defaultSampler, int step, int e, int size, StateT initialState) {
 	}
 
-	default <InstanceT extends Instance> void onEndStep(Trainer caller, int step, int numberOfSteps, Instance document,
-			int indexOfDocument, int numberOfDocuments, int epoch, int numberOfEpochs) {
+	default <InstanceT extends Instance, StateT extends AbstractState<InstanceT>> void onEndStep(
+			DefaultSampler<InstanceT, StateT, ?> defaultSampler, int step, int e, int size, StateT initialState,
+			StateT currentState) {
+
 	}
 }

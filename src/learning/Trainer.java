@@ -85,7 +85,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<?>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> train(
+	public <InstanceT extends LabeledInstance<ResultT>, StateT extends AbstractState<? super InstanceT>, ResultT> List<StateT> train(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			Learner<StateT> learner, List<InstanceT> instances, int numberOfEpochs) {
 		List<StateT> finalStates = new ArrayList<>();
@@ -122,23 +122,21 @@ public class Trainer {
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
-                                
+
 				/*
 				 * Store the final predicted state for the current document if
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
-					//finalState.getFactorGraph().clear();
-					//finalState.getFactorGraph().getFactorPool().clear();
+					// finalState.getFactorGraph().clear();
+					// finalState.getFactorGraph().getFactorPool().clear();
 					finalStates.add(finalState);
 				}
-                                
-                                finalState.resetFactorGraph();
-                                
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
-					c.onEndInstance(this, instance, i, instances.size(), e, numberOfEpochs);
+//					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
 				}
+				finalState.resetFactorGraph();
 			}
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
@@ -163,7 +161,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<?>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
+	public <StateT extends AbstractState<? super InstanceT>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
@@ -177,7 +175,7 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
-			
+
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
@@ -202,7 +200,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<?>, InstanceT extends Instance> List<StateT> predict(
+	public <StateT extends AbstractState<InstanceT>, InstanceT extends Instance> List<StateT> predict(
 			Sampler<StateT, ?> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
@@ -214,7 +212,7 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
-			
+
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
