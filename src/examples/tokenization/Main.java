@@ -70,7 +70,7 @@ public class Main {
 		 */
 		Model<Sentence, TokenState> model = new Model<>(templates);
 		model.setMultiThreaded(true);
-		model.setForceFactorComputation(false);
+		model.setForceFactorComputation(true);
 		/*
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.

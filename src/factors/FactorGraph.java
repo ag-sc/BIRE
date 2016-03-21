@@ -68,6 +68,8 @@ public class FactorGraph implements Serializable {
 
 	public void clear() {
 		this.factorPatterns.clear();
+		this.factorPatterns = null;
+		this.factorPatterns = ConcurrentHashMap.newKeySet();
 	}
 
 	// public Set<? extends FactorPattern> getFactorPatterns() {

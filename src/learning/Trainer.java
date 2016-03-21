@@ -84,7 +84,7 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<? super InstanceT>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> train(
+	public <InstanceT extends LabeledInstance<ResultT>, StateT extends AbstractState<? super InstanceT>, ResultT> List<StateT> train(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			Learner<StateT> learner, List<InstanceT> instances, int numberOfEpochs) {
 		List<StateT> finalStates = new ArrayList<>();
@@ -127,12 +127,15 @@ public class Trainer {
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
+					// finalState.getFactorGraph().clear();
+					// finalState.getFactorGraph().getFactorPool().clear();
 					finalStates.add(finalState);
 				}
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
-					c.onEndInstance(this, instance, i, instances.size(), finalState, e, numberOfEpochs);
+					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
 				}
+				finalState.resetFactorGraph();
 			}
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
@@ -175,6 +178,9 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
 			log.info("Gold Result:   %s", document.getGoldResult());
@@ -182,7 +188,7 @@ public class Trainer {
 			log.info("++++++++++++++++");
 			log.info("===========================");
 			for (InstanceCallback c : instanceCallbacks) {
-				c.onEndInstance(this, document, d, documents.size(), finalState, 1, 1);
+				c.onEndInstance(this, document, d, finalState, documents.size(), 1, 1);
 			}
 		}
 		return finalStates;
@@ -213,6 +219,9 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);
 			log.info("++++++++++++++++");
 			log.info("Final State:  %s", finalState);

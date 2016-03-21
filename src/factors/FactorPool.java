@@ -71,4 +71,10 @@ public class FactorPool {
 		return builder.toString();
 	}
 
+	public void clear() {
+		factorPattern2Factor.clear();
+		factorPattern2Factor = null;
+		factorPattern2Factor = new ConcurrentHashMap<>();
+	}
+
 }

@@ -11,7 +11,8 @@ public interface InstanceCallback {
 
 	}
 
-	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT document, int indexOfDocument,
-			int numberOfDocuments, AbstractState<?> finalState, int epoch, int numberOfEpochs);
+	public <InstanceT extends Instance, StateT extends AbstractState<? super InstanceT>> void onEndInstance(
+			Trainer caller, InstanceT document, int indexOfDocument, StateT finalState, int numberOfDocuments,
+			int epoch, int numberOfEpochs);
 
 }
