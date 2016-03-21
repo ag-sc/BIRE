@@ -1,14 +1,11 @@
 package examples.tokenization;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-import factors.FactorGraph;
 import variables.AbstractState;
 
-public class TokenState extends AbstractState<Sentence> {
+public class TokenState extends AbstractState<Sentence> implements Serializable {
 
 	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00000");
 	// TODO make this a list and keep it sorted!

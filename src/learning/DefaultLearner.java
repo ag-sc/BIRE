@@ -232,14 +232,14 @@ public class DefaultLearner<StateT extends AbstractState<?>>
 	}
 
 	@Override
-	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT instance, int indexOfInstance,
-			int numberOfInstances, int epoch, int numberOfEpochs) {
-
-	}
-
-	@Override
 	public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 		double fraction = ((float) epoch) / (numberOfEpochs);
 		currentAlpha = (alpha * 0.9) * (1 - fraction) + alpha * 0.01;
+	}
+
+	@Override
+	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT document, int indexOfDocument,
+			int numberOfDocuments, AbstractState<?> finalState, int epoch, int numberOfEpochs) {
+
 	}
 }
