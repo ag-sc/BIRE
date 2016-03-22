@@ -97,12 +97,12 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 	public FactorGraph getFactorGraph() {
 		return factorGraph;
 	}
-        
-        public void resetFactorGraph(){
-            factorGraph = null;
-            System.gc();
-            factorGraph = new FactorGraph();
-        }
+
+	public void resetFactorGraph() {
+		factorGraph = null;
+		System.gc();
+		factorGraph = new FactorGraph();
+	}
 
 	public InstanceT getInstance() {
 		return instance;

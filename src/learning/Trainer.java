@@ -9,10 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.Instance;
 import corpus.LabeledInstance;
-import factors.FactorGraph;
-import java.lang.ref.WeakReference;
-import learning.callbacks.InstanceCallback;
 import learning.callbacks.EpochCallback;
+import learning.callbacks.InstanceCallback;
 import sampling.Initializer;
 import sampling.Sampler;
 import variables.AbstractState;
@@ -134,7 +132,7 @@ public class Trainer {
 				}
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
-//					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
+					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
 				}
 				finalState.resetFactorGraph();
 			}
