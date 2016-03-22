@@ -3,6 +3,7 @@ package learning;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,7 +98,7 @@ public class Trainer {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
 
-			Collections.shuffle(instances);
+			Collections.shuffle(instances, new Random(100l));
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = instance.getGoldResult();
@@ -170,6 +171,10 @@ public class Trainer {
 			log.info("Content   : %s", document);
 			log.info("Gold Result: %s", document.getGoldResult());
 			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onStartInstance(this, document, d, documents.size(), 1, 1);
+			}
+
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
@@ -181,6 +186,10 @@ public class Trainer {
 			log.info("Gold Result:   %s", document.getGoldResult());
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
+			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onEndInstance(this, document, d, finalState, documents.size(), 1, 1);
+			}
 		}
 		return finalStates;
 	}

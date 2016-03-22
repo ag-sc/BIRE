@@ -12,8 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import exceptions.MissingFactorException;
 import factors.Factor;
-import learning.callbacks.EpochCallback;
-import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
 import variables.AbstractState;
 
