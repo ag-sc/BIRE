@@ -1,32 +1,18 @@
 package learning.scorer;
 
-import java.util.Set;
+import java.util.List;
 
-import exceptions.MissingFactorException;
-import factors.Factor;
 import variables.AbstractState;
 
-public abstract class Scorer {
+public interface Scorer {
 	/**
-	 * Computes the score of this state according to the trained model. The
-	 * computed score is returned but also updated in the state objects
-	 * <i>score</i> field.
+	 * Computes a score for each passed state given the individual factors.
+	 * Scoring is done is done in parallel if flag is set and scorer
+	 * implementation implements this behavior.
 	 * 
-	 * @param state
-	 * @return
+	 * @param states
+	 * @param multiThreaded
 	 */
+	public void score(List<? extends AbstractState<?>> states, boolean multiThreaded);
 
-	public double score(AbstractState<?> state) {
-		Set<Factor<?>> factors = null;
-		try {
-			factors = state.getFactorGraph().getFactors();
-		} catch (MissingFactorException e) {
-			e.printStackTrace();
-		}
-		double score = score(factors);
-		state.setModelScore(score);
-		return score;
-	}
-
-	public abstract double score(Set<Factor<?>> factors);
 }

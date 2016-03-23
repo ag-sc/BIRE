@@ -10,7 +10,7 @@ public class AcceptStrategies {
 	 * 
 	 * @return
 	 */
-	public static <StateT extends AbstractState> AcceptStrategy<StateT> strictModelAccept() {
+	public static <StateT extends AbstractState<?>> AcceptStrategy<StateT> strictModelAccept() {
 		return (candidate, current) -> candidate.getModelScore() > current.getModelScore();
 	};
 
@@ -21,11 +21,11 @@ public class AcceptStrategies {
 	 * 
 	 * @return
 	 */
-	public static <StateT extends AbstractState> AcceptStrategy<StateT> strictObjectiveAccept() {
+	public static <StateT extends AbstractState<?>> AcceptStrategy<StateT> strictObjectiveAccept() {
 		return (candidate, current) -> candidate.getObjectiveScore() > current.getObjectiveScore();
 	}
 
-	public static <StateT extends AbstractState> AcceptStrategy<StateT> objectiveAccept() {
+	public static <StateT extends AbstractState<?>> AcceptStrategy<StateT> objectiveAccept() {
 		return (candidate, current) -> candidate.getObjectiveScore() >= current.getObjectiveScore();
 	};
 

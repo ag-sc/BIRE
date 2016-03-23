@@ -1,14 +1,23 @@
 package learning.scorer;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
+
+import javax.jws.soap.SOAPBinding;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import exceptions.MissingFactorException;
 import factors.Factor;
 import learning.Vector;
+import variables.AbstractState;
 
-public class DefaultScorer extends Scorer {
+public class DefaultScorer implements Scorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -24,35 +33,47 @@ public class DefaultScorer extends Scorer {
 	public DefaultScorer() {
 	}
 
-	/**
-	 * Computes the score of this state according to the trained model. The
-	 * computed score is returned but also updated in the state objects
-	 * <i>score</i> field.
-	 * 
-	 * @param state
-	 * @return
-	 */
-	public double score(Set<Factor<?>> factors) {
-		// at this point, the function unroll(state) should be applied at least
-		// once
+	public void score(List<? extends AbstractState<?>> states, boolean multiThreaded) {
+		Double[] rawScores = new Double[states.size()];
 
-		// compute the score of the state according to all templates and all
-		// respective factors
+		/*
+		 * Collect raw (unnormalized) scores
+		 */
+		if (multiThreaded)
+			IntStream.range(0, states.size()).parallel().forEach(i -> rawScores[i] = rawScore(states.get(i)));
+		else
+			IntStream.range(0, states.size()).forEach(i -> rawScores[i] = rawScore(states.get(i)));
 
-		double score = 1;
-		// TODO normalize scores
-		// double normalization = 0;
+		/*
+		 * Find maximum score
+		 */
+		double max = Arrays.asList(rawScores).stream().max((d1, d2) -> Double.compare(d1, d2)).get();
+		/*
+		 * Subtract maximum and compute exponential
+		 */
+		for (int j = 0; j < rawScores.length; j++) {
+			// double factorScore = Math.exp(rawScores[j]);
+			double factorScore = Math.exp(rawScores[j] - max);
+			states.get(j).setModelScore(factorScore);
+		}
+	}
+
+	public double rawScore(AbstractState<?> state) {
+		Set<Factor<?>> factors = null;
+		try {
+			factors = state.getFactorGraph().getFactors();
+		} catch (MissingFactorException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		double score = 0;
 		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
 			Vector weights = factor.getTemplate().getWeights();
 			double dotProduct = featureVector.dotProduct(weights);
-			double factorScore = Math.exp(dotProduct);
-			score *= factorScore;
-			// normalization += factorScore;
+			score += dotProduct;
 		}
-		// score /= normalization;
 
 		return score;
 	}
-
 }

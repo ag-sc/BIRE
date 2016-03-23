@@ -10,7 +10,7 @@ import factors.Factor;
 import learning.Vector;
 import variables.AbstractState;
 
-public class SoftplusScorer extends Scorer {
+public class SoftplusScorer extends AbstractSingleStateScorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -34,7 +34,7 @@ public class SoftplusScorer extends Scorer {
 	 * @param state
 	 * @return
 	 */
-	public double score(Set<Factor<?>> factors) {
+	protected double score(Set<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 

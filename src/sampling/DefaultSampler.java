@@ -1,6 +1,7 @@
 package sampling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -12,7 +13,6 @@ import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
-import learning.callbacks.InstanceCallback;
 import learning.callbacks.StepCallback;
 import learning.scorer.Scorer;
 import sampling.samplingstrategies.AcceptStrategies;
@@ -39,14 +39,14 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * Defines the sampling strategy for the training phase. The test phase
 	 * currently always uses the greedy variant.
 	 */
-	private SamplingStrategy<StateT> trainSamplingStrategy = SamplingStrategies.linearSamplingStrategy();
+	private SamplingStrategy<StateT> trainSamplingStrategy = SamplingStrategies.linearModelSamplingStrategy();
 
 	private AcceptStrategy<StateT> trainAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	/**
 	 * Greedy sampling strategy for test phase.
 	 */
-	private final SamplingStrategy<StateT> greedySamplingStrategy = SamplingStrategies.greedyStrategy();
+	private final SamplingStrategy<StateT> greedySamplingStrategy = SamplingStrategies.greedyModelStrategy();
 
 	/**
 	 * Strict accept strategy for test phase.
@@ -198,22 +198,53 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 		if (nextStates.size() > 0) {
 			allStates.add(currentState);
 			/**
-			 * Compute objective function scores
+			 * Score all states with Objective/Model only if sampling strategy
+			 * needs that. If not, score only selected candidate and current.
 			 */
-			scoreWithObjective(allStates, goldResult);
+			if (trainSamplingStrategy.usesObjective()) {
+				/**
+				 * Compute objective function scores
+				 */
+				scoreWithObjective(allStates, goldResult);
+			}
+			if (trainSamplingStrategy.usesModel()) {
+				/**
+				 * Apply templates to states and, thus generate factors and
+				 * features
+				 */
+				model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(),
+						currentState.getInstance());
+				/**
+				 * Score all states according to the model.
+				 */
+				scorer.score(allStates, multiThreaded);
+			}
 			/**
-			 * Apply templates to states and, thus generate factors and features
-			 */
-			// unroll(allStates);
-			model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
-			/**
-			 * Score all states according to the model.
-			 */
-			scoreWithModel(allStates);
-			/**
-			 * Sample one possible successor from model distribution
+			 * Sample one possible successor
 			 */
 			StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
+
+			/**
+			 * If states were not scored before score only selected candidate
+			 * and current state.
+			 */
+			if (!trainSamplingStrategy.usesObjective()) {
+				/**
+				 * Compute objective function scores
+				 */
+				scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+			}
+			if (!trainSamplingStrategy.usesModel()) {
+				/**
+				 * Apply templates to current and candidate state only
+				 */
+				model.applyToStates(Arrays.asList(currentState, candidateState),
+						currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
+				/**
+				 * Score current and candidate state according to model.
+				 */
+				scorer.score(Arrays.asList(currentState, candidateState), multiThreaded);
+			}
 			/**
 			 * Update model with selected state
 			 */
@@ -287,7 +318,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			/**
 			 * Score all states according to the model.
 			 */
-			scoreWithModel(allStates);
+			scorer.score(allStates, multiThreaded);
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
@@ -339,21 +370,21 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	// TaggedTimer.stop(unrollID);
 	// }
 
-	/**
-	 * Computes the model scores for each of the given states. The
-	 * <i>multiThreaded</i> flag determines if the computation is performed in
-	 * parallel or sequentially.
-	 * 
-	 * @param nextStates
-	 */
-	protected void scoreWithModel(List<StateT> nextStates) {
-		long scID = TaggedTimer.start("MODEL-SCORE");
-		log.debug("Score %s states according to model...", nextStates.size());
-
-		Stream<StateT> stream = Utils.getStream(nextStates, multiThreaded);
-		stream.forEach(s -> scorer.score(s));
-		TaggedTimer.stop(scID);
-	}
+	// /**
+	// * Computes the model scores for each of the given states. The
+	// * <i>multiThreaded</i> flag determines if the computation is performed in
+	// * parallel or sequentially.
+	// *
+	// * @param nextStates
+	// */
+	// protected void scoreWithModel(List<StateT> nextStates) {
+	// long scID = TaggedTimer.start("MODEL-SCORE");
+	// log.debug("Score %s states according to model...", nextStates.size());
+	//
+	// Stream<StateT> stream = Utils.getStream(nextStates, multiThreaded);
+	// stream.forEach(s -> scorer.score(s));
+	// TaggedTimer.stop(scID);
+	// }
 
 	/**
 	 * Computes the objective scores for each of the given states. The
