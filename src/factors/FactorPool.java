@@ -42,6 +42,7 @@ public class FactorPool {
 				factors.add(factor);
 			} else {
 				log.error("Could not retrieve factor for requested factor pattern: %s", factorPattern);
+				log.error("Make sure \"sequentialScoring\" is set to FALSE in the model when training.");
 				throw new MissingFactorException(
 						String.format("Could not retrieve factor for requested factor pattern: %s", factorPattern));
 			}

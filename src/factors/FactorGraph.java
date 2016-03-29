@@ -136,6 +136,10 @@ public class FactorGraph implements Serializable {
 		return factorPool.getFactors(factorPatterns);
 	}
 
+	public Set<FactorPattern> getFactorPatterns() {
+		return factorPatterns;
+	}
+
 	public FactorPool getFactorPool() {
 		return factorPool;
 	}

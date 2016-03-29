@@ -66,17 +66,18 @@ public class Main {
 		templates.add(new TokenizationTemplate());
 
 		/*
-		 * Define a model and provide it with the necessary templates.
-		 */
-		Model<Sentence, TokenState> model = new Model<>(templates);
-		model.setMultiThreaded(true);
-		model.setForceFactorComputation(true);
-		/*
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.
 		 */
 		// Scorer<TokenState> scorer = new SoftplusScorer<>();
 		Scorer scorer = new DefaultScorer();
+		/*
+		 * Define a model and provide it with the necessary templates.
+		 */
+		Model<Sentence, TokenState> model = new Model<>(scorer, templates);
+		model.setMultiThreaded(true);
+		model.setForceFactorComputation(false);
+		model.setSequentialScoring(false);
 
 		/*
 		 * Create an Initializer that is responsible for providing an initial
@@ -102,8 +103,8 @@ public class Main {
 		 */
 		int numberOfSamplingSteps = 50;
 		StoppingCriterion<TokenState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-		DefaultSampler<Sentence, TokenState, Tokenization> sampler = new DefaultSampler<>(model, scorer, objective,
-				explorers, stoppingCriterion);
+		DefaultSampler<Sentence, TokenState, Tokenization> sampler = new DefaultSampler<>(model, objective, explorers,
+				stoppingCriterion);
 
 		/*
 		 * Define a learning strategy. The learner will receive state pairs
@@ -121,6 +122,8 @@ public class Main {
 		int numberOfEpochs = 1;
 		Trainer trainer = new Trainer();
 		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
+
+		model.setSequentialScoring(true);
 		List<TokenState> trainingResults = trainer.test(sampler, initializer, train);
 		List<TokenState> testResults = trainer.test(sampler, initializer, test);
 

@@ -29,7 +29,6 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 
 	private static Logger log = LogManager.getFormatterLogger();
 	protected Model<InstanceT, StateT> model;
-	protected Scorer scorer;
 	protected ObjectiveFunction<StateT, ResultT> objective;
 	private List<Explorer<StateT>> explorers;
 	private StoppingCriterion<StateT> stoppingCriterion;
@@ -46,12 +45,12 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	/**
 	 * Greedy sampling strategy for test phase.
 	 */
-	private final SamplingStrategy<StateT> greedySamplingStrategy = SamplingStrategies.greedyModelStrategy();
+	private final SamplingStrategy<StateT> predictionSamplingStrategy = SamplingStrategies.greedyModelStrategy();
 
 	/**
 	 * Strict accept strategy for test phase.
 	 */
-	private final AcceptStrategy<StateT> strictAcceptStrategy = AcceptStrategies.strictModelAccept();
+	private final AcceptStrategy<StateT> predictionAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	private List<StepCallback> stepCallbacks = new ArrayList<>();
 
@@ -80,11 +79,10 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * @param explorers
 	 * @param stoppingCriterion
 	 */
-	public DefaultSampler(Model<InstanceT, StateT> model, Scorer scorer, ObjectiveFunction<StateT, ResultT> objective,
+	public DefaultSampler(Model<InstanceT, StateT> model, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
 		this.model = model;
-		this.scorer = scorer;
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = stoppingCriterion;
@@ -104,11 +102,10 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * @param explorers
 	 * @param samplingSteps
 	 */
-	public DefaultSampler(Model<InstanceT, StateT> model, Scorer scorer, ObjectiveFunction<StateT, ResultT> objective,
+	public DefaultSampler(Model<InstanceT, StateT> model, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, int samplingSteps) {
 		super();
 		this.model = model;
-		this.scorer = scorer;
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingSteps);
@@ -212,12 +209,14 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 				 * Apply templates to states and, thus generate factors and
 				 * features
 				 */
-				model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(),
-						currentState.getInstance());
-				/**
-				 * Score all states according to the model.
-				 */
-				scorer.score(allStates, multiThreaded);
+				model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+				// model.applyToStates(allStates,
+				// currentState.getFactorGraph().getFactorPool(),
+				// currentState.getInstance());
+				// /**
+				// * Score all states according to the model.
+				// */
+				// scorer.score(allStates, multiThreaded);
 			}
 			/**
 			 * Sample one possible successor
@@ -238,12 +237,16 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 				/**
 				 * Apply templates to current and candidate state only
 				 */
-				model.applyToStates(Arrays.asList(currentState, candidateState),
-						currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
-				/**
-				 * Score current and candidate state according to model.
-				 */
-				scorer.score(Arrays.asList(currentState, candidateState), multiThreaded);
+				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance(),
+						currentState.getFactorGraph().getFactorPool());
+				// model.applyToStates(
+				// currentState.getFactorGraph().getFactorPool(),
+				// currentState.getInstance());
+				// /**
+				// * Score current and candidate state according to model.
+				// */
+				// scorer.score(Arrays.asList(currentState, candidateState),
+				// multiThreaded);
 			}
 			/**
 			 * Update model with selected state
@@ -313,16 +316,19 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			/**
 			 * Apply templates to states and thus generate factors and features
 			 */
-			// unroll(allStates);
-			model.applyToStates(allStates, currentState.getFactorGraph().getFactorPool(), currentState.getInstance());
-			/**
-			 * Score all states according to the model.
-			 */
-			scorer.score(allStates, multiThreaded);
+
+			model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+			// model.applyToStates(allStates,
+			// currentState.getFactorGraph().getFactorPool(),
+			// currentState.getInstance());
+			// /**
+			// * Score all states according to the model.
+			// */
+			// scorer.score(allStates, multiThreaded);
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
-			StateT candidateState = greedySamplingStrategy.sampleCandidate(nextStates);
+			StateT candidateState = predictionSamplingStrategy.sampleCandidate(nextStates);
 			/**
 			 * Decide to accept or reject the selected state
 			 */
@@ -343,7 +349,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			// }
 			// log.debug("");
 			// }
-			currentState = strictAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
+			currentState = predictionAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
 					: currentState;
 			return currentState;
 		} else {
@@ -405,10 +411,6 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 
 	protected Model<?, StateT> getModel() {
 		return model;
-	}
-
-	protected Scorer getScorer() {
-		return scorer;
 	}
 
 	public StoppingCriterion<StateT> getStoppingCriterion() {

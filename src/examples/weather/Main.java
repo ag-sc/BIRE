@@ -82,14 +82,14 @@ public class Main {
 			templates.add(new PlayOutsideTemplate(3));
 
 			/*
-			 * Define a model and provide it with the necessary templates.
-			 */
-			Model<WeatherInstance, PlayOutsideState> model = new Model<>(templates);
-			/*
 			 * Create the scorer object that computes a score from the features
 			 * of a factor and the weight vectors of the templates.
 			 */
 			Scorer scorer = new DefaultScorer();
+			/*
+			 * Define a model and provide it with the necessary templates.
+			 */
+			Model<WeatherInstance, PlayOutsideState> model = new Model<>(scorer, templates);
 
 			/*
 			 * Create an Initializer that is responsible for providing an
@@ -117,7 +117,7 @@ public class Main {
 			 */
 			int numberOfSamplingSteps = 2;
 			StoppingCriterion<PlayOutsideState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-			DefaultSampler<WeatherInstance, PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, scorer, objective,
+			DefaultSampler<WeatherInstance, PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, objective,
 					explorers, stoppingCriterion);
 
 			/*
