@@ -87,6 +87,7 @@ public class Trainer {
 	public <InstanceT extends LabeledInstance<ResultT>, StateT extends AbstractState<? super InstanceT>, ResultT> List<StateT> train(
 			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
 			Learner<StateT> learner, List<InstanceT> instances, int numberOfEpochs) {
+		Random random = new Random(100l);
 		List<StateT> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
@@ -98,7 +99,7 @@ public class Trainer {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
 
-			Collections.shuffle(instances, new Random(100l));
+			Collections.shuffle(instances, random);
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = instance.getGoldResult();

@@ -14,7 +14,6 @@ import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.callbacks.StepCallback;
-import learning.scorer.Scorer;
 import sampling.samplingstrategies.AcceptStrategies;
 import sampling.samplingstrategies.AcceptStrategy;
 import sampling.samplingstrategies.SamplingStrategies;
