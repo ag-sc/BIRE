@@ -44,12 +44,12 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	/**
 	 * Greedy sampling strategy for test phase.
 	 */
-	private final SamplingStrategy<StateT> predictionSamplingStrategy = SamplingStrategies.greedyModelStrategy();
+	private SamplingStrategy<StateT> predictionSamplingStrategy = SamplingStrategies.greedyModelStrategy();
 
 	/**
 	 * Strict accept strategy for test phase.
 	 */
-	private final AcceptStrategy<StateT> predictionAcceptStrategy = AcceptStrategies.strictModelAccept();
+	private AcceptStrategy<StateT> predictionAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	private List<StepCallback> stepCallbacks = new ArrayList<>();
 
@@ -457,6 +457,35 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 */
 	public void setTrainingAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
 		this.trainAcceptStrategy = acceptStrategy;
+	}
+
+	public SamplingStrategy<StateT> getTestSamplingStrategy() {
+		return predictionSamplingStrategy;
+	}
+
+	/**
+	 * Sets the sampling strategy for the training phase. The candidate state
+	 * that is used for training is selected from all possible successor states
+	 * using this strategy.
+	 * 
+	 * @param samplingStrategy
+	 */
+	public void setTestSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
+		this.predictionSamplingStrategy = samplingStrategy;
+	}
+
+	public AcceptStrategy<StateT> getTestAcceptStrategy() {
+		return predictionAcceptStrategy;
+	}
+
+	/**
+	 * Sets the strategy for accepting a sampled candidate state as the next
+	 * state in the training phase.
+	 * 
+	 * @return
+	 */
+	public void setTestAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+		this.predictionAcceptStrategy = acceptStrategy;
 	}
 
 	public List<Explorer<StateT>> getExplorers() {
