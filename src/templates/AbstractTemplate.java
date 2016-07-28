@@ -28,7 +28,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	/**
 	 * A regularization parameter to punish big feature weights.
 	 */
-	protected double l2 = 0.0;
+	protected double l2 = 0.01;
 
 	/**
 	 * Updates the weight of the given feature by adding the given alpha value.

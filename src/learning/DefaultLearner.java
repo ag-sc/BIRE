@@ -1,7 +1,6 @@
 package learning;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +9,8 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import exceptions.MissingFactorException;
-import factors.Factor;
 import templates.AbstractTemplate;
+import utility.VectorUtil;
 import variables.AbstractState;
 
 public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
@@ -73,6 +71,7 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		 */
 		possibleNextStates.forEach(
 				possibleNextState -> collectSampleRankGradients(currentState, possibleNextState, weightGradients));
+
 		if (normalize) {
 			applyWeightUpdate(weightGradients, possibleNextStates.size());
 		} else {
@@ -100,7 +99,8 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		 */
 		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
-			Vector differences = getFeatureDifferences(t, possibleNextState, currentState);
+			Vector differences = VectorUtil.getFeatureDifferences(t, possibleNextState, currentState);
+			// System.out.println(differences);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeights());
 		}
@@ -111,38 +111,7 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 			updateFeatures(featureDifferences, +1, weightUpdates);
 		} else {
 		}
-	}
-
-	/**
-	 * Computes the differences of all features of both states. For this, the
-	 * template uses features from all factors that are not associated to both
-	 * states (since these differences would be always 0).
-	 * 
-	 * @param state1
-	 * @param state2
-	 * @return
-	 */
-	public Vector getFeatureDifferences(AbstractTemplate<?, StateT, ?> template, StateT state1, StateT state2) {
-		Vector diff = new Vector();
-		Collection<Factor<?>> factors1 = null;
-		Collection<Factor<?>> factors2 = null;
-		try {
-			factors1 = state1.getFactorGraph().getFactors();
-			factors2 = state2.getFactorGraph().getFactors();
-		} catch (MissingFactorException e) {
-			e.printStackTrace();
-		}
-		for (Factor<?> factor : factors1) {
-			if (factor.getTemplate() == template) {
-				diff.add(factor.getFeatureVector());
-			}
-		}
-		for (Factor<?> factor : factors2) {
-			if (factor.getTemplate() == template) {
-				diff.sub(factor.getFeatureVector());
-			}
-		}
-		return diff;
+		// System.out.println("DIFF: " + featureDifferences.values());
 	}
 
 	/**
@@ -166,12 +135,11 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 
 			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				// only update for real differences
-				if (featureDifference.getValue() != 0) {
-					double weightGradient = learningDirection * featureDifference.getValue();
-					log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient,
-							featureDifference.getKey());
-					gradients.addToValue(featureDifference.getKey(), weightGradient);
-				}
+				// if (featureDifference.getValue() != 0) {
+				double weightGradient = learningDirection * featureDifference.getValue();
+				log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient, featureDifference.getKey());
+				gradients.addToValue(featureDifference.getKey(), weightGradient);
+				// }
 			}
 		}
 	}
@@ -186,15 +154,21 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector weightUpdatesForTemplate = weightGradients.get(t);
+			// System.out.println("GRAD: " +
+			// weightUpdatesForTemplate.getFeatures());
+			// Vector oldWeights = t.getWeights();
+			// System.out.println("OLD: " + oldWeights);
 			for (Entry<String, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {
 				// only update for actual differences
-				if (weightGradient.getValue() != 0) {
-					double gradient = weightGradient.getValue() / numberOfUpdates;
-					log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
-							weightGradient.getKey());
-					t.update(weightGradient.getKey(), gradient, currentAlpha);
-				}
+				// if (weightGradient.getValue() != 0) {
+				double gradient = weightGradient.getValue() / numberOfUpdates;
+				log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
+						weightGradient.getKey());
+				t.update(weightGradient.getKey(), gradient, currentAlpha);
+				// }
 			}
+			// Vector newWeights = t.getWeights();
+			// System.out.println("NEW: " + newWeights);
 		}
 	}
 

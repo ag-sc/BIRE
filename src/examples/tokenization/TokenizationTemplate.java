@@ -12,7 +12,7 @@ import templates.AbstractTemplate;
 public class TokenizationTemplate
 		extends AbstractTemplate<Sentence, TokenState, SingleVariablePattern<BoundaryVariable>> {
 
-	public int windowSize = 5;
+	public int windowSize = 3;
 
 	/**
 	 * This template generates factors for each character position and computes
@@ -63,6 +63,7 @@ public class TokenizationTemplate
 			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper);
 			features.set("CHAR@" + relativePosition + "_IS_OTHER",
 					(!isPunctuation && !isWhitespace && !isHyphen && !isDigit && !isLetter && !isLower && !isUpper));
+
 			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
 

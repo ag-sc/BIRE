@@ -12,14 +12,20 @@ import org.apache.logging.log4j.Logger;
 import corpus.FileUtils;
 import evaluation.DataSplit;
 import evaluation.EvaluationUtil;
+import learning.AdvancedLearner;
 import learning.DefaultLearner;
+import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Trainer;
+import learning.optimizer.Adam;
+import learning.optimizer.SGD;
 import learning.scorer.DefaultScorer;
+import learning.scorer.LinearScorer;
 import learning.scorer.Scorer;
 import sampling.DefaultSampler;
 import sampling.Explorer;
+import sampling.samplingstrategies.SamplingStrategies;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
 import templates.AbstractTemplate;
@@ -43,7 +49,7 @@ public class Main {
 		 * Load training and test data.
 		 */
 		List<TokenizedSentence> sentences = getTokenizedSentences();
-		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 0);
+		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 1);
 		List<TokenizedSentence> train = dataSplit.getTrain();
 		List<TokenizedSentence> test = dataSplit.getTest();
 		// List<Sentence> predict = getSentences();
@@ -70,6 +76,7 @@ public class Main {
 		 * features and the templates' weight vectors.
 		 */
 		// Scorer<TokenState> scorer = new SoftplusScorer<>();
+		// Scorer scorer = new LinearScorer();
 		Scorer scorer = new DefaultScorer();
 		/*
 		 * Define a model and provide it with the necessary templates.
@@ -105,12 +112,17 @@ public class Main {
 		StoppingCriterion<TokenState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
 		DefaultSampler<Sentence, TokenState, Tokenization> sampler = new DefaultSampler<>(model, objective, explorers,
 				stoppingCriterion);
-
+		// sampler.setTrainingSamplingStrategy(SamplingStrategies.greedyObjectiveStrategy());
 		/*
 		 * Define a learning strategy. The learner will receive state pairs
 		 * which can be used to update the models parameters.
 		 */
-		DefaultLearner<TokenState> learner = new DefaultLearner<>(model, 0.1);
+		// Learner<TokenState> learner = new DefaultLearner<>(model, 0.1);
+		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
+		// SGD());
+		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
+		// SGD(0.01, 0.9, 0.001, false));
+		Learner<TokenState> learner = new AdvancedLearner<>(model, new Adam());
 
 		log.info("####################");
 		log.info("Start training");
@@ -119,7 +131,7 @@ public class Main {
 		 * The trainer will loop over the data and invoke sampling and learning.
 		 * Additionally, it can invoke predictions on new data.
 		 */
-		int numberOfEpochs = 1;
+		int numberOfEpochs = 5;
 		Trainer trainer = new Trainer();
 		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
 

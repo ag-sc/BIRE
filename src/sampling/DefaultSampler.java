@@ -430,7 +430,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingLimit);
 	}
 
-	public SamplingStrategy<StateT> getSamplingStrategy() {
+	public SamplingStrategy<StateT> getTrainingSamplingStrategy() {
 		return trainSamplingStrategy;
 	}
 
@@ -441,11 +441,11 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * 
 	 * @param samplingStrategy
 	 */
-	public void setSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
+	public void setTrainingSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.trainSamplingStrategy = samplingStrategy;
 	}
 
-	public AcceptStrategy<StateT> getAcceptStrategy() {
+	public AcceptStrategy<StateT> getTrainingAcceptStrategy() {
 		return trainAcceptStrategy;
 	}
 
@@ -455,7 +455,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 	 * 
 	 * @return
 	 */
-	public void setAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+	public void setTrainingAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
 		this.trainAcceptStrategy = acceptStrategy;
 	}
 

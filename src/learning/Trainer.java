@@ -98,7 +98,6 @@ public class Trainer {
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
-
 			Collections.shuffle(instances, random);
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
@@ -107,6 +106,7 @@ public class Trainer {
 				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
 				log.info("Content   : %s", instance);
 				log.info("Gold Result: %s", goldResult);
+				log.info("Instance: %s", instance);
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
 					c.onStartInstance(this, instance, i, instances.size(), e, numberOfEpochs);
