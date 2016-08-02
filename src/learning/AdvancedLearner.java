@@ -16,7 +16,7 @@ import variables.AbstractState;
 
 public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
-	private static final double MARGIN = 1;
+	private static final double MARGIN = 0.1;
 
 	private static Logger log = LogManager.getFormatterLogger(AdvancedLearner.class.getName());
 
@@ -170,20 +170,21 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		} else {
 			// currentState is POS
 			// possibleNextState is NEG
+			posState = currentState;
+			negState = possibleNextState;
+
 			// System.out.println("NEXT - CURRENT");
 			// System.out.println("POS: CURRENT");
 			// System.out.println("NEG: NEXT");
-			posState = currentState;
-			negState = possibleNextState;
 		}
-
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = VectorUtil.getFeatureDifferences(t, negState, posState);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeights());
+			// System.out.println("WEIG: " + t.getWeights());
 		}
 
-		if (weightedDifferenceSum + MARGIN > 0) {
+		if (weightedDifferenceSum + MARGIN >= 0) {
 			// System.out.println("UPDATE:");
 			// System.out.println(weightedDifferenceSum);
 			// System.out.println("DIFF: " + featureDifferences.values());

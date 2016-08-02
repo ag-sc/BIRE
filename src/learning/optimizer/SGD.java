@@ -28,14 +28,19 @@ public class SGD implements Optimizer {
 	public Vector getUpdates(Vector theta, Vector gradient) {
 		t++;
 		double alpha_t = alpha * (1.0 / 1.0 + decay * t);
-		v = m.mul(momentum).sub(gradient.mul(alpha_t));
-
-		if (nesterov) {
-			theta = theta.add(v.mul(momentum).sub(gradient.mul(alpha_t)));
+		if (momentum == 0 && decay == 0 && !nesterov) {
+			// perform sparse updates
+			theta.subtractFromValue(gradient.mul(alpha_t));
 		} else {
-			theta = theta.add(v);
+			v = m.mul(momentum).sub(gradient.mul(alpha_t));
+
+			if (nesterov) {
+				theta = theta.add(v.mul(momentum).sub(gradient.mul(alpha_t)));
+			} else {
+				theta = theta.add(v);
+			}
+			m = v;
 		}
-		m = v;
 		return theta;
 	}
 

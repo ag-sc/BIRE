@@ -59,10 +59,7 @@ public class SamplingUtils {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
 			}
 		}
-		System.out.println("INDEX: " + (i - 1));
 		StateT state = nextStates.get(Math.max(0, i - 1));
-		System.out.println(state);
-
 		return state;
 
 	}

@@ -99,8 +99,6 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 	}
 
 	public void resetFactorGraph() {
-		factorGraph = null;
-		System.gc();
 		factorGraph = new FactorGraph();
 	}
 

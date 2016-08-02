@@ -13,6 +13,7 @@ import corpus.FileUtils;
 import evaluation.DataSplit;
 import evaluation.EvaluationUtil;
 import learning.AdvancedLearner;
+import learning.DefaultLearner;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -116,11 +117,11 @@ public class Main {
 		 * which can be used to update the models parameters.
 		 */
 		// Learner<TokenState> learner = new DefaultLearner<>(model, 0.1);
+		Learner<TokenState> learner = new AdvancedLearner<>(model, new SGD());
 		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
-		// SGD());
+		// SGD(0.1, 0.0, 0, false), new L2(0.0));
 		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
-		// SGD(0.01, 0.9, 0.001, false));
-		Learner<TokenState> learner = new AdvancedLearner<>(model, new Adam());
+		// Adam());
 
 		log.info("####################");
 		log.info("Start training");
@@ -129,7 +130,7 @@ public class Main {
 		 * The trainer will loop over the data and invoke sampling and learning.
 		 * Additionally, it can invoke predictions on new data.
 		 */
-		int numberOfEpochs = 5;
+		int numberOfEpochs = 1;
 		Trainer trainer = new Trainer();
 		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
 

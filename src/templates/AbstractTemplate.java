@@ -24,12 +24,6 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 */
 	protected Vector weights = new Vector();
 
-	// protected FactorPool factorPool = new FactorPool();
-	/**
-	 * A regularization parameter to punish big feature weights.
-	 */
-	protected double l2 = 0.01;
-
 	/**
 	 * Updates the weight of the given feature by adding the given alpha value.
 	 * 
@@ -37,9 +31,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * @param gradient
 	 * @param currentAlpha
 	 */
-	public void update(String feature, double gradient, double learningRate) {
-		double weight = weights.getValueOfFeature(feature);
-		double update = learningRate * (gradient - l2 * weight);
+	public void update(String feature, double update) {
 		weights.addToValue(feature, update);
 	}
 
