@@ -1,5 +1,6 @@
 package learning.scorer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -40,7 +41,7 @@ public abstract class AbstractSingleStateScorer implements Scorer {
 	 */
 
 	protected double score(AbstractState<?> state) {
-		Set<Factor<?>> factors = null;
+		Collection<Factor<?>> factors = null;
 		try {
 			factors = state.getFactorGraph().getFactors();
 		} catch (MissingFactorException e) {
@@ -51,6 +52,6 @@ public abstract class AbstractSingleStateScorer implements Scorer {
 		return score;
 	}
 
-	protected abstract double score(Set<Factor<?>> factors);
+	protected abstract double score(Collection<Factor<?>> factors);
 
 }

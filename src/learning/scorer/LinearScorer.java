@@ -1,6 +1,6 @@
 package learning.scorer;
 
-import java.util.Set;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +32,7 @@ public class LinearScorer extends AbstractSingleStateScorer {
 	 * @param state
 	 * @return
 	 */
-	protected double score(Set<Factor<?>> factors) {
+	protected double score(Collection<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 

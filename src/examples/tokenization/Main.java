@@ -117,11 +117,11 @@ public class Main {
 		 * which can be used to update the models parameters.
 		 */
 		// Learner<TokenState> learner = new DefaultLearner<>(model, 0.1);
-		Learner<TokenState> learner = new AdvancedLearner<>(model, new SGD());
+		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
+		// SGD());
 		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
 		// SGD(0.1, 0.0, 0, false), new L2(0.0));
-		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
-		// Adam());
+		Learner<TokenState> learner = new AdvancedLearner<>(model, new Adam());
 
 		log.info("####################");
 		log.info("Start training");

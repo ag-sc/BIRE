@@ -282,7 +282,7 @@ public class Model<InstanceT extends Instance, StateT extends AbstractState<Inst
 			log.trace("Apply template \"%s\" to state %s. Force recomputation: %s", t.getClass().getSimpleName(),
 					state.getID(), forceFactorComputation);
 			log.trace("%s", state);
-			Set<FactorPatternT> generatedPatternsForState = t.generateFactorPatterns(state);
+			List<FactorPatternT> generatedPatternsForState = t.generateFactorPatterns(state);
 			log.trace("%s possible Factors for state %s", generatedPatternsForState.size(), state.getID());
 
 			FactorGraph factorGraph = state.getFactorGraph();

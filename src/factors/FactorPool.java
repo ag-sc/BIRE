@@ -1,7 +1,9 @@
 package factors;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -31,9 +33,12 @@ public class FactorPool {
 		return newFactors;
 	}
 
-	public Set<Factor<? extends FactorPattern>> getFactors(Set<? extends FactorPattern> factorPatterns)
+	public List<Factor<? extends FactorPattern>> getFactors(List<? extends FactorPattern> factorPatterns)
 			throws MissingFactorException {
-		Set<Factor<? extends FactorPattern>> factors = new HashSet<>();
+		// TODO consider not returning a list with plain factors (with
+		// repeating elements) but to return a list of tuples (count, factor).
+		// This avoids processing of several identical factors.
+		List<Factor<? extends FactorPattern>> factors = new ArrayList<>();
 
 		for (FactorPattern factorPattern : factorPatterns) {
 			// synchronized (factorPattern2Factor) {

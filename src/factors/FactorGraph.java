@@ -1,9 +1,12 @@
 package factors;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import exceptions.MissingFactorException;
 
@@ -17,12 +20,12 @@ public class FactorGraph implements Serializable {
 	private FactorPool factorPool;
 	// private Map<FactorPattern, Factor<? extends FactorPattern>>
 	// factorPattern2Factor;
-	private Set<FactorPattern> factorPatterns;
+	private List<FactorPattern> factorPatterns;
 
 	public FactorGraph() {
 		this.factorPool = new FactorPool();
-		// this.factorPattern2Factor = new HashMap<>();
-		this.factorPatterns = ConcurrentHashMap.newKeySet();
+		// TODO This should be thread safe. Is it in our case?
+		this.factorPatterns = new ArrayList<>();
 	}
 
 	public FactorGraph(FactorGraph factorGraph) {
@@ -30,7 +33,7 @@ public class FactorGraph implements Serializable {
 		// this.factorPattern2Factor = new
 		// HashMap<>(factorGraph.factorPattern2Factor);
 		// this.factorPatterns = new HashSet<>(factorGraph.factorPatterns);
-		this.factorPatterns = ConcurrentHashMap.newKeySet();
+		this.factorPatterns = new ArrayList<>();
 	}
 
 	//
@@ -62,13 +65,13 @@ public class FactorGraph implements Serializable {
 	// this.factorPatterns = generatedFactorPatterns;
 	// }
 
-	public void addFactorPatterns(Set<? extends FactorPattern> generatedFactorPatterns) {
+	public void addFactorPatterns(List<? extends FactorPattern> generatedFactorPatterns) {
 		this.factorPatterns.addAll(generatedFactorPatterns);
 	}
 
 	public void clear() {
 		this.factorPatterns.clear();
-		this.factorPatterns = ConcurrentHashMap.newKeySet();
+		this.factorPatterns = new ArrayList<>();
 	}
 
 	// public Set<? extends FactorPattern> getFactorPatterns() {
@@ -131,11 +134,11 @@ public class FactorGraph implements Serializable {
 	// }
 	// }
 
-	public Set<Factor<? extends FactorPattern>> getFactors() throws MissingFactorException {
+	public List<Factor<? extends FactorPattern>> getFactors() throws MissingFactorException {
 		return factorPool.getFactors(factorPatterns);
 	}
 
-	public Set<FactorPattern> getFactorPatterns() {
+	public List<FactorPattern> setFactorPatterns() {
 		return factorPatterns;
 	}
 

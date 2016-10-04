@@ -1,6 +1,8 @@
 package examples.weather;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,8 +27,8 @@ public class PlayOutsideTemplate
 	}
 
 	@Override
-	public Set<SingleVariablePattern<PlayOutsideVariable>> generateFactorPatterns(PlayOutsideState state) {
-		Set<SingleVariablePattern<PlayOutsideVariable>> factors = new HashSet<>();
+	public List<SingleVariablePattern<PlayOutsideVariable>> generateFactorPatterns(PlayOutsideState state) {
+		List<SingleVariablePattern<PlayOutsideVariable>> factors = new ArrayList<>();
 		factors.add(new SingleVariablePattern<>(this, state.getPlayOutsideVariable()));
 		return factors;
 	}

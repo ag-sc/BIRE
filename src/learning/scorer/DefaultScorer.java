@@ -1,17 +1,12 @@
 package learning.scorer;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.IntStream;
+import java.util.Collection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import exceptions.MissingFactorException;
 import factors.Factor;
 import learning.Vector;
-import variables.AbstractState;
 
 public class DefaultScorer extends AbstractSingleStateScorer {
 
@@ -30,7 +25,7 @@ public class DefaultScorer extends AbstractSingleStateScorer {
 	}
 
 	@Override
-	protected double score(Set<Factor<?>> factors) {
+	protected double score(Collection<Factor<?>> factors) {
 		double score = 1;
 		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();

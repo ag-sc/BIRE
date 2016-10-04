@@ -1,13 +1,9 @@
 package learning.scorer;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
-
-import javax.jws.soap.SOAPBinding;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +55,7 @@ public class NumericallyStableScorer implements Scorer {
 	}
 
 	public double rawScore(AbstractState<?> state) {
-		Set<Factor<?>> factors = null;
+		Collection<Factor<?>> factors = null;
 		try {
 			factors = state.getFactorGraph().getFactors();
 		} catch (MissingFactorException e) {

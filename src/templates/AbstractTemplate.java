@@ -1,7 +1,7 @@
 package templates;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +54,7 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	 * @param state
 	 * @return
 	 */
-	public abstract Set<FactorPatternT> generateFactorPatterns(StateT state);
+	public abstract List<FactorPatternT> generateFactorPatterns(StateT state);
 
 	/**
 	 * This method receives the previously created "empty" factor patterns and

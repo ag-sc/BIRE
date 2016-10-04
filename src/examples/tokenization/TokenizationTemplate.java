@@ -1,8 +1,7 @@
 package examples.tokenization;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import factors.Factor;
 import factors.patterns.SingleVariablePattern;
@@ -26,8 +25,8 @@ public class TokenizationTemplate
 	 * (except for the edge cases; these are just omitted).
 	 */
 	@Override
-	public Set<SingleVariablePattern<BoundaryVariable>> generateFactorPatterns(TokenState state) {
-		Set<SingleVariablePattern<BoundaryVariable>> factors = new HashSet<>();
+	public List<SingleVariablePattern<BoundaryVariable>> generateFactorPatterns(TokenState state) {
+		List<SingleVariablePattern<BoundaryVariable>> factors = new ArrayList<>();
 		for (BoundaryVariable b : state.tokenization.tokenBoundaries.values()) {
 			factors.add(new SingleVariablePattern<>(this, b));
 		}
