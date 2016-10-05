@@ -33,7 +33,7 @@ public class FactorPool {
 		return newFactors;
 	}
 
-	public List<Factor<? extends FactorPattern>> getFactors(List<? extends FactorPattern> factorPatterns)
+	public List<Factor<? extends FactorPattern>> getFactors(Collection<? extends FactorPattern> factorPatterns)
 			throws MissingFactorException {
 		// TODO consider not returning a list with plain factors (with
 		// repeating elements) but to return a list of tuples (count, factor).
@@ -41,7 +41,6 @@ public class FactorPool {
 		List<Factor<? extends FactorPattern>> factors = new ArrayList<>();
 
 		for (FactorPattern factorPattern : factorPatterns) {
-			// synchronized (factorPattern2Factor) {
 			if (factorPattern2Factor.containsKey(factorPattern)) {
 				Factor<? extends FactorPattern> factor = factorPattern2Factor.get(factorPattern);
 				factors.add(factor);
@@ -51,9 +50,7 @@ public class FactorPool {
 				throw new MissingFactorException(
 						String.format("Could not retrieve factor for requested factor pattern: %s", factorPattern));
 			}
-			// }
 		}
-
 		return factors;
 	}
 
