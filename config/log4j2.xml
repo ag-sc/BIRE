@@ -31,13 +31,15 @@
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
-
+		<Logger name="learning.Model" level="WARN" additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="LogFile" />
+		</Logger>
 		<Logger name="learning.Trainer" level="INFO" additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
-		<Logger name="sampling.DefaultSampler" level="DEBUG"
-			additivity="false">
+		<Logger name="sampling.DefaultSampler" level="WARN" additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
@@ -60,7 +62,8 @@
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>
-		<Logger name="examples.TokenBoundaryExplorer" level="WARN" additivity="false">
+		<Logger name="examples.TokenBoundaryExplorer" level="WARN"
+			additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="LogFile" />
 		</Logger>

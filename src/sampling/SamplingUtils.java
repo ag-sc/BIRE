@@ -3,11 +3,14 @@ package sampling;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 
 import variables.AbstractState;
 
 public class SamplingUtils {
+
+	private static Random rand = new Random(43921422342L);
 
 	/**
 	 * Selects a state from the given list according to the probability
@@ -21,13 +24,13 @@ public class SamplingUtils {
 	 * @param softmax
 	 * @return
 	 */
-	public static <StateT extends AbstractState> StateT drawFromDistribution(List<StateT> nextStates,
+	public static <StateT extends AbstractState<?>> StateT drawFromDistribution(List<StateT> nextStates,
 			boolean useModelDistribution, boolean softmax) {
 		Function<StateT, Double> toScore = null;
 		if (useModelDistribution) {
 			toScore = s -> s.getModelScore();
 		} else {
-			toScore = d -> d.getObjectiveScore();
+			toScore = s -> s.getObjectiveScore();
 		}
 		Function<Double, Double> toProbability = null;
 		if (softmax) {
@@ -46,20 +49,18 @@ public class SamplingUtils {
 			}
 			totalSum += prob;
 		}
-
-		double randomIndex = Math.random() * totalSum;
+		double randomIndex = rand.nextDouble() * totalSum;
 		double sum = 0;
 		int i = 0;
-		while (sum < randomIndex)
-
-		{
+		while (sum < randomIndex) {
 			if (useModelDistribution) {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
 			} else {
 				sum += toProbability.apply(toScore.apply(nextStates.get(i++)));
 			}
 		}
-		return nextStates.get(Math.max(0, i - 1));
+		StateT state = nextStates.get(Math.max(0, i - 1));
+		return state;
 
 	}
 
@@ -75,7 +76,7 @@ public class SamplingUtils {
 	 * @param useModelDistribution
 	 * @return
 	 */
-	public static <StateT extends AbstractState> boolean accept(StateT candidateState, StateT currentState,
+	public static <StateT extends AbstractState<?>> boolean accept(StateT candidateState, StateT currentState,
 			boolean useModelDistribution) {
 		double pCurrent = 0;
 		double pCandidate = 0;
@@ -113,7 +114,7 @@ public class SamplingUtils {
 	 * @param useModelDistribution
 	 * @return
 	 */
-	public static <StateT extends AbstractState> boolean strictAccept(StateT candidateState, StateT currentState,
+	public static <StateT extends AbstractState<?>> boolean strictAccept(StateT candidateState, StateT currentState,
 			boolean useModelDistribution) {
 		Function<StateT, Double> getScore = null;
 		if (useModelDistribution) {

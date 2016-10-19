@@ -2,58 +2,51 @@ package factors;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
-import templates.AbstractTemplate;
+import exceptions.MissingFactorException;
 
 public class FactorGraph implements Serializable {
 
-	private Multimap<AbstractTemplate<?>, AbstractFactor> factors;
+	/**
+	 * The factor pool stores computed factors w.r.t their patterns. This object
+	 * is shared across several factor graphs so that individual states do not
+	 * need to recompute existing, previously computed factors.
+	 */
+	private FactorPool factorPool;
+	private Collection<FactorPattern> factorPatterns;
 
 	public FactorGraph() {
-		init();
-	}
-
-	private void init() {
-		factors = HashMultimap.create();
+		this.factorPool = new FactorPool();
+		// TODO This should be thread safe. Is it in our case?
+		this.factorPatterns = new ConcurrentLinkedQueue<>();
 	}
 
 	public FactorGraph(FactorGraph factorGraph) {
-		this.factors = HashMultimap.create(factorGraph.factors);
+		this.factorPool = factorGraph.factorPool;
+		this.factorPatterns = new ConcurrentLinkedQueue<>();
 	}
 
-	public void updateFactors(AbstractTemplate<?> template, Collection<AbstractFactor> factors) {
-		this.factors.removeAll(template);
-		this.factors.putAll(template, factors);
+	public void addFactorPatterns(List<? extends FactorPattern> generatedFactorPatterns) {
+		this.factorPatterns.addAll(generatedFactorPatterns);
 	}
 
-	public Collection<AbstractFactor> getFactors() {
-		return new HashSet<>(factors.values());
+	public void clear() {
+		this.factorPatterns.clear();
+		this.factorPatterns = new ConcurrentLinkedQueue<>();
 	}
 
-	public void reset() {
-		init();
+	public List<Factor<? extends FactorPattern>> getFactors() throws MissingFactorException {
+		return factorPool.getFactors(factorPatterns);
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder("FactorGraph:");
-		builder.append("\n");
-		for (AbstractTemplate<?> template : factors.keySet()) {
-			builder.append("-------------- ");
-			builder.append(template.getClass().getSimpleName());
-			builder.append(" --------------");
-			builder.append("\n");
-			for (AbstractFactor factor : factors.get(template)) {
-				builder.append(factor);
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
+	public Collection<FactorPattern> getFactorPatterns() {
+		return factorPatterns;
 	}
-	
+
+	public FactorPool getFactorPool() {
+		return factorPool;
+	}
+
 }

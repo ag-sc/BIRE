@@ -31,7 +31,7 @@ public class TokenizedSentence extends Sentence implements LabeledInstance<Token
 
 	@Override
 	public String toString() {
-		return "TokenizedSentence [tokenization=" + tokenization + "]";
+		return "TokenizedSentence [text=" + text + ", tokenization=" + tokenization + "]";
 	}
 
 }

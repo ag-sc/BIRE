@@ -5,11 +5,10 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.Vector;
-import variables.AbstractState;
 
-public class DefaultScorer<StateT extends AbstractState> implements Scorer<StateT> {
+public class DefaultScorer extends AbstractSingleStateScorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -25,32 +24,16 @@ public class DefaultScorer<StateT extends AbstractState> implements Scorer<State
 	public DefaultScorer() {
 	}
 
-	/**
-	 * Computes the score of this state according to the trained model. The
-	 * computed score is returned but also updated in the state objects
-	 * <i>score</i> field.
-	 * 
-	 * @param state
-	 * @return
-	 */
-	public double score(StateT state) {
-		// at this point, the function unroll(state) should be applied at least
-		// once
-
-		// compute the score of the state according to all templates and all
-		// respective factors
-
+	@Override
+	protected double score(Collection<Factor<?>> factors) {
 		double score = 1;
-		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors) {
+		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
-			Vector weights = factor.getTemplate().getWeightVector();
+			Vector weights = factor.getTemplate().getWeights();
 			double dotProduct = featureVector.dotProduct(weights);
 			double factorScore = Math.exp(dotProduct);
 			score *= factorScore;
 		}
-		state.setModelScore(score);
 		return score;
 	}
-
 }

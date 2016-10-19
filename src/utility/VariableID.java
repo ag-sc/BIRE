@@ -1,8 +1,8 @@
 package utility;
 
-import variables.Variable;
+import variables.AbstractVariable;
 
-public class VariableID extends ID<Variable> {
+public class VariableID extends ID<AbstractVariable> {
 
 	public VariableID(String id) {
 		super(id);

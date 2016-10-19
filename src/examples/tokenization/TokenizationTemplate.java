@@ -1,16 +1,17 @@
 package examples.tokenization;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import factors.AbstractFactor;
+import factors.Factor;
+import factors.patterns.SingleVariablePattern;
 import learning.Vector;
 import templates.AbstractTemplate;
 
-public class TokenizationTemplate extends AbstractTemplate<TokenState> {
+public class TokenizationTemplate
+		extends AbstractTemplate<Sentence, TokenState, SingleVariablePattern<BoundaryVariable>> {
 
-	public int windowSize = 5;
+	public int windowSize = 3;
 
 	/**
 	 * This template generates factors for each character position and computes
@@ -24,24 +25,22 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 	 * (except for the edge cases; these are just omitted).
 	 */
 	@Override
-	protected Collection<AbstractFactor> generateFactors(TokenState state) {
-		Set<AbstractFactor> factors = new HashSet<>();
-		for (int i : state.tokenization.tokenBoundaries) {
-			factors.add(new TokenizationFactor(this, i));
+	public List<SingleVariablePattern<BoundaryVariable>> generateFactorPatterns(TokenState state) {
+		List<SingleVariablePattern<BoundaryVariable>> factors = new ArrayList<>();
+		for (BoundaryVariable b : state.tokenization.tokenBoundaries.values()) {
+			factors.add(new SingleVariablePattern<>(this, b));
 		}
 		return factors;
 	}
 
 	@Override
-	protected void computeFactor(TokenState state, AbstractFactor factor) {
-		TokenizationFactor tokenizationFactor = (TokenizationFactor) factor;
-		int position = tokenizationFactor.position;
+	public void computeFactor(Sentence instance, Factor<SingleVariablePattern<BoundaryVariable>> factor) {
+		Vector features = factor.getFeatureVector();
+		int position = factor.getFactorPattern().getVariable().boundaryPosition;
 		int from = Math.max(position - windowSize / 2, 0);
-		int to = Math.min(position + (windowSize + 1) / 2, state.sentence.text.length());
+		int to = Math.min(position + (windowSize + 1) / 2, instance.text.length());
 
-		String window = state.sentence.text.substring(from, to);
-
-		Vector features = new Vector();
+		String window = instance.text.substring(from, to);
 
 		for (int i = 0; i < window.length(); i++) {
 			char c = window.charAt(i);
@@ -66,7 +65,7 @@ public class TokenizationTemplate extends AbstractTemplate<TokenState> {
 
 			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
-		tokenizationFactor.setFeatures(features);
+
 	}
 
 }

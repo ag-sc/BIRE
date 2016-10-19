@@ -3,7 +3,6 @@ package examples.tokenization;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,13 +12,17 @@ import org.apache.logging.log4j.Logger;
 import corpus.FileUtils;
 import evaluation.DataSplit;
 import evaluation.EvaluationUtil;
+import learning.AdvancedLearner;
 import learning.DefaultLearner;
+import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Trainer;
+import learning.optimizer.Adam;
+import learning.optimizer.SGD;
+import learning.regularizer.L2;
 import learning.scorer.DefaultScorer;
 import learning.scorer.Scorer;
-import learning.scorer.SoftplusScorer;
 import sampling.DefaultSampler;
 import sampling.Explorer;
 import sampling.stoppingcriterion.StepLimitCriterion;
@@ -45,7 +48,7 @@ public class Main {
 		 * Load training and test data.
 		 */
 		List<TokenizedSentence> sentences = getTokenizedSentences();
-		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 0);
+		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 1);
 		List<TokenizedSentence> train = dataSplit.getTrain();
 		List<TokenizedSentence> test = dataSplit.getTest();
 		// List<Sentence> predict = getSentences();
@@ -64,25 +67,29 @@ public class Main {
 		 * Define templates that are responsible to generate factors/features to
 		 * score intermediate, generated states.
 		 */
-		List<AbstractTemplate<TokenState>> templates = new ArrayList<>();
+		List<AbstractTemplate<Sentence, TokenState, ?>> templates = new ArrayList<>();
 		templates.add(new TokenizationTemplate());
 
-		/*
-		 * Define a model and provide it with the necessary templates.
-		 */
-		Model<TokenState> model = new Model<>(templates);
 		/*
 		 * Create the scorer object that computes a score from the factors'
 		 * features and the templates' weight vectors.
 		 */
-//		Scorer<TokenState> scorer = new SoftplusScorer<>();
-		Scorer<TokenState> scorer = new DefaultScorer<>();
+		// Scorer<TokenState> scorer = new SoftplusScorer<>();
+		// Scorer scorer = new LinearScorer();
+		Scorer scorer = new DefaultScorer();
+		/*
+		 * Define a model and provide it with the necessary templates.
+		 */
+		Model<Sentence, TokenState> model = new Model<>(scorer, templates);
+		model.setMultiThreaded(true);
+		model.setForceFactorComputation(false);
+		model.setSequentialScoring(false);
 
 		/*
 		 * Create an Initializer that is responsible for providing an initial
 		 * state for the sampling chain given a sentence.
 		 */
-		TokenizationInitializer<Sentence> initializer = new TokenizationInitializer<>();
+		TokenizationInitializer initializer = new TokenizationInitializer();
 
 		/*
 		 * Define the explorers that will provide "neighboring" states given a
@@ -102,14 +109,19 @@ public class Main {
 		 */
 		int numberOfSamplingSteps = 50;
 		StoppingCriterion<TokenState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-		DefaultSampler<TokenState, Tokenization> sampler = new DefaultSampler<>(model, scorer, objective, explorers,
+		DefaultSampler<Sentence, TokenState, Tokenization> sampler = new DefaultSampler<>(model, objective, explorers,
 				stoppingCriterion);
-
+		// sampler.setTrainingSamplingStrategy(SamplingStrategies.greedyObjectiveStrategy());
 		/*
 		 * Define a learning strategy. The learner will receive state pairs
 		 * which can be used to update the models parameters.
 		 */
-		DefaultLearner<TokenState> learner = new DefaultLearner<>(model, 0.1);
+		// Learner<TokenState> learner = new DefaultLearner<>(model, 0.1);
+		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
+		// SGD());
+		// Learner<TokenState> learner = new AdvancedLearner<>(model, new
+		// SGD(0.1, 0.0, 0, false), new L2(0.0));
+		Learner<TokenState> learner = new AdvancedLearner<>(model, new Adam());
 
 		log.info("####################");
 		log.info("Start training");
@@ -118,9 +130,11 @@ public class Main {
 		 * The trainer will loop over the data and invoke sampling and learning.
 		 * Additionally, it can invoke predictions on new data.
 		 */
-		int numberOfEpochs = 3;
+		int numberOfEpochs = 1;
 		Trainer trainer = new Trainer();
 		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
+
+		model.setSequentialScoring(true);
 		List<TokenState> trainingResults = trainer.test(sampler, initializer, train);
 		List<TokenState> testResults = trainer.test(sampler, initializer, test);
 
@@ -129,11 +143,11 @@ public class Main {
 		 * predictions, we do that here, manually, before we print the results.
 		 */
 		for (TokenState state : trainingResults) {
-			Tokenization goldResult = ((TokenizedSentence) state.sentence).getGoldResult();
+			Tokenization goldResult = ((TokenizedSentence) state.getInstance()).getGoldResult();
 			double s = objective.score(state, goldResult);
 		}
 		for (TokenState state : testResults) {
-			Tokenization goldResult = ((TokenizedSentence) state.sentence).getGoldResult();
+			Tokenization goldResult = ((TokenizedSentence) state.getInstance()).getGoldResult();
 			double s = objective.score(state, goldResult);
 		}
 		/*
@@ -177,8 +191,8 @@ public class Main {
 			while (m.find()) {
 				int from = m.start();
 				int to = m.end();
-				tokenization.tokenBoundaries.add(from);
-				tokenization.tokenBoundaries.add(to);
+				tokenization.tokenBoundaries.put(from, new BoundaryVariable(from));
+				tokenization.tokenBoundaries.put(to, new BoundaryVariable(to));
 			}
 			tokenizedSentence.setTokenization(tokenization);
 			tokenizedSentences.add(tokenizedSentence);

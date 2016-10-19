@@ -1,52 +1,69 @@
 package sampling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import corpus.Instance;
 import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
-import learning.scorer.Scorer;
+import learning.callbacks.StepCallback;
 import sampling.samplingstrategies.AcceptStrategies;
 import sampling.samplingstrategies.AcceptStrategy;
 import sampling.samplingstrategies.SamplingStrategies;
 import sampling.samplingstrategies.SamplingStrategy;
 import sampling.stoppingcriterion.StepLimitCriterion;
 import sampling.stoppingcriterion.StoppingCriterion;
+import utility.Utils;
 import variables.AbstractState;
 
-public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sampler<StateT, ResultT> {
+public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractState<InstanceT>, ResultT>
+		implements Sampler<StateT, ResultT> {
 
 	private static Logger log = LogManager.getFormatterLogger();
-	protected Model<StateT> model;
-	protected Scorer<StateT> scorer;
+	protected Model<InstanceT, StateT> model;
 	protected ObjectiveFunction<StateT, ResultT> objective;
 	private List<Explorer<StateT>> explorers;
 	private StoppingCriterion<StateT> stoppingCriterion;
 
-	protected final boolean multiThreaded = true;
+	protected final boolean multiThreaded = false;
 	/**
 	 * Defines the sampling strategy for the training phase. The test phase
 	 * currently always uses the greedy variant.
 	 */
-	private SamplingStrategy<StateT> samplingStrategy = SamplingStrategies.linearSamplingStrategy();
+	private SamplingStrategy<StateT> trainSamplingStrategy = SamplingStrategies.linearModelSamplingStrategy();
 
-	private AcceptStrategy<StateT> acceptStrategy = AcceptStrategies.strictModelAccept();
+	private AcceptStrategy<StateT> trainAcceptStrategy = AcceptStrategies.strictModelAccept();
 
 	/**
 	 * Greedy sampling strategy for test phase.
 	 */
-	private final SamplingStrategy<StateT> greedySamplingStrategy = SamplingStrategies.greedyStrategy();
+	private SamplingStrategy<StateT> predictionSamplingStrategy = SamplingStrategies.greedyModelStrategy();
 
 	/**
 	 * Strict accept strategy for test phase.
 	 */
-	private final AcceptStrategy<StateT> strictAcceptStrategy = AcceptStrategies.strictModelAccept();
+	private AcceptStrategy<StateT> predictionAcceptStrategy = AcceptStrategies.strictModelAccept();
+
+	private List<StepCallback> stepCallbacks = new ArrayList<>();
+
+	public List<StepCallback> getStepCallbacks() {
+		return stepCallbacks;
+	}
+
+	public void addStepCallbacks(List<StepCallback> stepCallbacks) {
+		this.stepCallbacks.addAll(stepCallbacks);
+	}
+
+	public void addStepCallback(StepCallback stepCallback) {
+		this.stepCallbacks.add(stepCallback);
+	}
 
 	/**
 	 * The DefaultSampler implements the Sampler interface. This sampler divides
@@ -61,11 +78,10 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @param explorers
 	 * @param stoppingCriterion
 	 */
-	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
+	public DefaultSampler(Model<InstanceT, StateT> model, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
 		this.model = model;
-		this.scorer = scorer;
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = stoppingCriterion;
@@ -85,11 +101,10 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * @param explorers
 	 * @param samplingSteps
 	 */
-	public DefaultSampler(Model<StateT> model, Scorer<StateT> scorer, ObjectiveFunction<StateT, ResultT> objective,
+	public DefaultSampler(Model<InstanceT, StateT> model, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, int samplingSteps) {
 		super();
 		this.model = model;
-		this.scorer = scorer;
 		this.objective = objective;
 		this.explorers = explorers;
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingSteps);
@@ -104,12 +119,21 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 
 		do {
 			log.info("---------------------------");
+			int e = 0;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("TRAINING Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				for (StepCallback c : stepCallbacks) {
+					c.onStartStep(this, step, e, explorers.size(), initialState);
+				}
+
 				currentState = performTrainingStep(learner, explorer, goldResult, currentState);
 				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
+				for (StepCallback c : stepCallbacks) {
+					c.onEndStep(this, step, e, explorers.size(), initialState, currentState);
+				}
+				e++;
 			}
 			step++;
 		} while (!stoppingCriterion.checkCondition(generatedChain, step));
@@ -126,12 +150,20 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		int step = 0;
 		do {
 			log.info("---------------------------");
+			int e = 0;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("PREDICTION Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+				for (StepCallback c : stepCallbacks) {
+					c.onStartStep(this, step, e, explorers.size(), initialState);
+				}
 				currentState = performPredictionStep(explorer, currentState);
 				generatedChain.add(currentState);
 				log.info("Sampled State:  %s", currentState);
+				for (StepCallback c : stepCallbacks) {
+					c.onEndStep(this, step, e, explorers.size(), initialState, currentState);
+				}
+				e++;
 			}
 			step++;
 		} while (!stoppingCriterion.checkCondition(generatedChain, step));
@@ -162,21 +194,59 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		if (nextStates.size() > 0) {
 			allStates.add(currentState);
 			/**
-			 * Compute objective function scores
+			 * Score all states with Objective/Model only if sampling strategy
+			 * needs that. If not, score only selected candidate and current.
 			 */
-			scoreWithObjective(allStates, goldResult);
+			if (trainSamplingStrategy.usesObjective()) {
+				/**
+				 * Compute objective function scores
+				 */
+				scoreWithObjective(allStates, goldResult);
+			}
+			if (trainSamplingStrategy.usesModel()) {
+				/**
+				 * Apply templates to states and, thus generate factors and
+				 * features
+				 */
+				model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+				// model.applyToStates(allStates,
+				// currentState.getFactorGraph().getFactorPool(),
+				// currentState.getInstance());
+				// /**
+				// * Score all states according to the model.
+				// */
+				// scorer.score(allStates, multiThreaded);
+			}
 			/**
-			 * Apply templates to states and, thus generate factors and features
+			 * Sample one possible successor
 			 */
-			unroll(allStates);
+			StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
+
 			/**
-			 * Score all states according to the model.
+			 * If states were not scored before score only selected candidate
+			 * and current state.
 			 */
-			scoreWithModel(allStates);
-			/**
-			 * Sample one possible successor from model distribution
-			 */
-			StateT candidateState = samplingStrategy.sampleCandidate(nextStates);
+			if (!trainSamplingStrategy.usesObjective()) {
+				/**
+				 * Compute objective function scores
+				 */
+				scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+			}
+			if (!trainSamplingStrategy.usesModel()) {
+				/**
+				 * Apply templates to current and candidate state only
+				 */
+				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance(),
+						currentState.getFactorGraph().getFactorPool());
+				// model.applyToStates(
+				// currentState.getFactorGraph().getFactorPool(),
+				// currentState.getInstance());
+				// /**
+				// * Score current and candidate state according to model.
+				// */
+				// scorer.score(Arrays.asList(currentState, candidateState),
+				// multiThreaded);
+			}
 			/**
 			 * Update model with selected state
 			 */
@@ -220,7 +290,7 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			 * Choose to accept or reject selected state
 			 */
 			// return candidateState;
-			return acceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
+			return trainAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
 		}
 		return currentState;
 	}
@@ -245,15 +315,19 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			/**
 			 * Apply templates to states and thus generate factors and features
 			 */
-			unroll(allStates);
-			/**
-			 * Score all states according to the model.
-			 */
-			scoreWithModel(allStates);
+
+			model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+			// model.applyToStates(allStates,
+			// currentState.getFactorGraph().getFactorPool(),
+			// currentState.getInstance());
+			// /**
+			// * Score all states according to the model.
+			// */
+			// scorer.score(allStates, multiThreaded);
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
-			StateT candidateState = greedySamplingStrategy.sampleCandidate(nextStates);
+			StateT candidateState = predictionSamplingStrategy.sampleCandidate(nextStates);
 			/**
 			 * Decide to accept or reject the selected state
 			 */
@@ -274,56 +348,48 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 			// }
 			// log.debug("");
 			// }
-			currentState = strictAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
+			currentState = predictionAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
 					: currentState;
 			return currentState;
 		} else {
 			return currentState;
 		}
 	}
+	//
+	// /**
+	// * Applies the model's template to each of the given states, thus
+	// unrolling
+	// * (computing) the features. The <i>multiThreaded</i> flag determines if
+	// the
+	// * computation is performed in parallel or sequentially.
+	// *
+	// * @param currentState
+	// * @param nextStates
+	// */
+	// protected void unroll(List<StateT> allStates) {
+	// long unrollID = TaggedTimer.start("SC-UNROLL");
+	// log.debug("Unroll features for %s states...", allStates.size() + 1);
+	//
+	// Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
+	// stream.forEach(s -> model.applyTo(s));
+	// TaggedTimer.stop(unrollID);
+	// }
 
-	/**
-	 * Applies the model's template to each of the given states, thus unrolling
-	 * (computing) the features. The <i>multiThreaded</i> flag determines if the
-	 * computation is performed in parallel or sequentially.
-	 * 
-	 * @param currentState
-	 * @param nextStates
-	 */
-	protected void unroll(List<StateT> allStates) {
-		long unrollID = TaggedTimer.start("SC-UNROLL");
-		log.debug("Unroll features for %s states...", allStates.size() + 1);
-
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = allStates.parallelStream();
-		} else {
-			stream = allStates.stream();
-		}
-		stream.forEach(s -> model.unroll(s));
-		TaggedTimer.stop(unrollID);
-	}
-
-	/**
-	 * Computes the model scores for each of the given states. The
-	 * <i>multiThreaded</i> flag determines if the computation is performed in
-	 * parallel or sequentially.
-	 * 
-	 * @param nextStates
-	 */
-	protected void scoreWithModel(List<StateT> nextStates) {
-		long scID = TaggedTimer.start("MODEL-SCORE");
-		log.debug("Score %s states according to model...", nextStates.size());
-
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = nextStates.parallelStream();
-		} else {
-			stream = nextStates.stream();
-		}
-		stream.forEach(s -> scorer.score(s));
-		TaggedTimer.stop(scID);
-	}
+	// /**
+	// * Computes the model scores for each of the given states. The
+	// * <i>multiThreaded</i> flag determines if the computation is performed in
+	// * parallel or sequentially.
+	// *
+	// * @param nextStates
+	// */
+	// protected void scoreWithModel(List<StateT> nextStates) {
+	// long scID = TaggedTimer.start("MODEL-SCORE");
+	// log.debug("Score %s states according to model...", nextStates.size());
+	//
+	// Stream<StateT> stream = Utils.getStream(nextStates, multiThreaded);
+	// stream.forEach(s -> scorer.score(s));
+	// TaggedTimer.stop(scID);
+	// }
 
 	/**
 	 * Computes the objective scores for each of the given states. The
@@ -337,22 +403,13 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	protected void scoreWithObjective(List<StateT> allStates, ResultT goldResult) {
 		long scID = TaggedTimer.start("OBJ-SCORE");
 		log.debug("Score %s states according to objective...", allStates.size() + 1);
-		Stream<StateT> stream = null;
-		if (multiThreaded) {
-			stream = allStates.parallelStream();
-		} else {
-			stream = allStates.stream();
-		}
+		Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
 		stream.forEach(s -> objective.score(s, goldResult));
 		TaggedTimer.stop(scID);
 	}
 
-	protected Model<StateT> getModel() {
+	protected Model<?, StateT> getModel() {
 		return model;
-	}
-
-	protected Scorer<StateT> getScorer() {
-		return scorer;
 	}
 
 	public StoppingCriterion<StateT> getStoppingCriterion() {
@@ -373,8 +430,8 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingLimit);
 	}
 
-	public SamplingStrategy<StateT> getSamplingStrategy() {
-		return samplingStrategy;
+	public SamplingStrategy<StateT> getTrainingSamplingStrategy() {
+		return trainSamplingStrategy;
 	}
 
 	/**
@@ -384,12 +441,12 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * 
 	 * @param samplingStrategy
 	 */
-	public void setSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
-		this.samplingStrategy = samplingStrategy;
+	public void setTrainingSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
+		this.trainSamplingStrategy = samplingStrategy;
 	}
 
-	public AcceptStrategy<StateT> getAcceptStrategy() {
-		return acceptStrategy;
+	public AcceptStrategy<StateT> getTrainingAcceptStrategy() {
+		return trainAcceptStrategy;
 	}
 
 	/**
@@ -398,8 +455,37 @@ public class DefaultSampler<StateT extends AbstractState, ResultT> implements Sa
 	 * 
 	 * @return
 	 */
-	public void setAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
-		this.acceptStrategy = acceptStrategy;
+	public void setTrainingAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+		this.trainAcceptStrategy = acceptStrategy;
+	}
+
+	public SamplingStrategy<StateT> getTestSamplingStrategy() {
+		return predictionSamplingStrategy;
+	}
+
+	/**
+	 * Sets the sampling strategy for the training phase. The candidate state
+	 * that is used for training is selected from all possible successor states
+	 * using this strategy.
+	 * 
+	 * @param samplingStrategy
+	 */
+	public void setTestSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
+		this.predictionSamplingStrategy = samplingStrategy;
+	}
+
+	public AcceptStrategy<StateT> getTestAcceptStrategy() {
+		return predictionAcceptStrategy;
+	}
+
+	/**
+	 * Sets the strategy for accepting a sampled candidate state as the next
+	 * state in the training phase.
+	 * 
+	 * @return
+	 */
+	public void setTestAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+		this.predictionAcceptStrategy = acceptStrategy;
 	}
 
 	public List<Explorer<StateT>> getExplorers() {

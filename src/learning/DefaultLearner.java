@@ -1,7 +1,6 @@
 package learning;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,23 +9,23 @@ import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
-import evaluation.TaggedTimer;
-import factors.AbstractFactor;
-import learning.callbacks.EpochCallback;
-import learning.callbacks.InstanceCallback;
 import templates.AbstractTemplate;
+import utility.VectorUtil;
 import variables.AbstractState;
 
-public class DefaultLearner<StateT extends AbstractState> implements Learner<StateT>, InstanceCallback, EpochCallback {
+public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
 	private static Logger log = LogManager.getFormatterLogger(DefaultLearner.class.getName());
 
 	private double alpha;
-	private Model<StateT> model;
+	private Model<?, StateT> model;
 	private boolean normalize = true;
 	public double currentAlpha;
 	public int updates = 0;
+	/**
+	 * A regularization parameter to punish big feature weights.
+	 */
+	protected double l2 = 0.01;
 
 	/**
 	 * This implementation of the learner implements the SampleRank learning
@@ -38,7 +37,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param model
 	 * @param alpha
 	 */
-	public DefaultLearner(Model<StateT> model, double alpha) {
+	public DefaultLearner(Model<?, StateT> model, double alpha) {
 		super();
 		this.model = model;
 		this.alpha = alpha;
@@ -67,13 +66,16 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
-		Map<AbstractTemplate<StateT>, Vector> weightGradients = new HashMap<>();
-		model.getTemplates().forEach(t -> weightGradients.put(t, new Vector()));
+		Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients = new HashMap<>();
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
+			weightGradients.put(t, new Vector());
+		}
 		/**
 		 * Rank each possible next state against the current state
 		 */
 		possibleNextStates.forEach(
 				possibleNextState -> collectSampleRankGradients(currentState, possibleNextState, weightGradients));
+
 		if (normalize) {
 			applyWeightUpdate(weightGradients, possibleNextStates.size());
 		} else {
@@ -90,7 +92,7 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param weightUpdates
 	 */
 	private void collectSampleRankGradients(StateT currentState, StateT possibleNextState,
-			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
+			Map<AbstractTemplate<?, StateT, ?>, Vector> weightUpdates) {
 		log.trace("Current:\t%s", currentState);
 		log.trace("Next:\t%s", possibleNextState);
 
@@ -99,46 +101,21 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		 * Collect differences of features for both states and remember
 		 * respective template
 		 */
-		Map<AbstractTemplate<StateT>, Vector> featureDifferences = new HashMap<>();
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
-			Vector differences = getFeatureDifferences(t, possibleNextState, currentState);
+		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
+			Vector differences = VectorUtil.getFeatureDifferences(t, possibleNextState, currentState);
+			// System.out.println(differences);
 			featureDifferences.put(t, differences);
-			weightedDifferenceSum += differences.dotProduct(t.getWeightVector());
+			weightedDifferenceSum += differences.dotProduct(t.getWeights());
 		}
-		
+
 		if (weightedDifferenceSum > 0 && preference(currentState, possibleNextState)) {
-			updateFeatures(featureDifferences, -1, weightUpdates);
+			aggregateGradients(featureDifferences, +1, weightUpdates);
 		} else if (weightedDifferenceSum <= 0 && preference(possibleNextState, currentState)) {
-			updateFeatures(featureDifferences, +1, weightUpdates);
+			aggregateGradients(featureDifferences, -1, weightUpdates);
 		} else {
 		}
-	}
-
-	
-	/**
-	 * Computes the differences of all features of both states. For this, the
-	 * template uses features from all factors that are not associated to both
-	 * states (since these differences would be always 0).
-	 * 
-	 * @param state1
-	 * @param state2
-	 * @return
-	 */
-	public Vector getFeatureDifferences(AbstractTemplate<StateT> template, StateT state1, StateT state2) {
-		Vector diff = new Vector();
-		Collection<AbstractFactor> factors1 = state1.getFactorGraph().getFactors();
-		Collection<AbstractFactor> factors2 = state2.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors1) {
-			if (factor.getTemplate() == template) {
-				diff.add(factor.getFeatureVector());
-			}
-		}
-		for (AbstractFactor factor : factors2) {
-			if (factor.getTemplate() == template) {
-				diff.sub(factor.getFeatureVector());
-			}
-		}
-		return diff;
+		// System.out.println("DIFF: " + featureDifferences.values());
 	}
 
 	/**
@@ -151,23 +128,19 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param featureDifferences
 	 * @param learningDirection
 	 */
-	private void updateFeatures(Map<AbstractTemplate<StateT>, Vector> featureDifferences, double learningDirection,
-			Map<AbstractTemplate<StateT>, Vector> weightUpdates) {
+	private void aggregateGradients(Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences,
+			double learningDirection, Map<AbstractTemplate<?, StateT, ?>, Vector> weightUpdates) {
 		log.trace("UPDATE: learning direction: %s", learningDirection);
 
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector features = featureDifferences.get(t);
 			Vector gradients = weightUpdates.get(t);
 
 			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
-				// only update for real differences
-				if (featureDifference.getValue() != 0) {
-					double weightGradient = learningDirection * featureDifference.getValue();
-					log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient,
-							featureDifference.getKey());
-					gradients.addToValue(featureDifference.getKey(), weightGradient);
-				}
+				double weightGradient = learningDirection * featureDifference.getValue();
+				log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient, featureDifference.getKey());
+				gradients.addToValue(featureDifference.getKey(), weightGradient);
 			}
 		}
 	}
@@ -178,18 +151,17 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 	 * @param weightGradients
 	 * @param numberOfUpdates
 	 */
-	private void applyWeightUpdate(Map<AbstractTemplate<StateT>, Vector> weightGradients, int numberOfUpdates) {
-		for (AbstractTemplate<StateT> t : model.getTemplates()) {
+	private void applyWeightUpdate(Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients, int numberOfUpdates) {
+		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector weightUpdatesForTemplate = weightGradients.get(t);
+			Vector weights = t.getWeights();
 			for (Entry<String, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {
-				// only update for actual differences
-				if (weightGradient.getValue() != 0) {
-					double gradient = weightGradient.getValue() / numberOfUpdates;
-					log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
-							weightGradient.getKey());
-					t.update(weightGradient.getKey(), gradient, currentAlpha);
-				}
+				double gradient = weightGradient.getValue() / numberOfUpdates
+						- l2 * weights.getValueOfFeature(weightGradient.getKey());
+				log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
+						weightGradient.getKey());
+				t.update(weightGradient.getKey(), -gradient * currentAlpha);
 			}
 		}
 	}
@@ -211,27 +183,8 @@ public class DefaultLearner<StateT extends AbstractState> implements Learner<Sta
 		return O1 > O2;
 	}
 
-	public Model<StateT> getModel() {
+	public Model<?, StateT> getModel() {
 		return model;
 	}
 
-	@Override
-	public <InstanceT extends Instance> void onStartInstance(Trainer caller, InstanceT instance, int indexOfInstance,
-			int numberOfInstances, int epoch, int numberOfEpochs) {
-		double fraction = ((float) (indexOfInstance + epoch * numberOfInstances))
-				/ (numberOfEpochs * numberOfInstances);
-		currentAlpha = (alpha * 0.99) * (1 - fraction) + alpha * 0.01;
-	}
-
-	@Override
-	public <InstanceT extends Instance> void onEndInstance(Trainer caller, InstanceT instance, int indexOfInstance,
-			int numberOfInstances, int epoch, int numberOfEpochs) {
-
-	}
-
-	@Override
-	public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
-		double fraction = ((float) epoch) / (numberOfEpochs);
-		currentAlpha = (alpha * 0.9) * (1 - fraction) + alpha * 0.01;
-	}
 }

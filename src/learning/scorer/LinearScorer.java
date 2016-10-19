@@ -5,13 +5,13 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.Vector;
-import variables.AbstractState;
 
-public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT> {
+public class LinearScorer extends AbstractSingleStateScorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
+
 	/**
 	 * The scorer scores a state w.r.t. the model. It retrieves all factors
 	 * related to the state and multiplies their individual scores. These
@@ -32,7 +32,7 @@ public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT
 	 * @param state
 	 * @return
 	 */
-	public double score(StateT state) {
+	protected double score(Collection<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -40,15 +40,13 @@ public class LinearScorer<StateT extends AbstractState> implements Scorer<StateT
 		// respective factors
 
 		double score = 0;
-		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors) {
+		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
-			Vector weights = factor.getTemplate().getWeightVector();
+			Vector weights = factor.getTemplate().getWeights();
 			double dotProduct = featureVector.dotProduct(weights);
 			double factorScore = dotProduct;
 			score += factorScore;
 		}
-		state.setModelScore(score);
 		return score;
 	}
 

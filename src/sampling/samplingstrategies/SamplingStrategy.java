@@ -4,7 +4,7 @@ import java.util.List;
 
 import variables.AbstractState;
 
-public interface SamplingStrategy<StateT extends AbstractState> {
+public interface SamplingStrategy<StateT extends AbstractState<?>> {
 	/**
 	 * Interface function for implementing a strategy through which a candidate
 	 * state is sampled from the list of generated, possible successor states.
@@ -15,4 +15,8 @@ public interface SamplingStrategy<StateT extends AbstractState> {
 	 * @return
 	 */
 	public StateT sampleCandidate(List<StateT> candidates);
+
+	public boolean usesModel();
+
+	public boolean usesObjective();
 }

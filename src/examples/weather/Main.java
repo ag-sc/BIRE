@@ -13,6 +13,7 @@ import examples.weather.WeatherInstance.Humidity;
 import examples.weather.WeatherInstance.Outlook;
 import examples.weather.WeatherInstance.Temperature;
 import examples.weather.WeatherInstance.Windy;
+import factors.patterns.SingleVariablePattern;
 import learning.DefaultLearner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -41,7 +42,7 @@ public class Main {
 		 * Load training and test data.
 		 */
 		List<PlayOutsideInstance> samples = getLabledSamples();
-		
+
 		/*
 		 * Some code for n-fold cross validation
 		 */
@@ -59,7 +60,6 @@ public class Main {
 			List<PlayOutsideInstance> train = new ArrayList<>(samples);
 			train.removeAll(test);
 
-			
 			log.info("Train data:");
 			train.forEach(s -> log.info("%s", s));
 
@@ -78,18 +78,18 @@ public class Main {
 			 * Define templates that are responsible to generate
 			 * factors/features to score intermediate, generated states.
 			 */
-			List<AbstractTemplate<PlayOutsideState>> templates = new ArrayList<>();
+			List<AbstractTemplate<WeatherInstance, PlayOutsideState, ?>> templates = new ArrayList<>();
 			templates.add(new PlayOutsideTemplate(3));
 
-			/*
-			 * Define a model and provide it with the necessary templates.
-			 */
-			Model<PlayOutsideState> model = new Model<>(templates);
 			/*
 			 * Create the scorer object that computes a score from the features
 			 * of a factor and the weight vectors of the templates.
 			 */
-			Scorer<PlayOutsideState> scorer = new DefaultScorer<>();
+			Scorer scorer = new DefaultScorer();
+			/*
+			 * Define a model and provide it with the necessary templates.
+			 */
+			Model<WeatherInstance, PlayOutsideState> model = new Model<>(scorer, templates);
 
 			/*
 			 * Create an Initializer that is responsible for providing an
@@ -117,7 +117,7 @@ public class Main {
 			 */
 			int numberOfSamplingSteps = 2;
 			StoppingCriterion<PlayOutsideState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-			DefaultSampler<PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, scorer, objective,
+			DefaultSampler<WeatherInstance, PlayOutsideState, Boolean> sampler = new DefaultSampler<>(model, objective,
 					explorers, stoppingCriterion);
 
 			/*
@@ -146,7 +146,7 @@ public class Main {
 			 */
 			double accuracy = 0;
 			for (PlayOutsideState state : testResults) {
-				Boolean goldResult = ((PlayOutsideInstance) state.getWeatherInstance()).getGoldResult();
+				Boolean goldResult = ((PlayOutsideInstance) state.getInstance()).getGoldResult();
 				double s = objective.score(state, goldResult);
 				accuracy += s;
 			}

@@ -1,15 +1,18 @@
 package learning.scorer;
 
+import java.util.List;
+
 import variables.AbstractState;
 
-public interface Scorer<StateT extends AbstractState> {
+public interface Scorer {
 	/**
-	 * Computes the score of this state according to the trained model. The
-	 * computed score is returned but also updated in the state objects
-	 * <i>score</i> field.
+	 * Computes a score for each passed state given the individual factors.
+	 * Scoring is done is done in parallel if flag is set and scorer
+	 * implementation implements this behavior.
 	 * 
-	 * @param state
-	 * @return
+	 * @param states
+	 * @param multiThreaded
 	 */
-	public double score(StateT state);
+	public void score(List<? extends AbstractState<?>> states, boolean multiThreaded);
+
 }

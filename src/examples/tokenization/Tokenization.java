@@ -1,20 +1,20 @@
 package examples.tokenization;
 
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 public class Tokenization {
-	public TreeSet<Integer> tokenBoundaries;
+	public TreeMap<Integer, BoundaryVariable> tokenBoundaries;
 
 	public Tokenization() {
-		this.tokenBoundaries = new TreeSet<>();
+		this.tokenBoundaries = new TreeMap<>();
 	}
 
 	public Tokenization(Tokenization tokenization) {
-		this.tokenBoundaries = new TreeSet<>(tokenization.tokenBoundaries);
+		this.tokenBoundaries = new TreeMap<>(tokenization.tokenBoundaries);
 	}
 
 	@Override
 	public String toString() {
-		return "Tokenization [tokenBoundaries=" + tokenBoundaries + "]";
+		return "Tokenization: " + tokenBoundaries.values();
 	}
 }

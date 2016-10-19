@@ -1,19 +1,21 @@
 package templates;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
-import factors.FactorGraph;
+import corpus.Instance;
+import factors.Factor;
+import factors.FactorPattern;
 import learning.Vector;
 import variables.AbstractState;
 
-public abstract class AbstractTemplate<StateT extends AbstractState> implements Serializable {
+public abstract class AbstractTemplate<InstanceT extends Instance, StateT extends AbstractState<InstanceT>, FactorPatternT extends FactorPattern>
+		implements Serializable {
 
-	private static Logger log = LogManager.getFormatterLogger(AbstractTemplate.class.getName());
+	private static Logger log = LogManager.getFormatterLogger();
 
 	/**
 	 * Initializes the feature weights for this template. The default values for
@@ -21,10 +23,6 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	 * INIT_WEIGHT_RANGE.
 	 */
 	protected Vector weights = new Vector();
-	/**
-	 * A regularization parameter to punish big feature weights.
-	 */
-	protected double l2 = 0.0;
 
 	/**
 	 * Updates the weight of the given feature by adding the given alpha value.
@@ -33,63 +31,45 @@ public abstract class AbstractTemplate<StateT extends AbstractState> implements 
 	 * @param gradient
 	 * @param currentAlpha
 	 */
-	public void update(String feature, double gradient, double learningRate) {
-		double weight = weights.getValueOfFeature(feature);
-		double update = learningRate * (gradient - l2 * weight);
+	public void update(String feature, double update) {
 		weights.addToValue(feature, update);
 	}
 
-	public Vector getWeightVector() {
+	public Vector getWeights() {
 		return weights;
 	}
 
-	/**
-	 * This function computes factors (and their features) for the given state.
-	 * This method only needs to be called by the framework.
-	 * 
-	 * @param state
-	 */
-	public void applyTo(StateT state, boolean force) {
-		log.debug("Apply template \"%s\" to state %s. Force recomputation: %s", this.getClass().getSimpleName(),
-				state.getID(), force);
-		log.debug("%s", state);
-		FactorGraph factorGraph = state.getFactorGraph();
-
-		Collection<AbstractFactor> allPossibleFactors = generateFactors(state);
-		log.debug("%s possible Factors: %s", allPossibleFactors.size(), allPossibleFactors);
-
-		factorGraph.updateFactors(this, allPossibleFactors);
-
-		// TODO only update changed factors
-		log.debug("(Re)compute Factors: %s", allPossibleFactors);
-		allPossibleFactors.forEach(f -> computeFactor(state, f));
+	public void setWeights(Vector weights) {
+		this.weights = weights;
 	}
 
 	/**
-	 * Returns all possible factors that can be applied to the given state. Note
-	 * that this function should only return "empty" factors but does not need
-	 * to compute the features yet. The "empty" factor only needs to remember
-	 * which variables of the state are relevant for the computation of the
-	 * features.
+	 * Returns all possible factor patterns that can be applied to the given
+	 * state. Each factor pattern declares which variables are relevant for its
+	 * computation but does NOT compute any features yet. Later, a selected set
+	 * of factor patterns that were created here are passed to the
+	 * computeFactor() method, for the actual computation of factors and feature
+	 * values.
 	 * 
 	 * @param state
 	 * @return
 	 */
-	protected abstract Collection<AbstractFactor> generateFactors(StateT state);
+	public abstract List<FactorPatternT> generateFactorPatterns(StateT state);
 
 	/**
-	 * This method receives the previously created "empty" factors and computes
-	 * the features for this factor. Therefore, the factor object implementation
-	 * should remember which variables are needed and retrieve them from the
-	 * given state.
+	 * This method receives the previously created "empty" factor patterns and
+	 * computes the features for this factor. For this, each previously created
+	 * factor pattern should include all the variables it needs to compute the
+	 * respective factor.
 	 * 
 	 * @param state
 	 * @param factor
 	 */
-	protected abstract void computeFactor(StateT state, AbstractFactor factor);
+	public abstract void computeFactor(InstanceT instance, Factor<FactorPatternT> factor);
 
 	@Override
 	public String toString() {
 		return "Template [weights=" + weights + "]";
 	}
+
 }

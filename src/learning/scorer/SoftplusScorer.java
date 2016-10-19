@@ -5,11 +5,10 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import factors.AbstractFactor;
+import factors.Factor;
 import learning.Vector;
-import variables.AbstractState;
 
-public class SoftplusScorer<StateT extends AbstractState> implements Scorer<StateT> {
+public class SoftplusScorer extends AbstractSingleStateScorer {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -33,7 +32,7 @@ public class SoftplusScorer<StateT extends AbstractState> implements Scorer<Stat
 	 * @param state
 	 * @return
 	 */
-	public double score(StateT state) {
+	protected double score(Collection<Factor<?>> factors) {
 		// at this point, the function unroll(state) should be applied at least
 		// once
 
@@ -41,15 +40,13 @@ public class SoftplusScorer<StateT extends AbstractState> implements Scorer<Stat
 		// respective factors
 
 		double score = 1;
-		Collection<AbstractFactor> factors = state.getFactorGraph().getFactors();
-		for (AbstractFactor factor : factors) {
+		for (Factor<?> factor : factors) {
 			Vector featureVector = factor.getFeatureVector();
-			Vector weights = factor.getTemplate().getWeightVector();
+			Vector weights = factor.getTemplate().getWeights();
 			double dotProduct = featureVector.dotProduct(weights);
 			double factorScore = softplus(dotProduct);
 			score *= factorScore;
 		}
-		state.setModelScore(score);
 		return score;
 	}
 
