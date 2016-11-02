@@ -6,46 +6,37 @@ import java.util.concurrent.atomic.AtomicInteger;
 import learning.Vector;
 import templates.AbstractTemplate;
 import utility.FactorID;
-import variables.AbstractState;
 
 /**
  * A factor is an object that connects a feature vector to the variables that
- * were involved computing this feature vector. Since the current system does
- * NOT use any caching of factors and features across states, it is not yet
- * necessary to implement the getVariableIDs() methods correctly. However, this
- * will change in the future. </br>
- * Since the generation of a factor and the actual computation of its features
- * is separated into to steps, you need to store/reference the variables you
- * need for the computation of the features inside this factor object (for
- * example as a global variable in this object).
+ * are involved in computing this feature vector. Since the generation of a
+ * factor and the actual computation of its features is separated into to steps,
+ * you need to store/reference the variables you need for the computation of the
+ * features inside the factorVariables object.
  * 
  * @author sjebbara
  *
  */
-public class Factor<FactorPatternT extends FactorPattern> implements Serializable {
+public class Factor<FactorVariablesT extends FactorVariables> implements Serializable {
 
 	private static final AtomicInteger factorIDIndex = new AtomicInteger();
 	private final FactorID factorID;
-	private final FactorPatternT factorPattern;
+	private final FactorVariablesT factorVariables;
 	private final Vector features = new Vector();
 
 	/**
 	 * A factor is an object that connects a feature vector to the variables
-	 * that were involved computing this feature vector. Since the current
-	 * system does NOT use any caching of factors and features across states, it
-	 * is not yet necessary to implement the getVariableIDs() methods correctly.
-	 * However, this will change in the future. </br>
-	 * Since the generation of a factor and the actual computation of its
-	 * features is separated into to steps, you need to store/reference the
-	 * variables you need for the computation of the features inside this factor
-	 * object (for example as a global variable in this object).
+	 * that are involved in computing this feature vector. Since the generation
+	 * of a factor and the actual computation of its features is separated into
+	 * to steps, you need to store/reference the variables you need for the
+	 * computation of the features inside the factorVariables object.
 	 * 
 	 * @author sjebbara
 	 *
 	 */
-	public Factor(FactorPatternT factorPattern) {
+	public Factor(FactorVariablesT factorVariables) {
 		this.factorID = generateFactorID();
-		this.factorPattern = factorPattern;
+		this.factorVariables = factorVariables;
 	}
 
 	public FactorID getID() {
@@ -62,16 +53,16 @@ public class Factor<FactorPatternT extends FactorPattern> implements Serializabl
 		return new FactorID(id);
 	}
 
-	public FactorPatternT getFactorPattern() {
-		return factorPattern;
+	public FactorVariablesT getFactorVariables() {
+		return factorVariables;
 	}
 
 	public AbstractTemplate<?, ?, ?> getTemplate() {
-		return factorPattern.getTemplate();
+		return factorVariables.getTemplate();
 	}
 
 	@Override
 	public String toString() {
-		return "Factor [factorID=" + factorID + ", factorPattern=" + factorPattern + ", features=" + features + "]";
+		return "Factor [factorID=" + factorID + ", factorVariables=" + factorVariables + ", features=" + features + "]";
 	}
 }

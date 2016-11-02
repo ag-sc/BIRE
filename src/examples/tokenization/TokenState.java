@@ -5,7 +5,7 @@ import java.text.DecimalFormat;
 
 import variables.AbstractState;
 
-public class TokenState extends AbstractState<Sentence> implements Serializable {
+public class TokenState extends AbstractState<String>implements Serializable {
 
 	private static final DecimalFormat SCORE_FORMAT = new DecimalFormat("0.00000");
 	// TODO make this a list and keep it sorted!
@@ -18,7 +18,7 @@ public class TokenState extends AbstractState<Sentence> implements Serializable 
 	 * 
 	 * @param sentence
 	 */
-	public TokenState(Sentence sentence) {
+	public TokenState(String sentence) {
 		super(sentence);
 		this.tokenization = new Tokenization();
 	}
@@ -32,14 +32,14 @@ public class TokenState extends AbstractState<Sentence> implements Serializable 
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		int last = 0;
-		for (BoundaryVariable b : tokenization.tokenBoundaries.values()) {
-			builder.append(instance.text.subSequence(last, b.boundaryPosition));
+		for (int b : tokenization.tokenBoundaries) {
+			builder.append(instance.subSequence(last, b));
 			builder.append("|");
-			last = b.boundaryPosition;
+			last = b;
 		}
-		builder.append(instance.text.subSequence(last, instance.text.length()));
+		builder.append(instance.subSequence(last, instance.length()));
 		return "TokenState [[" + SCORE_FORMAT.format(getModelScore()) + "][" + SCORE_FORMAT.format(getObjectiveScore())
-				+ "][" + builder.toString() + "] " + tokenization.tokenBoundaries.values() + "]";
+				+ "][" + builder.toString() + "] " + tokenization.tokenBoundaries + "]";
 	}
 
 }

@@ -14,6 +14,14 @@ import templates.AbstractTemplate;
 import utility.VectorUtil;
 import variables.AbstractState;
 
+/**
+ * This learner implements a margin rank learning scheme with modular parameter
+ * optimization and regularization.
+ * 
+ * @author sjebbara
+ *
+ * @param <StateT>
+ */
 public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
 	private static final double MARGIN = 0.1;

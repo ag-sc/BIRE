@@ -7,11 +7,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
 import factors.FactorGraph;
 import utility.StateID;
 
-public abstract class AbstractState<InstanceT extends Instance> implements Serializable {
+public abstract class AbstractState<InstanceT> implements Serializable {
 
 	/**
 	 * A comparator implementation that allows to sort states in descending
@@ -38,9 +37,9 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 
 	private static Logger log = LogManager.getFormatterLogger();
 	private final static AtomicLong stateIDIndex = new AtomicLong();
-	protected double modelScore = 1;
-	protected double objectiveScore = 0;
-	protected FactorGraph factorGraph = new FactorGraph();
+	protected double modelScore = Double.MIN_VALUE;
+	protected double objectiveScore = Double.MIN_VALUE;
+	protected FactorGraph factorGraph;
 	protected final InstanceT instance;
 	protected final StateID id;
 
@@ -53,14 +52,15 @@ public abstract class AbstractState<InstanceT extends Instance> implements Seria
 	public AbstractState(InstanceT instance) {
 		this.id = generateStateID();
 		this.instance = instance;
-
+		this.factorGraph = new FactorGraph();
 	}
 
 	public AbstractState(AbstractState<InstanceT> state) {
 		this(state.instance);
 		this.modelScore = state.modelScore;
 		this.objectiveScore = state.objectiveScore;
-		this.factorGraph = new FactorGraph(state.factorGraph);
+		this.factorGraph = new FactorGraph();
+//		this.factorGraph = new FactorGraph(state.factorGraph);
 	}
 
 	public void setModelScore(double modelScore) {

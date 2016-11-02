@@ -6,7 +6,7 @@ public class PlayOutsideObjectiveFunction extends ObjectiveFunction<PlayOutsideS
 
 	@Override
 	protected double computeScore(PlayOutsideState state, Boolean goldResult) {
-		return state.getPlayOutsideVariable().isPlayingOutside() == goldResult ? 1.0 : 0.0;
+		return state.isPlayingOutside() == goldResult ? 1.0 : 0.0;
 	}
 
 }

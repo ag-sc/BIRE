@@ -3,17 +3,19 @@ package examples.weather;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import evaluation.DataSplit;
+import corpus.SampledInstance;
+import corpus.LabeledInstance;
+import corpus.LabeledInstanceImpl;
 import evaluation.EvaluationUtil;
 import examples.weather.WeatherInstance.Humidity;
 import examples.weather.WeatherInstance.Outlook;
 import examples.weather.WeatherInstance.Temperature;
 import examples.weather.WeatherInstance.Windy;
-import factors.patterns.SingleVariablePattern;
 import learning.DefaultLearner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -41,7 +43,7 @@ public class Main {
 		/*
 		 * Load training and test data.
 		 */
-		List<PlayOutsideInstance> samples = getLabledSamples();
+		List<LabeledInstance<WeatherInstance, Boolean>> samples = getLabledSamples();
 
 		/*
 		 * Some code for n-fold cross validation
@@ -56,8 +58,9 @@ public class Main {
 			double j = k;
 			k = j + step;
 
-			List<PlayOutsideInstance> test = samples.subList((int) Math.floor(j), (int) Math.floor(k));
-			List<PlayOutsideInstance> train = new ArrayList<>(samples);
+			List<LabeledInstance<WeatherInstance, Boolean>> test = samples.subList((int) Math.floor(j),
+					(int) Math.floor(k));
+			List<LabeledInstance<WeatherInstance, Boolean>> train = new ArrayList<>(samples);
 			train.removeAll(test);
 
 			log.info("Train data:");
@@ -90,7 +93,6 @@ public class Main {
 			 * Define a model and provide it with the necessary templates.
 			 */
 			Model<WeatherInstance, PlayOutsideState> model = new Model<>(scorer, templates);
-
 			/*
 			 * Create an Initializer that is responsible for providing an
 			 * initial state for the sampling chain given a sentence.
@@ -135,9 +137,10 @@ public class Main {
 			 */
 			int numberOfEpochs = 10;
 			Trainer trainer = new Trainer();
-			List<PlayOutsideState> trainingResults = trainer.train(sampler, initializer, learner, train,
-					numberOfEpochs);
-			List<PlayOutsideState> testResults = trainer.test(sampler, initializer, test);
+			List<SampledInstance<WeatherInstance, Boolean, PlayOutsideState>> trainingResults = trainer
+					.train(sampler, initializer, learner, train, numberOfEpochs);
+			List<SampledInstance<WeatherInstance, Boolean, PlayOutsideState>> testResults = trainer
+					.test(sampler, initializer, test);
 
 			/*
 			 * Since the test function does not compute the objective score of
@@ -145,9 +148,8 @@ public class Main {
 			 * results.
 			 */
 			double accuracy = 0;
-			for (PlayOutsideState state : testResults) {
-				Boolean goldResult = ((PlayOutsideInstance) state.getInstance()).getGoldResult();
-				double s = objective.score(state, goldResult);
+			for (SampledInstance<WeatherInstance, Boolean, PlayOutsideState> triple : testResults) {
+				double s = objective.score(triple.getState(), triple.getGoldResult());
 				accuracy += s;
 			}
 			accuracy /= testResults.size();
@@ -157,9 +159,11 @@ public class Main {
 			 * prediction outcome.
 			 */
 			log.info("######## Results on TRAIN: ########");
-			EvaluationUtil.printPredictionPerformance(trainingResults);
+			EvaluationUtil.printPredictionPerformance(
+					trainingResults.stream().map(t -> t.getState()).collect(Collectors.toList()));
 			log.info("######## Results on TEST: ########");
-			EvaluationUtil.printPredictionPerformance(testResults);
+			EvaluationUtil.printPredictionPerformance(
+					testResults.stream().map(t -> t.getState()).collect(Collectors.toList()));
 			/*
 			 * Finally, print the models weights.
 			 */
@@ -171,8 +175,8 @@ public class Main {
 		log.info("%s-fold cross validation: %s", n, avrgAccuracy);
 	}
 
-	private static List<PlayOutsideInstance> getLabledSamples() {
-		List<PlayOutsideInstance> samples = new ArrayList<>();
+	private static List<LabeledInstance<WeatherInstance, Boolean>> getLabledSamples() {
+		List<LabeledInstance<WeatherInstance, Boolean>> samples = new ArrayList<>();
 		String text = "SUNNY,HOT,HIGH,FALSE,NO " + "SUNNY,HOT,HIGH,TRUE,NO " + "OVERCAST,HOT,HIGH,FALSE,YES "
 				+ "RAINY,MILD,HIGH,FALSE,YES " + "RAINY,COOL,NORMAL,FALSE,YES " + "RAINY,COOL,NORMAL,TRUE,NO "
 				+ "OVERCAST,COOL,NORMAL,TRUE,YES " + "SUNNY,MILD,HIGH,FALSE,NO " + "SUNNY,COOL,NORMAL,FALSE,YES "
@@ -180,8 +184,9 @@ public class Main {
 				+ "OVERCAST,HOT,NORMAL,FALSE,YES " + "RAINY,MILD,HIGH,TRUE,NO";
 		for (String instance : text.split(" ")) {
 			String[] x = instance.split(",");
-			samples.add(new PlayOutsideInstance(Outlook.valueOf(x[0]), Temperature.valueOf(x[1]),
-					Humidity.valueOf(x[2]), Windy.valueOf(x[3]), x[4].equals("YES")));
+			WeatherInstance weather = new WeatherInstance(Outlook.valueOf(x[0]), Temperature.valueOf(x[1]),
+					Humidity.valueOf(x[2]), Windy.valueOf(x[3]));
+			samples.add(new LabeledInstanceImpl<WeatherInstance, Boolean>(weather, x[4].equals("YES")));
 		}
 		return samples;
 	}

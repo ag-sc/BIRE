@@ -2,7 +2,7 @@ package learning;
 
 import variables.AbstractState;
 
-public abstract class ObjectiveFunction<StateT extends AbstractState, ResultT> {
+public abstract class ObjectiveFunction<StateT extends AbstractState<?>, ResultT> {
 
 	/**
 	 * Computes a real valued score for the given state and stores it in the

@@ -1,8 +1,6 @@
 package examples.weather;
 
-import corpus.Instance;
-
-public class WeatherInstance implements Instance {
+public class WeatherInstance {
 	enum Outlook {
 		OVERCAST, SUNNY, RAINY;
 	}
@@ -25,7 +23,6 @@ public class WeatherInstance implements Instance {
 	protected Windy windy;
 
 	public WeatherInstance(Outlook outlook, Temperature temperature, Humidity humidity, Windy windy) {
-		super();
 		this.outlook = outlook;
 		this.temperature = temperature;
 		this.humidity = humidity;
@@ -66,8 +63,8 @@ public class WeatherInstance implements Instance {
 
 	@Override
 	public String toString() {
-		return "[outlook=" + outlook + ", temperature=" + temperature + ", humidity=" + humidity
-				+ ", windy=" + windy + "]";
+		return "[outlook=" + outlook + ", temperature=" + temperature + ", humidity=" + humidity + ", windy=" + windy
+				+ "]";
 	}
 
 }

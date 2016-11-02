@@ -1,5 +1,7 @@
 package factors;
 
+import java.util.Arrays;
+
 import templates.AbstractTemplate;
 
 /**
@@ -9,11 +11,13 @@ import templates.AbstractTemplate;
  * @author sjebbara
  *
  */
-public abstract class FactorPattern {
+public abstract class FactorVariables {
 	protected final AbstractTemplate<?, ?, ?> template;
+	protected final Object[] variables;
 
-	public FactorPattern(AbstractTemplate<?, ?, ?> template) {
+	public FactorVariables(AbstractTemplate<?, ?, ?> template, Object... variables) {
 		this.template = template;
+		this.variables = variables;
 	}
 
 	public AbstractTemplate<?, ?, ?> getTemplate() {
@@ -25,6 +29,7 @@ public abstract class FactorPattern {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((template == null) ? 0 : template.hashCode());
+		result = prime * result + Arrays.hashCode(variables);
 		return result;
 	}
 
@@ -36,11 +41,13 @@ public abstract class FactorPattern {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FactorPattern other = (FactorPattern) obj;
+		FactorVariables other = (FactorVariables) obj;
 		if (template == null) {
 			if (other.template != null)
 				return false;
 		} else if (!template.equals(other.template))
+			return false;
+		if (!Arrays.equals(variables, other.variables))
 			return false;
 		return true;
 	}

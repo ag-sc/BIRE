@@ -22,14 +22,14 @@ public class TokenBoundaryExplorer implements Explorer<TokenState> {
 	@Override
 	public List<TokenState> getNextStates(TokenState currentState) {
 		List<TokenState> nextStates = new ArrayList<>();
-		for (int i = 0; i < currentState.getInstance().text.length(); i++) {
-			if (currentState.tokenization.tokenBoundaries.containsKey(i)) {
+		for (int i = 0; i < currentState.getInstance().length(); i++) {
+			if (currentState.tokenization.tokenBoundaries.contains(i)) {
 				TokenState generatedState = new TokenState(currentState);
 				generatedState.tokenization.tokenBoundaries.remove(i);
 				nextStates.add(generatedState);
 			} else {
 				TokenState generatedState = new TokenState(currentState);
-				generatedState.tokenization.tokenBoundaries.put(i, new BoundaryVariable(i));
+				generatedState.tokenization.tokenBoundaries.add(i);
 				nextStates.add(generatedState);
 			}
 		}

@@ -1,6 +1,5 @@
 package sampling;
 
-import corpus.Instance;
 import variables.AbstractState;
 
 /**
@@ -12,6 +11,6 @@ import variables.AbstractState;
  *
  * @param <StateT>
  */
-public interface Initializer<InstanceT extends Instance, StateT extends AbstractState<InstanceT>> {
+public interface Initializer<InstanceT, StateT extends AbstractState<InstanceT>> {
 	public StateT getInitialState(InstanceT document);
 }

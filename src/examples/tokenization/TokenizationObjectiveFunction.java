@@ -25,8 +25,8 @@ public class TokenizationObjectiveFunction extends ObjectiveFunction<TokenState,
 		} else if (goldResult.tokenBoundaries.size() != 0 && state.tokenization.tokenBoundaries.size() == 0) {
 			return 0;
 		}
-		Set<Integer> correctBoundaries = Sets.intersection(state.tokenization.tokenBoundaries.keySet(),
-				goldResult.tokenBoundaries.keySet());
+		Set<Integer> correctBoundaries = Sets.intersection(state.tokenization.tokenBoundaries,
+				goldResult.tokenBoundaries);
 		double precision = correctBoundaries.size();
 		precision /= (state.tokenization.tokenBoundaries.size());
 		double recall = correctBoundaries.size();

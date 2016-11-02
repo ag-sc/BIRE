@@ -8,12 +8,10 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
 import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
-import learning.callbacks.StepCallback;
 import sampling.samplingstrategies.AcceptStrategies;
 import sampling.samplingstrategies.AcceptStrategy;
 import sampling.samplingstrategies.SamplingStrategies;
@@ -23,8 +21,20 @@ import sampling.stoppingcriterion.StoppingCriterion;
 import utility.Utils;
 import variables.AbstractState;
 
-public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractState<InstanceT>, ResultT>
+public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, ResultT>
 		implements Sampler<StateT, ResultT> {
+
+	public interface StepCallback {
+
+		default <InstanceT, StateT extends AbstractState<InstanceT>> void onStartStep(Sampler<StateT, ?> sampler,
+				int step, int e, int numberOfExplorers, StateT initialState) {
+		}
+
+		default <InstanceT, StateT extends AbstractState<InstanceT>> void onEndStep(Sampler<StateT, ?> sampler,
+				int step, int e, int numberOfExplorers, StateT initialState, StateT currentState) {
+
+		}
+	}
 
 	private static Logger log = LogManager.getFormatterLogger();
 	protected Model<InstanceT, StateT> model;
@@ -208,7 +218,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 				 * Apply templates to states and, thus generate factors and
 				 * features
 				 */
-				model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+				model.score(allStates, currentState.getInstance());
 				// model.applyToStates(allStates,
 				// currentState.getFactorGraph().getFactorPool(),
 				// currentState.getInstance());
@@ -236,8 +246,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 				/**
 				 * Apply templates to current and candidate state only
 				 */
-				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance(),
-						currentState.getFactorGraph().getFactorPool());
+				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
 				// model.applyToStates(
 				// currentState.getFactorGraph().getFactorPool(),
 				// currentState.getInstance());
@@ -316,7 +325,7 @@ public class DefaultSampler<InstanceT extends Instance, StateT extends AbstractS
 			 * Apply templates to states and thus generate factors and features
 			 */
 
-			model.score(allStates, currentState.getInstance(), currentState.getFactorGraph().getFactorPool());
+			model.score(allStates, currentState.getInstance());
 			// model.applyToStates(allStates,
 			// currentState.getFactorGraph().getFactorPool(),
 			// currentState.getInstance());

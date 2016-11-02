@@ -8,15 +8,35 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
 import corpus.LabeledInstance;
-import learning.callbacks.EpochCallback;
-import learning.callbacks.InstanceCallback;
+import corpus.SampledInstance;
 import sampling.Initializer;
 import sampling.Sampler;
 import variables.AbstractState;
 
 public class Trainer {
+
+	public interface InstanceCallback {
+
+		default public <InstanceT> void onStartInstance(Trainer caller, InstanceT instance, int indexOfInstance,
+				int numberOfInstances, int epoch, int numberOfEpochs) {
+
+		}
+
+		public <InstanceT, StateT extends AbstractState<InstanceT>> void onEndInstance(Trainer caller,
+				InstanceT instance, int indexOfInstance, StateT finalState, int numberOfInstances, int epoch,
+				int numberOfEpochs);
+
+	}
+
+	public interface EpochCallback {
+
+		default void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+		}
+
+		default void onEndEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
+		}
+	}
 
 	private static Logger log = LogManager.getFormatterLogger();
 
@@ -84,11 +104,12 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <InstanceT extends LabeledInstance<ResultT>, StateT extends AbstractState<? super InstanceT>, ResultT> List<StateT> train(
-			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
-			Learner<StateT> learner, List<InstanceT> instances, int numberOfEpochs) {
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
+			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, Learner<StateT> learner,
+			List<? extends LabeledInstance<InstanceT, ResultT>> instances, int numberOfEpochs) {
 		Random random = new Random(100l);
-		List<StateT> finalStates = new ArrayList<>();
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
 		for (int e = 0; e < numberOfEpochs; e++) {
@@ -100,8 +121,8 @@ public class Trainer {
 			}
 			Collections.shuffle(instances, random);
 			for (int i = 0; i < instances.size(); i++) {
-				InstanceT instance = instances.get(i);
-				ResultT goldResult = instance.getGoldResult();
+				InstanceT instance = instances.get(i).getInstance();
+				ResultT goldResult = instances.get(i).getResult();
 				log.info("===========TRAIN===========");
 				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
@@ -129,7 +150,8 @@ public class Trainer {
 				if (e == numberOfEpochs - 1) {
 					// finalState.getFactorGraph().clear();
 					// finalState.getFactorGraph().getFactorPool().clear();
-					finalStates.add(finalState);
+					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(
+							instance, goldResult, finalState));
 				}
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
@@ -156,39 +178,41 @@ public class Trainer {
 	 * 
 	 * @param sampler
 	 * @param initializer
-	 * @param documents
+	 * @param instances
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<? super InstanceT>, InstanceT extends LabeledInstance<ResultT>, ResultT> List<StateT> test(
-			Sampler<StateT, ResultT> sampler, Initializer<? super InstanceT, StateT> initializer,
-			List<InstanceT> documents) {
-		List<StateT> finalStates = new ArrayList<>();
-		for (int d = 0; d < documents.size(); d++) {
-			InstanceT document = documents.get(d);
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> test(
+			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer,
+			List<? extends LabeledInstance<InstanceT, ResultT>> instances) {
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
+		for (int i = 0; i < instances.size(); i++) {
+			InstanceT instance = instances.get(i).getInstance();
+			ResultT goldResult = instances.get(i).getResult();
 			log.info("===========TEST============");
-			log.info("Document: %s/%s", d + 1, documents.size());
-			log.info("Content   : %s", document);
-			log.info("Gold Result: %s", document.getGoldResult());
+			log.info("Document: %s/%s", i + 1, instances.size());
+			log.info("Content   : %s", instance);
+			log.info("Gold Result: %s", instances.get(i).getResult());
 			log.info("===========================");
 			for (InstanceCallback c : instanceCallbacks) {
-				c.onStartInstance(this, document, d, documents.size(), 1, 1);
+				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
 			}
 
-			StateT initialState = initializer.getInitialState(document);
+			StateT initialState = initializer.getInitialState(instance);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
-			finalStates.add(finalState);
+			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance,
+					goldResult, finalState));
 			log.info("++++++++++++++++");
-			log.info("Gold Result:   %s", document.getGoldResult());
+			log.info("Gold Result:   %s", goldResult);
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 			log.info("===========================");
 			for (InstanceCallback c : instanceCallbacks) {
-				c.onEndInstance(this, document, d, finalState, documents.size(), 1, 1);
+				c.onEndInstance(this, instance, i, finalState, instances.size(), 1, 1);
 			}
 		}
 		return finalStates;
@@ -207,8 +231,8 @@ public class Trainer {
 	 * @param steps
 	 * @return
 	 */
-	public <StateT extends AbstractState<InstanceT>, InstanceT extends Instance> List<StateT> predict(
-			Sampler<StateT, ?> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
+	public <InstanceT, StateT extends AbstractState<InstanceT>> List<StateT> predict(Sampler<StateT, ?> sampler,
+			Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
 			InstanceT document = documents.get(d);

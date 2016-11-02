@@ -5,22 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import corpus.FileUtils;
+import corpus.SampledInstance;
+import corpus.LabeledInstance;
+import corpus.LabeledInstanceImpl;
 import evaluation.DataSplit;
 import evaluation.EvaluationUtil;
 import learning.AdvancedLearner;
-import learning.DefaultLearner;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
 import learning.Trainer;
 import learning.optimizer.Adam;
-import learning.optimizer.SGD;
-import learning.regularizer.L2;
 import learning.scorer.DefaultScorer;
 import learning.scorer.Scorer;
 import sampling.DefaultSampler;
@@ -47,10 +48,10 @@ public class Main {
 		/*
 		 * Load training and test data.
 		 */
-		List<TokenizedSentence> sentences = getTokenizedSentences();
-		DataSplit<TokenizedSentence> dataSplit = new DataSplit<>(sentences, 0.7, 1);
-		List<TokenizedSentence> train = dataSplit.getTrain();
-		List<TokenizedSentence> test = dataSplit.getTest();
+		List<LabeledInstance<String, Tokenization>> sentences = getTokenizedSentences();
+		DataSplit<LabeledInstance<String, Tokenization>> dataSplit = new DataSplit<>(sentences, 0.7, 1);
+		List<LabeledInstance<String, Tokenization>> train = dataSplit.getTrain();
+		List<LabeledInstance<String, Tokenization>> test = dataSplit.getTest();
 		// List<Sentence> predict = getSentences();
 
 		train.forEach(s -> log.debug("%s", s));
@@ -67,7 +68,7 @@ public class Main {
 		 * Define templates that are responsible to generate factors/features to
 		 * score intermediate, generated states.
 		 */
-		List<AbstractTemplate<Sentence, TokenState, ?>> templates = new ArrayList<>();
+		List<AbstractTemplate<String, TokenState, ?>> templates = new ArrayList<>();
 		templates.add(new TokenizationTemplate());
 
 		/*
@@ -80,7 +81,7 @@ public class Main {
 		/*
 		 * Define a model and provide it with the necessary templates.
 		 */
-		Model<Sentence, TokenState> model = new Model<>(scorer, templates);
+		Model<String, TokenState> model = new Model<>(scorer, templates);
 		model.setMultiThreaded(true);
 		model.setForceFactorComputation(false);
 		model.setSequentialScoring(false);
@@ -109,7 +110,7 @@ public class Main {
 		 */
 		int numberOfSamplingSteps = 50;
 		StoppingCriterion<TokenState> stoppingCriterion = new StepLimitCriterion<>(numberOfSamplingSteps);
-		DefaultSampler<Sentence, TokenState, Tokenization> sampler = new DefaultSampler<>(model, objective, explorers,
+		DefaultSampler<String, TokenState, Tokenization> sampler = new DefaultSampler<>(model, objective, explorers,
 				stoppingCriterion);
 		// sampler.setTrainingSamplingStrategy(SamplingStrategies.greedyObjectiveStrategy());
 		/*
@@ -135,20 +136,20 @@ public class Main {
 		trainer.train(sampler, initializer, learner, train, numberOfEpochs);
 
 		model.setSequentialScoring(true);
-		List<TokenState> trainingResults = trainer.test(sampler, initializer, train);
-		List<TokenState> testResults = trainer.test(sampler, initializer, test);
+		List<SampledInstance<String, Tokenization, TokenState>> trainingResults = trainer.test(sampler,
+				initializer, train);
+		List<SampledInstance<String, Tokenization, TokenState>> testResults = trainer.test(sampler,
+				initializer, test);
 
 		/*
 		 * Since the test function does not compute the objective score of its
 		 * predictions, we do that here, manually, before we print the results.
 		 */
-		for (TokenState state : trainingResults) {
-			Tokenization goldResult = ((TokenizedSentence) state.getInstance()).getGoldResult();
-			double s = objective.score(state, goldResult);
+		for (SampledInstance<String, Tokenization, TokenState> triple : trainingResults) {
+			double s = objective.score(triple.getState(), triple.getGoldResult());
 		}
-		for (TokenState state : testResults) {
-			Tokenization goldResult = ((TokenizedSentence) state.getInstance()).getGoldResult();
-			double s = objective.score(state, goldResult);
+		for (SampledInstance<String, Tokenization, TokenState> triple : testResults) {
+			double s = objective.score(triple.getState(), triple.getGoldResult());
 		}
 		/*
 		 * Now, that the predicted states have there objective score computed
@@ -156,9 +157,11 @@ public class Main {
 		 * outcome.
 		 */
 		log.info("Training results:");
-		EvaluationUtil.printPredictionPerformance(trainingResults);
+		EvaluationUtil.printPredictionPerformance(
+				trainingResults.stream().map(t -> t.getState()).collect(Collectors.toList()));
 		log.info("Test results:");
-		EvaluationUtil.printPredictionPerformance(testResults);
+		EvaluationUtil
+				.printPredictionPerformance(testResults.stream().map(t -> t.getState()).collect(Collectors.toList()));
 		/*
 		 * Finally, print the models weights.
 		 */
@@ -166,36 +169,33 @@ public class Main {
 		EvaluationUtil.printWeights(model, -1);
 	}
 
-	private static List<Sentence> getSentences() throws IOException {
+	private static List<String> getSentences() throws IOException {
 		List<String> lines = FileUtils.readLines("res/examples/tokenization/test-sentences.txt");
-		List<Sentence> sentences = new ArrayList<>();
-		for (String line : lines) {
-			Sentence sentence = new Sentence(line);
+		List<String> sentences = new ArrayList<>();
+		for (String sentence : lines) {
 			sentences.add(sentence);
 		}
 		return sentences;
 	}
 
-	private static List<TokenizedSentence> getTokenizedSentences() throws IOException {
+	private static List<LabeledInstance<String, Tokenization>> getTokenizedSentences() throws IOException {
 		/*
 		 * Read a list of sentences from a file and tokenize them with a regular
 		 * expression to create our training data.
 		 */
 		List<String> lines = FileUtils.readLines("res/examples/tokenization/training-sentences.txt");
-		List<TokenizedSentence> tokenizedSentences = new ArrayList<>();
+		List<LabeledInstance<String, Tokenization>> tokenizedSentences = new ArrayList<>();
 		Pattern p = Pattern.compile("\\w+|\\s+");
 		for (String line : lines) {
-			TokenizedSentence tokenizedSentence = new TokenizedSentence(line);
 			Tokenization tokenization = new Tokenization();
 			Matcher m = p.matcher(line);
 			while (m.find()) {
 				int from = m.start();
 				int to = m.end();
-				tokenization.tokenBoundaries.put(from, new BoundaryVariable(from));
-				tokenization.tokenBoundaries.put(to, new BoundaryVariable(to));
+				tokenization.tokenBoundaries.add(from);
+				tokenization.tokenBoundaries.add(to);
 			}
-			tokenizedSentence.setTokenization(tokenization);
-			tokenizedSentences.add(tokenizedSentence);
+			tokenizedSentences.add(new LabeledInstanceImpl<String, Tokenization>(line, tokenization));
 		}
 		return tokenizedSentences;
 	}

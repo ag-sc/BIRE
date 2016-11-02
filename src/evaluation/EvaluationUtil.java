@@ -48,11 +48,11 @@ public class EvaluationUtil {
 				now.get(Calendar.SECOND));
 	}
 
-	public static void printPredictionPerformance(List<? extends AbstractState> predictedStates) {
+	public static void printPredictionPerformance(List<? extends AbstractState<?>> predictedStates) {
 		double meanModelScore = 0;
 		double meanObjectiveScore = 0;
 		int count = 0;
-		for (AbstractState s : predictedStates) {
+		for (AbstractState<?> s : predictedStates) {
 			meanModelScore += s.getModelScore();
 			meanObjectiveScore += s.getObjectiveScore();
 

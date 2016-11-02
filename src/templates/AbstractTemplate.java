@@ -6,13 +6,12 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import corpus.Instance;
 import factors.Factor;
-import factors.FactorPattern;
+import factors.FactorVariables;
 import learning.Vector;
 import variables.AbstractState;
 
-public abstract class AbstractTemplate<InstanceT extends Instance, StateT extends AbstractState<InstanceT>, FactorPatternT extends FactorPattern>
+public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<InstanceT>, FactorVariablesT extends FactorVariables>
 		implements Serializable {
 
 	private static Logger log = LogManager.getFormatterLogger();
@@ -44,28 +43,28 @@ public abstract class AbstractTemplate<InstanceT extends Instance, StateT extend
 	}
 
 	/**
-	 * Returns all possible factor patterns that can be applied to the given
-	 * state. Each factor pattern declares which variables are relevant for its
+	 * Returns all possible factor variables that can be applied to the given
+	 * state. Each FactorVariables declares which variables are relevant for its
 	 * computation but does NOT compute any features yet. Later, a selected set
-	 * of factor patterns that were created here are passed to the
+	 * of factor variables that were created here are passed to the
 	 * computeFactor() method, for the actual computation of factors and feature
 	 * values.
 	 * 
 	 * @param state
 	 * @return
 	 */
-	public abstract List<FactorPatternT> generateFactorPatterns(StateT state);
+	public abstract List<FactorVariablesT> generateFactorVariables(StateT state);
 
 	/**
-	 * This method receives the previously created "empty" factor patterns and
+	 * This method receives the previously created "empty" factor variables and
 	 * computes the features for this factor. For this, each previously created
-	 * factor pattern should include all the variables it needs to compute the
+	 * FactorVariables should include all the variables it needs to compute the
 	 * respective factor.
 	 * 
 	 * @param state
 	 * @param factor
 	 */
-	public abstract void computeFactor(InstanceT instance, Factor<FactorPatternT> factor);
+	public abstract void computeFactor(Factor<FactorVariablesT> factor);
 
 	@Override
 	public String toString() {

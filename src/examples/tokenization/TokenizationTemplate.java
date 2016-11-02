@@ -3,13 +3,27 @@ package examples.tokenization;
 import java.util.ArrayList;
 import java.util.List;
 
+import examples.tokenization.TokenizationTemplate.TokenizationFactorVariables;
 import factors.Factor;
-import factors.patterns.SingleVariablePattern;
+import factors.FactorVariables;
 import learning.Vector;
 import templates.AbstractTemplate;
 
-public class TokenizationTemplate
-		extends AbstractTemplate<Sentence, TokenState, SingleVariablePattern<BoundaryVariable>> {
+public class TokenizationTemplate extends AbstractTemplate<String, TokenState, TokenizationFactorVariables> {
+
+	class TokenizationFactorVariables extends FactorVariables {
+		public int boundaryPosition;
+		public int fromOffset;
+		public String window;
+
+		public TokenizationFactorVariables(AbstractTemplate<?, ?, ?> template, int boundaryPosition, int fromOffset,
+				String window) {
+			super(template, boundaryPosition, fromOffset, window);
+			this.boundaryPosition = boundaryPosition;
+			this.fromOffset = fromOffset;
+			this.window = window;
+		}
+	}
 
 	public int windowSize = 3;
 
@@ -25,22 +39,25 @@ public class TokenizationTemplate
 	 * (except for the edge cases; these are just omitted).
 	 */
 	@Override
-	public List<SingleVariablePattern<BoundaryVariable>> generateFactorPatterns(TokenState state) {
-		List<SingleVariablePattern<BoundaryVariable>> factors = new ArrayList<>();
-		for (BoundaryVariable b : state.tokenization.tokenBoundaries.values()) {
-			factors.add(new SingleVariablePattern<>(this, b));
+	public List<TokenizationFactorVariables> generateFactorVariables(TokenState state) {
+		List<TokenizationFactorVariables> factors = new ArrayList<>();
+		for (int position : state.tokenization.tokenBoundaries) {
+			int from = Math.max(position - windowSize / 2, 0);
+			int to = Math.min(position + (windowSize + 1) / 2, state.getInstance().length());
+
+			String window = state.getInstance().substring(from, to);
+
+			factors.add(this.new TokenizationFactorVariables(this, position, from, window));
 		}
 		return factors;
 	}
 
 	@Override
-	public void computeFactor(Sentence instance, Factor<SingleVariablePattern<BoundaryVariable>> factor) {
+	public void computeFactor(Factor<TokenizationFactorVariables> factor) {
 		Vector features = factor.getFeatureVector();
-		int position = factor.getFactorPattern().getVariable().boundaryPosition;
-		int from = Math.max(position - windowSize / 2, 0);
-		int to = Math.min(position + (windowSize + 1) / 2, instance.text.length());
-
-		String window = instance.text.substring(from, to);
+		int position = factor.getFactorVariables().boundaryPosition;
+		int from = factor.getFactorVariables().fromOffset;
+		String window = factor.getFactorVariables().window;
 
 		for (int i = 0; i < window.length(); i++) {
 			char c = window.charAt(i);
@@ -62,8 +79,6 @@ public class TokenizationTemplate
 			features.set("CHAR@" + relativePosition + "_IS_UPPER", isUpper);
 			features.set("CHAR@" + relativePosition + "_IS_OTHER",
 					(!isPunctuation && !isWhitespace && !isHyphen && !isDigit && !isLetter && !isLower && !isUpper));
-
-			// features.set("CHAR@" + relativePosition + "=" + c, 1.0);
 		}
 
 	}
