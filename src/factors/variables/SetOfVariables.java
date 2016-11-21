@@ -2,14 +2,14 @@ package factors.variables;
 
 import java.util.Set;
 
-import factors.FactorVariables;
+import factors.FactorScope;
 import templates.AbstractTemplate;
 
-public class SetOfVariables<VariableT> extends FactorVariables {
-	public Set<VariableT> variables;
+public class SetOfVariables<T> extends FactorScope {
+	public Set<T> variables;
 
-	public SetOfVariables(AbstractTemplate<?, ?, SetOfVariables<VariableT>> template,
-			Set<VariableT> variables) {
+	public SetOfVariables(AbstractTemplate<?, ?, SetOfVariables<T>> template,
+			Set<T> variables) {
 		super(template, variables);
 		this.variables = variables;
 	}

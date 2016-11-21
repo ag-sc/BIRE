@@ -219,13 +219,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				 * features
 				 */
 				model.score(allStates, currentState.getInstance());
-				// model.applyToStates(allStates,
-				// currentState.getFactorGraph().getFactorPool(),
-				// currentState.getInstance());
-				// /**
-				// * Score all states according to the model.
-				// */
-				// scorer.score(allStates, multiThreaded);
 			}
 			/**
 			 * Sample one possible successor
@@ -247,58 +240,14 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				 * Apply templates to current and candidate state only
 				 */
 				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
-				// model.applyToStates(
-				// currentState.getFactorGraph().getFactorPool(),
-				// currentState.getInstance());
-				// /**
-				// * Score current and candidate state according to model.
-				// */
-				// scorer.score(Arrays.asList(currentState, candidateState),
-				// multiThreaded);
 			}
 			/**
 			 * Update model with selected state
 			 */
-			// nextStates.sort(AbstractState.modelScoreComparator);
-			// List<StateT> train = new ArrayList<>();
-			// train.addAll(nextStates.subList(0, Math.min(10,
-			// nextStates.size())));
-			// train.addAll(nextStates.subList(Math.max(0, nextStates.size() -
-			// 10),
-			// nextStates.size()));
-			// learner.update(currentState, nextStates);
 			learner.update(currentState, candidateState);
-			/**
-			 * Recompute model score to reflect last update in score.
-			 */
-			// log.debug("(Re)Score:");
-			// scoreWithModel(Arrays.asList(currentState, candidateState));
-
-			// EvaluationUtil.printWeights(model, 0);
-			// nextStates.sort(AbstractState.modelScoreComparator);
-			// double sum = 0;
-			// for (StateT state : nextStates) {
-			// sum += state.getModelScore();
-			// }
-			// if (sum == 0)
-			// sum = 1;
-			// System.out.println(String.format("CURRENT: %s", currentState));
-			// System.out.println(String.format("CANDIDATE: %s: %s",
-			// candidateState.getModelScore() / sum, candidateState));
-			// for (StateT state : nextStates) {
-			// System.out.println(String.format("%s: %s", state.getModelScore()
-			// /
-			// sum, state));
-			// }
-			// StateT candidateState =
-			// greedyObjectiveStrategy.sampleCandidate(nextStates);
-			// System.out
-			// .println(String.format("NEW CANDIDATE: %s: %s",
-			// candidateState.getModelScore() / sum, candidateState));
 			/**
 			 * Choose to accept or reject selected state
 			 */
-			// return candidateState;
 			return trainAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
 		}
 		return currentState;
@@ -326,13 +275,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			 */
 
 			model.score(allStates, currentState.getInstance());
-			// model.applyToStates(allStates,
-			// currentState.getFactorGraph().getFactorPool(),
-			// currentState.getInstance());
-			// /**
-			// * Score all states according to the model.
-			// */
-			// scorer.score(allStates, multiThreaded);
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
@@ -341,22 +283,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			 * Decide to accept or reject the selected state
 			 */
 
-			// TokenState s = (TokenState) currentState;
-			// if (s.sentence.text.startsWith("He")) {
-			// EvaluationUtil.printWeights(model, 0);
-			// nextStates.sort(AbstractState.modelScoreComparator);
-			// double sum = 0;
-			// for (StateT state : nextStates) {
-			// sum += state.getModelScore();
-			// }
-			// log.debug("CURRENT: %s", currentState);
-			// log.debug("CANDIDATE: %s: %s", candidateState.getModelScore() /
-			// sum, candidateState);
-			// for (StateT state : nextStates) {
-			// log.debug("%s: %s", state.getModelScore() / sum, state);
-			// }
-			// log.debug("");
-			// }
 			currentState = predictionAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
 					: currentState;
 			return currentState;
@@ -364,41 +290,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			return currentState;
 		}
 	}
-	//
-	// /**
-	// * Applies the model's template to each of the given states, thus
-	// unrolling
-	// * (computing) the features. The <i>multiThreaded</i> flag determines if
-	// the
-	// * computation is performed in parallel or sequentially.
-	// *
-	// * @param currentState
-	// * @param nextStates
-	// */
-	// protected void unroll(List<StateT> allStates) {
-	// long unrollID = TaggedTimer.start("SC-UNROLL");
-	// log.debug("Unroll features for %s states...", allStates.size() + 1);
-	//
-	// Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
-	// stream.forEach(s -> model.applyTo(s));
-	// TaggedTimer.stop(unrollID);
-	// }
-
-	// /**
-	// * Computes the model scores for each of the given states. The
-	// * <i>multiThreaded</i> flag determines if the computation is performed in
-	// * parallel or sequentially.
-	// *
-	// * @param nextStates
-	// */
-	// protected void scoreWithModel(List<StateT> nextStates) {
-	// long scID = TaggedTimer.start("MODEL-SCORE");
-	// log.debug("Score %s states according to model...", nextStates.size());
-	//
-	// Stream<StateT> stream = Utils.getStream(nextStates, multiThreaded);
-	// stream.forEach(s -> scorer.score(s));
-	// TaggedTimer.stop(scID);
-	// }
 
 	/**
 	 * Computes the objective scores for each of the given states. The

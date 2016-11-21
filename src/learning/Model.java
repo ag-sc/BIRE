@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 import exceptions.UnkownTemplateRequestedException;
 import factors.Factor;
 import factors.FactorGraph;
-import factors.FactorVariables;
+import factors.FactorScope;
 import factors.FactorPool;
 import learning.scorer.Scorer;
 import templates.AbstractTemplate;
@@ -214,182 +214,70 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 		scorer.score(states, multiThreaded);
 	}
 
-	private <FactorVariablesT extends FactorVariables> Set<FactorVariablesT> applyTemplatesShared(
-			AbstractTemplate<InstanceT, StateT, FactorVariablesT> t, List<StateT> states) {
+	private <FactorScopeT extends FactorScope> Set<FactorScopeT> applyTemplatesShared(
+			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, List<StateT> states) {
 		log.debug("Apply template \"%s\" to %s states.", t.getClass().getSimpleName(), states.size());
 		/*
-		 * Collect all Factor variables of all states to which this template can be
+		 * Collect all Factor scopes of all states to which this template can be
 		 * applied (in parallel).
 		 */
-		Set<FactorVariablesT> allGeneratedVaribalesForTemplate = generateVariablesAndAddToStates(t, states);
+		Set<FactorScopeT> allGeneratedScopesForTemplate = generateScopesAndAddToStates(t, states);
 
-		log.debug("%s possible Factors for template %s", allGeneratedVaribalesForTemplate.size(),
+		log.debug("%s possible Factors for template %s", allGeneratedScopesForTemplate.size(),
 				t.getClass().getSimpleName());
 
 		/*
-		 * Select only new variables (or all if forced) for computation.
+		 * Select only new scopes (or all if forced) for computation.
 		 */
 		log.debug("Compute %s factors ...", forceFactorComputation ? "ALL" : "NEW");
-		Set<FactorVariablesT> varibalesToCompute = null;
+		Set<FactorScopeT> scopesToCompute = null;
 		if (forceFactorComputation) {
-			varibalesToCompute = allGeneratedVaribalesForTemplate;
+			scopesToCompute = allGeneratedScopesForTemplate;
 		} else {
 			/*
 			 * Extract only the ones which are not already associate with a
 			 * factor.
 			 */
-			Set<FactorVariablesT> newFactorVariablesForTemplate = sharedFactorPool
-					.extractNewFactorVariables(allGeneratedVaribalesForTemplate);
-			log.debug("%s new Factors for template %s", newFactorVariablesForTemplate.size(), t.getClass().getSimpleName());
+			Set<FactorScopeT> newFactorScopesForTemplate = sharedFactorPool
+					.extractNewFactorScopes(allGeneratedScopesForTemplate);
+			log.debug("%s new Factors for template %s", newFactorScopesForTemplate.size(), t.getClass().getSimpleName());
 
-			varibalesToCompute = newFactorVariablesForTemplate;
+			scopesToCompute = newFactorScopesForTemplate;
 		}
 
 		/*
 		 * Compute all selected factors (in parallel).
 		 */
-		Set<Factor<FactorVariablesT>> newFactors = computeNewFactors(t, varibalesToCompute);
+		Set<Factor<FactorScopeT>> newFactors = computeNewFactors(t, scopesToCompute);
 
 		sharedFactorPool.addFactors(newFactors);
-		return allGeneratedVaribalesForTemplate;
+		return allGeneratedScopesForTemplate;
 	}
 
-	private <FactorPatternT extends FactorVariables> Set<FactorPatternT> generateVariablesAndAddToStates(
-			AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT> states) {
+	private <FactorScopeT extends FactorScope> Set<FactorScopeT> generateScopesAndAddToStates(
+			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, List<StateT> states) {
 		Stream<StateT> stream = Utils.getStream(states, multiThreaded);
-		Set<FactorPatternT> allGeneratedPatternsForTemplate = ConcurrentHashMap.newKeySet();
+		Set<FactorScopeT> allGeneratedScopesForTemplate = ConcurrentHashMap.newKeySet();
 
 		stream.forEach(state -> {
 			log.trace("Apply template \"%s\" to state %s. Force recomputation: %s", t.getClass().getSimpleName(),
 					state.getID(), forceFactorComputation);
 			log.trace("%s", state);
-			List<FactorPatternT> generatedPatternsForState = t.generateFactorVariables(state);
-			log.trace("%s possible Factors for state %s", generatedPatternsForState.size(), state.getID());
+			List<FactorScopeT> generatedScopesForState = t.generateFactorScopes(state);
+			log.trace("%s possible Factors for state %s", generatedScopesForState.size(), state.getID());
 
 			FactorGraph factorGraph = state.getFactorGraph();
-			factorGraph.addFactorVariables(generatedPatternsForState);
-			allGeneratedPatternsForTemplate.addAll(generatedPatternsForState);
+			factorGraph.addFactorScopes(generatedScopesForState);
+			allGeneratedScopesForTemplate.addAll(generatedScopesForState);
 		});
-		return allGeneratedPatternsForTemplate;
+		return allGeneratedScopesForTemplate;
 	}
-	// public void score(List<StateT> states, InstanceT instance) {
-	// if (sequentialScoring) {
-	// for (StateT state : states) {
-	// log.debug("Apply %s templates to %s state.", templates.size(),
-	// state.getID());
-	// state.getFactorGraph().clear();
-	// state.getFactorGraph().getFactorPool().clear();
-	//
-	// List<StateT> stateAsList = Arrays.asList(state);
-	// for (AbstractTemplate<InstanceT, StateT, ?> t : templates) {
-	// applyTemplate(t, stateAsList, state.getFactorGraph().getFactorPool(),
-	// instance);
-	// }
-	// scorer.score(stateAsList, multiThreaded);
-	// }
-	// } else {
-	// applyToStates(states, sharedFactorPool, instance);
-	// scorer.score(states, multiThreaded);
-	// }
-	// }
-	//
-	// public void applyToStates(List<StateT> states, FactorPool factorPool,
-	// InstanceT instance) {
-	// log.debug("Apply %s templates to %s states.", templates.size(),
-	// states.size());
-	// for (StateT state : states) {
-	// state.getFactorGraph().clear();
-	// }
-	// if (forceFactorComputation) {
-	// factorPool.clear();
-	// }
-	//
-	// Stream<AbstractTemplate<InstanceT, StateT, ?>> stream =
-	// Utils.getStream(templates, multiThreaded);
-	// stream.forEach(t -> {
-	// applyTemplate(t, states, factorPool, instance);
-	// });
-	// }
-	//
-	// private <FactorPatternT extends FactorPattern> Set<FactorPatternT>
-	// applyTemplate(
-	// AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT>
-	// states, FactorPool factorPool,
-	// InstanceT instance) {
-	// log.debug("Apply template \"%s\" to %s states.",
-	// t.getClass().getSimpleName(), states.size());
-	// /*
-	// * Collect all pattern of all states to which this template can be
-	// * applied (in parallel).
-	// */
-	// Set<FactorPatternT> allGeneratedPatternsForTemplate =
-	// generatePatternsAndAddToStates(t, states);
-	//
-	// log.debug("%s possible Factors for template %s",
-	// allGeneratedPatternsForTemplate.size(),
-	// t.getClass().getSimpleName());
-	//
-	// /*
-	// * Select only new patterns (or all if forced) for computation.
-	// */
-	// log.debug("Compute %s factors ...", forceFactorComputation ? "ALL" :
-	// "NEW");
-	// Set<FactorPatternT> patternsToCompute = null;
-	// if (forceFactorComputation) {
-	// patternsToCompute = allGeneratedPatternsForTemplate;
-	// } else {
-	// /*
-	// * Extract only the ones which are not already associate with a
-	// * factor.
-	// */
-	// Set<FactorPatternT> newPatternsForTemplate = factorPool
-	// .extractNewFactorPatterns(allGeneratedPatternsForTemplate);
-	// log.debug("%s new Factors for template %s",
-	// newPatternsForTemplate.size(), t.getClass().getSimpleName());
-	//
-	// patternsToCompute = newPatternsForTemplate;
-	// }
-	//
-	// /*
-	// * Compute all selected factors (in parallel).
-	// */
-	// Set<Factor<FactorPatternT>> newFactors = computeNewFactors(t,
-	// patternsToCompute, instance);
-	//
-	// factorPool.addFactors(newFactors);
-	// return allGeneratedPatternsForTemplate;
-	// }
-	//
-	// private <FactorPatternT extends FactorPattern> Set<FactorPatternT>
-	// generatePatternsAndAddToStates(
-	// AbstractTemplate<InstanceT, StateT, FactorPatternT> t, List<StateT>
-	// states) {
-	// Stream<StateT> stream = Utils.getStream(states, multiThreaded);
-	// Set<FactorPatternT> allGeneratedPatternsForTemplate =
-	// ConcurrentHashMap.newKeySet();
-	//
-	// stream.forEach(state -> {
-	// log.trace("Apply template \"%s\" to state %s. Force recomputation: %s",
-	// t.getClass().getSimpleName(),
-	// state.getID(), forceFactorComputation);
-	// log.trace("%s", state);
-	// List<FactorPatternT> generatedPatternsForState =
-	// t.generateFactorPatterns(state);
-	// log.trace("%s possible Factors for state %s",
-	// generatedPatternsForState.size(), state.getID());
-	//
-	// FactorGraph factorGraph = state.getFactorGraph();
-	// factorGraph.addFactorPatterns(generatedPatternsForState);
-	// allGeneratedPatternsForTemplate.addAll(generatedPatternsForState);
-	// });
-	// return allGeneratedPatternsForTemplate;
-	// }
 
-	private <FactorVariablesT extends FactorVariables> Set<Factor<FactorVariablesT>> computeNewFactors(
-			AbstractTemplate<InstanceT, StateT, FactorVariablesT> t, Set<FactorVariablesT> variables) {
-		Stream<FactorVariablesT> stream = Utils.getStream(variables, multiThreaded);
-		Set<Factor<FactorVariablesT>> factors = stream.map(p -> {
-			Factor<FactorVariablesT> f = new Factor<>(p);
+	private <FactorScopeT extends FactorScope> Set<Factor<FactorScopeT>> computeNewFactors(
+			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, Set<FactorScopeT> scopes) {
+		Stream<FactorScopeT> stream = Utils.getStream(scopes, multiThreaded);
+		Set<Factor<FactorScopeT>> factors = stream.map(p -> {
+			Factor<FactorScopeT> f = new Factor<>(p);
 			t.computeFactor(f);
 			return f;
 		}).collect(Collectors.toSet());

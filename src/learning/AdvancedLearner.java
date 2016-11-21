@@ -80,7 +80,6 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
-		// System.out.println("##########################");
 		Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			batchGradients.put(t, new Vector());
@@ -93,57 +92,7 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 
 		applyWeightUpdate(batchGradients);
 		updates++;
-		// try {
-		// Thread.sleep(200);
-		// } catch (InterruptedException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// System.out.println("##########################");
 	}
-	//
-	// /**
-	// * Updates the weights of each template according to the SampleRank
-	// scheme.
-	// *
-	// * @param currentState
-	// * @param possibleNextState
-	// * @param weightUpdates
-	// */
-	// private void collectSampleRankGradients(StateT currentState, StateT
-	// possibleNextState,
-	// Map<AbstractTemplate<?, StateT, ?>, Vector> weightUpdates) {
-	// log.trace("Current:\t%s", currentState);
-	// log.trace("Next:\t%s", possibleNextState);
-	//
-	// double weightedDifferenceSum = 0;
-	// /*
-	// * Collect differences of features for both states and remember
-	// * respective template
-	// */
-	// Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new
-	// HashMap<>();
-	// for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
-	// Vector differences = VectorUtil.getFeatureDifferences(t,
-	// possibleNextState, currentState);
-	// featureDifferences.put(t, differences);
-	// weightedDifferenceSum += differences.dotProduct(t.getWeights());
-	// }
-	//
-	// if (weightedDifferenceSum > 0 && preference(currentState,
-	// possibleNextState)) {
-	// System.out.println("INCREASE");
-	// System.out.println("DIFF: " + featureDifferences.values());
-	// updateFeatures(featureDifferences, +1, weightUpdates);
-	// } else if (weightedDifferenceSum <= 0 && preference(possibleNextState,
-	// currentState)) {
-	// System.out.println("DECREASE");
-	// System.out.println("DIFF: " + featureDifferences.values());
-	// updateFeatures(featureDifferences, -1, weightUpdates);
-	// } else {
-	// }
-	// // System.out.println("DIFF: " + featureDifferences.values());
-	// }
 
 	/**
 	 * Updates the weights of each template according to the Margin Rank scheme.
@@ -172,30 +121,20 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 			posState = possibleNextState;
 			negState = currentState;
 
-			// System.out.println("CURRENT - NEXT");
-			// System.out.println("POS: NEXT");
-			// System.out.println("NEG: CURRENT");
 		} else {
 			// currentState is POS
 			// possibleNextState is NEG
 			posState = currentState;
 			negState = possibleNextState;
 
-			// System.out.println("NEXT - CURRENT");
-			// System.out.println("POS: CURRENT");
-			// System.out.println("NEG: NEXT");
 		}
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = VectorUtil.getFeatureDifferences(t, negState, posState);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeights());
-			// System.out.println("WEIG: " + t.getWeights());
 		}
 
 		if (weightedDifferenceSum + MARGIN >= 0) {
-			// System.out.println("UPDATE:");
-			// System.out.println(weightedDifferenceSum);
-			// System.out.println("DIFF: " + featureDifferences.values());
 			/*
 			 * gradient for weight w[i] is simply featureDifference[i].
 			 */
@@ -221,11 +160,8 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector templateGradients = batchGradients.get(t);
-			// System.out.println("GRAD: " + templateGradients);
 			Vector oldWeights = t.getWeights();
-			// System.out.println("OLD: " + oldWeights);
 			Vector newWeights = optimizer.getUpdates(oldWeights, templateGradients);
-			// System.out.println("NEW: " + newWeights);
 			t.setWeights(newWeights);
 		}
 	}

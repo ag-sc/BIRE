@@ -1,19 +1,19 @@
 package factors.variables;
 
-import factors.FactorVariables;
+import factors.FactorScope;
 import templates.AbstractTemplate;
 
-public class SingleVariable<VariableT> extends FactorVariables {
+public class SingleVariable<T> extends FactorScope {
 
-	private VariableT variable;
+	private T variable;
 
-	public SingleVariable(AbstractTemplate<?, ?, SingleVariable<VariableT>> template,
-			VariableT variable) {
+	public SingleVariable(AbstractTemplate<?, ?, SingleVariable<T>> template,
+			T variable) {
 		super(template, variable);
 		this.variable = variable;
 	}
 
-	public VariableT getVariable() {
+	public T getVariable() {
 		return variable;
 	}
 

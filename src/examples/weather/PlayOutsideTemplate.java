@@ -17,12 +17,12 @@ import examples.weather.WeatherInstance.Outlook;
 import examples.weather.WeatherInstance.Temperature;
 import examples.weather.WeatherInstance.Windy;
 import factors.Factor;
-import factors.FactorVariables;
+import factors.FactorScope;
 import learning.Vector;
 import templates.AbstractTemplate;
 
 public class PlayOutsideTemplate extends AbstractTemplate<WeatherInstance, PlayOutsideState, PlayOutsideFactorVariables> {
-	class PlayOutsideFactorVariables extends FactorVariables {
+	class PlayOutsideFactorVariables extends FactorScope {
 		public boolean playOutside;
 		public Outlook outlook;
 		public Temperature temperatur;
@@ -56,7 +56,7 @@ public class PlayOutsideTemplate extends AbstractTemplate<WeatherInstance, PlayO
 	}
 
 	@Override
-	public List<PlayOutsideFactorVariables> generateFactorVariables(PlayOutsideState state) {
+	public List<PlayOutsideFactorVariables> generateFactorScopes(PlayOutsideState state) {
 		List<PlayOutsideFactorVariables> factors = new ArrayList<>();
 		factors.add(new PlayOutsideFactorVariables(this, state.isPlayingOutside(), state.getInstance().outlook,
 				state.getInstance().temperature, state.getInstance().humidity, state.getInstance().windy));
@@ -68,10 +68,10 @@ public class PlayOutsideTemplate extends AbstractTemplate<WeatherInstance, PlayO
 		Vector features = factor.getFeatureVector();
 		Set<String> conds = new HashSet<String>();
 
-		conds.add("Outlook=" + factor.getFactorVariables().outlook.name());
-		conds.add("Temperatur=" + factor.getFactorVariables().temperatur.name());
-		conds.add("Humidity=" + factor.getFactorVariables().humidity.name());
-		conds.add("Windy=" + factor.getFactorVariables().windy.name());
+		conds.add("Outlook=" + factor.getFactorScope().outlook.name());
+		conds.add("Temperatur=" + factor.getFactorScope().temperatur.name());
+		conds.add("Humidity=" + factor.getFactorScope().humidity.name());
+		conds.add("Windy=" + factor.getFactorScope().windy.name());
 
 		/*
 		 * Create all combinations of all attributes to create features.
@@ -84,7 +84,7 @@ public class PlayOutsideTemplate extends AbstractTemplate<WeatherInstance, PlayO
 		powerSet = powerSet.stream().filter(s -> s.size() <= this.maxCombinedAttributes).collect(Collectors.toSet());
 
 		for (Set<String> set : powerSet) {
-			features.set("Is_playing_outside=" + factor.getFactorVariables().playOutside + "_" + set.toString(), 1.0);
+			features.set("Is_playing_outside=" + factor.getFactorScope().playOutside + "_" + set.toString(), 1.0);
 		}
 
 	}

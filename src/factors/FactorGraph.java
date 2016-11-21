@@ -15,43 +15,33 @@ public class FactorGraph implements Serializable {
 	 * need to recompute existing, previously computed factors.
 	 */
 	private FactorPool factorPool;
-	private Collection<FactorVariables> factorVariables;
+	private Collection<FactorScope> factorScope;
 
 	public FactorGraph() {
 		this.factorPool = FactorPool.getInstance();
-		this.factorVariables = new ConcurrentLinkedQueue<>();
+		this.factorScope = new ConcurrentLinkedQueue<>();
 	}
 
-//	public FactorGraph(FactorGraph factorGraph) {
-//		// TODO using the same factor pool instead of using the getInstance()
-//		// method might lead to unexpected and confusing behavior.
-//		this.factorPool = FactorPool.getInstance();
-//		this.factorPatterns = new ConcurrentLinkedQueue<>();
-//	}
 
-	public void addFactorVariables(List<? extends FactorVariables> generatedFactorVariables) {
-		this.factorVariables.addAll(generatedFactorVariables);
+	public void addFactorScopes(List<? extends FactorScope> generatedFactorScopes) {
+		this.factorScope.addAll(generatedFactorScopes);
 	}
 
 	public void clear() {
-		this.factorVariables.clear();
-		this.factorVariables = new ConcurrentLinkedQueue<>();
+		this.factorScope.clear();
+		this.factorScope = new ConcurrentLinkedQueue<>();
 	}
 
-	public List<Factor<? extends FactorVariables>> getFactors() throws MissingFactorException {
-		return factorPool.getFactors(factorVariables);
+	public List<Factor<? extends FactorScope>> getFactors() throws MissingFactorException {
+		return factorPool.getFactors(factorScope);
 	}
 
-	public Collection<FactorVariables> getFactorVariables() {
-		return factorVariables;
+	public Collection<FactorScope> getFactorScopes() {
+		return factorScope;
 	}
 
 	public FactorPool getFactorPool() {
 		return factorPool;
 	}
-	//
-	// public void setFactorPool(FactorPool factorPool) {
-	// this.factorPool = factorPool;
-	// }
 
 }

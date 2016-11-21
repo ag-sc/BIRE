@@ -17,11 +17,11 @@ import utility.FactorID;
  * @author sjebbara
  *
  */
-public class Factor<FactorVariablesT extends FactorVariables> implements Serializable {
+public class Factor<FactorScopeT extends FactorScope> implements Serializable {
 
 	private static final AtomicInteger factorIDIndex = new AtomicInteger();
 	private final FactorID factorID;
-	private final FactorVariablesT factorVariables;
+	private final FactorScopeT factorScope;
 	private final Vector features = new Vector();
 
 	/**
@@ -34,9 +34,9 @@ public class Factor<FactorVariablesT extends FactorVariables> implements Seriali
 	 * @author sjebbara
 	 *
 	 */
-	public Factor(FactorVariablesT factorVariables) {
+	public Factor(FactorScopeT factorScope) {
 		this.factorID = generateFactorID();
-		this.factorVariables = factorVariables;
+		this.factorScope = factorScope;
 	}
 
 	public FactorID getID() {
@@ -53,16 +53,16 @@ public class Factor<FactorVariablesT extends FactorVariables> implements Seriali
 		return new FactorID(id);
 	}
 
-	public FactorVariablesT getFactorVariables() {
-		return factorVariables;
+	public FactorScopeT getFactorScope() {
+		return factorScope;
 	}
 
 	public AbstractTemplate<?, ?, ?> getTemplate() {
-		return factorVariables.getTemplate();
+		return factorScope.getTemplate();
 	}
 
 	@Override
 	public String toString() {
-		return "Factor [factorID=" + factorID + ", factorVariables=" + factorVariables + ", features=" + features + "]";
+		return "Factor [factorID=" + factorID + ", factorScope=" + factorScope + ", features=" + features + "]";
 	}
 }

@@ -7,19 +7,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import factors.Factor;
-import factors.FactorVariables;
+import factors.FactorScope;
 import learning.Vector;
 import variables.AbstractState;
 
-public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<InstanceT>, FactorVariablesT extends FactorVariables>
+public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<InstanceT>, FactorScopeT extends FactorScope>
 		implements Serializable {
 
 	private static Logger log = LogManager.getFormatterLogger();
 
 	/**
-	 * Initializes the feature weights for this template. The default values for
-	 * the weights are sampled from a uniform distribution in the range of
-	 * INIT_WEIGHT_RANGE.
+	 * Weights for the computation of factor scores. These weights are shared
+	 * across all factors of this template.
 	 */
 	protected Vector weights = new Vector();
 
@@ -43,8 +42,8 @@ public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<I
 	}
 
 	/**
-	 * Returns all possible factor variables that can be applied to the given
-	 * state. Each FactorVariables declares which variables are relevant for its
+	 * Returns all possible factor scopes that can be applied to the given
+	 * state. Each FactorScope declares which variables are relevant for its
 	 * computation but does NOT compute any features yet. Later, a selected set
 	 * of factor variables that were created here are passed to the
 	 * computeFactor() method, for the actual computation of factors and feature
@@ -53,18 +52,18 @@ public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<I
 	 * @param state
 	 * @return
 	 */
-	public abstract List<FactorVariablesT> generateFactorVariables(StateT state);
+	public abstract List<FactorScopeT> generateFactorScopes(StateT state);
 
 	/**
-	 * This method receives the previously created "empty" factor variables and
+	 * This method receives the previously created "empty" factor scopes and
 	 * computes the features for this factor. For this, each previously created
-	 * FactorVariables should include all the variables it needs to compute the
+	 * FactorScopes should include all the variables it needs to compute the
 	 * respective factor.
 	 * 
 	 * @param state
 	 * @param factor
 	 */
-	public abstract void computeFactor(Factor<FactorVariablesT> factor);
+	public abstract void computeFactor(Factor<FactorScopeT> factor);
 
 	@Override
 	public String toString() {

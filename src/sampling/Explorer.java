@@ -17,7 +17,7 @@ import variables.AbstractState;
  *
  * @param <StateT>
  */
-public interface Explorer<StateT extends AbstractState> {
+public interface Explorer<StateT extends AbstractState<?>> {
 
 	public List<StateT> getNextStates(StateT currentState);
 

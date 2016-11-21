@@ -12,7 +12,7 @@ import variables.AbstractState;
  * 
  * @param explorers
  */
-public class JoinExplorer<StateT extends AbstractState> implements Explorer<StateT> {
+public class JoinExplorer<StateT extends AbstractState<?>> implements Explorer<StateT> {
 
 	private List<Explorer<StateT>> explorers;
 

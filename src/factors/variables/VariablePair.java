@@ -1,25 +1,25 @@
 package factors.variables;
 
-import factors.FactorVariables;
+import factors.FactorScope;
 import templates.AbstractTemplate;
 
-public class VariablePair<VariableT> extends FactorVariables {
+public class VariablePair<T> extends FactorScope {
 
-	private VariableT variable1;
-	private VariableT variable2;
+	private T variable1;
+	private T variable2;
 
-	public VariablePair(AbstractTemplate<?, ?, VariablePair<VariableT>> template, VariableT variable1,
-			VariableT variable2) {
+	public VariablePair(AbstractTemplate<?, ?, VariablePair<T>> template, T variable1,
+			T variable2) {
 		super(template, variable1, variable2);
 		this.variable1 = variable1;
 		this.variable2 = variable2;
 	}
 
-	public VariableT getVariable1() {
+	public T getVariable1() {
 		return variable1;
 	}
 
-	public VariableT getVariable2() {
+	public T getVariable2() {
 		return variable2;
 	}
 

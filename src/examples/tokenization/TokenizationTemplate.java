@@ -3,20 +3,20 @@ package examples.tokenization;
 import java.util.ArrayList;
 import java.util.List;
 
-import examples.tokenization.TokenizationTemplate.TokenizationFactorVariables;
+import examples.tokenization.TokenizationTemplate.TokenizationFactorScope;
 import factors.Factor;
-import factors.FactorVariables;
+import factors.FactorScope;
 import learning.Vector;
 import templates.AbstractTemplate;
 
-public class TokenizationTemplate extends AbstractTemplate<String, TokenState, TokenizationFactorVariables> {
+public class TokenizationTemplate extends AbstractTemplate<String, TokenState, TokenizationFactorScope> {
 
-	class TokenizationFactorVariables extends FactorVariables {
+	class TokenizationFactorScope extends FactorScope {
 		public int boundaryPosition;
 		public int fromOffset;
 		public String window;
 
-		public TokenizationFactorVariables(AbstractTemplate<?, ?, ?> template, int boundaryPosition, int fromOffset,
+		public TokenizationFactorScope(AbstractTemplate<?, ?, ?> template, int boundaryPosition, int fromOffset,
 				String window) {
 			super(template, boundaryPosition, fromOffset, window);
 			this.boundaryPosition = boundaryPosition;
@@ -39,25 +39,25 @@ public class TokenizationTemplate extends AbstractTemplate<String, TokenState, T
 	 * (except for the edge cases; these are just omitted).
 	 */
 	@Override
-	public List<TokenizationFactorVariables> generateFactorVariables(TokenState state) {
-		List<TokenizationFactorVariables> factors = new ArrayList<>();
+	public List<TokenizationFactorScope> generateFactorScopes(TokenState state) {
+		List<TokenizationFactorScope> factors = new ArrayList<>();
 		for (int position : state.tokenization.tokenBoundaries) {
 			int from = Math.max(position - windowSize / 2, 0);
 			int to = Math.min(position + (windowSize + 1) / 2, state.getInstance().length());
 
 			String window = state.getInstance().substring(from, to);
 
-			factors.add(this.new TokenizationFactorVariables(this, position, from, window));
+			factors.add(this.new TokenizationFactorScope(this, position, from, window));
 		}
 		return factors;
 	}
 
 	@Override
-	public void computeFactor(Factor<TokenizationFactorVariables> factor) {
+	public void computeFactor(Factor<TokenizationFactorScope> factor) {
 		Vector features = factor.getFeatureVector();
-		int position = factor.getFactorVariables().boundaryPosition;
-		int from = factor.getFactorVariables().fromOffset;
-		String window = factor.getFactorVariables().window;
+		int position = factor.getFactorScope().boundaryPosition;
+		int from = factor.getFactorScope().fromOffset;
+		String window = factor.getFactorScope().window;
 
 		for (int i = 0; i < window.length(); i++) {
 			char c = window.charAt(i);

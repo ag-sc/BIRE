@@ -104,7 +104,6 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = VectorUtil.getFeatureDifferences(t, possibleNextState, currentState);
-			// System.out.println(differences);
 			featureDifferences.put(t, differences);
 			weightedDifferenceSum += differences.dotProduct(t.getWeights());
 		}
@@ -115,7 +114,6 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 			aggregateGradients(featureDifferences, -1, weightUpdates);
 		} else {
 		}
-		// System.out.println("DIFF: " + featureDifferences.values());
 	}
 
 	/**

@@ -11,11 +11,11 @@ import templates.AbstractTemplate;
  * @author sjebbara
  *
  */
-public abstract class FactorVariables {
+public abstract class FactorScope {
 	protected final AbstractTemplate<?, ?, ?> template;
 	protected final Object[] variables;
 
-	public FactorVariables(AbstractTemplate<?, ?, ?> template, Object... variables) {
+	public FactorScope(AbstractTemplate<?, ?, ?> template, Object... variables) {
 		this.template = template;
 		this.variables = variables;
 	}
@@ -41,7 +41,7 @@ public abstract class FactorVariables {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FactorVariables other = (FactorVariables) obj;
+		FactorScope other = (FactorScope) obj;
 		if (template == null) {
 			if (other.template != null)
 				return false;
