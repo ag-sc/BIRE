@@ -24,7 +24,7 @@ import variables.AbstractState;
  */
 public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
-	private static final double MARGIN = 0.1;
+	private double margin = 0.1;
 
 	private static Logger log = LogManager.getFormatterLogger(AdvancedLearner.class.getName());
 
@@ -56,6 +56,13 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		this.model = model;
 		this.optimizer = optimizer;
 		this.regularizer = regularizer;
+	}
+	public AdvancedLearner(Model<?, StateT> model, Optimizer optimizer, Regularizer regularizer, double margin) {
+		super();
+		this.model = model;
+		this.optimizer = optimizer;
+		this.regularizer = regularizer;
+		this.margin = margin;
 	}
 
 	/**
@@ -134,7 +141,7 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 			weightedDifferenceSum += differences.dotProduct(t.getWeights());
 		}
 
-		if (weightedDifferenceSum + MARGIN >= 0) {
+		if (weightedDifferenceSum + margin >= 0) {
 			/*
 			 * gradient for weight w[i] is simply featureDifference[i].
 			 */

@@ -9,9 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.common.collect.Sets;
 
 import learning.Model;
 import learning.Vector;
@@ -109,4 +112,86 @@ public class EvaluationUtil {
 		}
 	}
 
+	public static class TpFpFn {
+
+		private double tp;
+		private double fp;
+		private double fn;
+
+		public <T> TpFpFn(Set<T> targets, Set<T> predictions) {
+			tp = Sets.intersection(targets, predictions).size();
+			fp = predictions.size() - tp;
+			fn = targets.size() - tp;
+		}
+
+		public TpFpFn(double tp, double fp, double fn) {
+			super();
+			this.tp = tp;
+			this.fp = fp;
+			this.fn = fn;
+		}
+
+		public double getTP() {
+			return tp;
+		}
+
+		public double getFP() {
+			return fp;
+		}
+
+		public double getFN() {
+			return fn;
+		}
+	}
+
+	// public static <T> TpFpFn tpFpFn(Set<T> targets, Set<T> predictions) {
+	// double tp = Sets.intersection(targets, predictions).size();
+	// double fp = predictions.size() - tp;
+	// double fn = targets.size() - tp;
+	// return new TpFpFn(tp, fp, fn);
+	// }
+
+	public static class F1Measure {
+
+		private double p;
+		private double r;
+
+		public <T> F1Measure(Set<T> targets, Set<T> predictions) {
+			this(new TpFpFn(targets, predictions));
+		}
+
+		public F1Measure(TpFpFn tpFpFn) {
+			this(tpFpFn.tp, tpFpFn.fp, tpFpFn.fn);
+		}
+
+		public F1Measure(double tp, double fp, double fn) {
+			this(tp / (tp + fp), tp / (tp + fn));
+		}
+
+		public F1Measure(double precision, double recall) {
+			super();
+			this.p = precision;
+			this.r = recall;
+		}
+
+		public double getPrecision() {
+			return p;
+		}
+
+		public double getRecall() {
+			return r;
+		}
+
+		public double getF1() {
+			return getF1(1);
+		}
+
+		public double getF1(double beta) {
+			return (1 + beta * beta) * p * r / (beta * beta * p + r);
+		}
+	}
+
+	// public static <T> F1Measure f1(Set<T> targets, Set<T> predictions) {
+	// return new F1Measure(tpFpFn(targets, predictions));
+	// }
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +43,8 @@ public class Trainer {
 
 	/**
 	 * This object is a basically a helper that iterates over data instances and
-	 * triggers the generation of sampling chains for the provided
-	 * documents. </br>
+	 * triggers the generation of sampling chains for the provided documents.
+	 * </br>
 	 * The <b>train</b> function should be used for training while <b>test</b>
 	 * and <b>predict</b> can be used to evaluate the trained model.
 	 */
@@ -150,8 +151,68 @@ public class Trainer {
 				if (e == numberOfEpochs - 1) {
 					// finalState.getFactorGraph().clear();
 					// finalState.getFactorGraph().getFactorPool().clear();
-					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(
-							instance, goldResult, finalState));
+					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
+				}
+				log.info("===========================");
+				for (InstanceCallback c : instanceCallbacks) {
+					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
+				}
+				finalState.resetFactorGraph();
+			}
+			log.info("##############################");
+			for (EpochCallback c : epochCallbacks) {
+				c.onEndEpoch(this, e, numberOfEpochs, instances.size());
+			}
+		}
+		return finalStates;
+	}
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
+			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, Learner<StateT> learner,
+			List<InstanceT> instances, Function<InstanceT, ResultT> getResult, int numberOfEpochs) {
+		Random random = new Random(100l);
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
+		long startTime = System.currentTimeMillis();
+		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
+		for (int e = 0; e < numberOfEpochs; e++) {
+			log.info("##############################");
+			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+			log.info("##############################");
+			for (EpochCallback c : epochCallbacks) {
+				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
+			}
+			Collections.shuffle(instances, random);
+			for (int i = 0; i < instances.size(); i++) {
+				InstanceT instance = instances.get(i);
+				ResultT goldResult = getResult.apply(instances.get(i));
+				log.info("===========TRAIN===========");
+				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
+				log.info("Gold Result: %s", goldResult);
+				log.info("Instance: %s", instance);
+				log.info("===========================");
+				for (InstanceCallback c : instanceCallbacks) {
+					c.onStartInstance(this, instance, i, instances.size(), e, numberOfEpochs);
+				}
+
+				StateT initialState = initializer.getInitialState(instance);
+				List<StateT> generatedChain = sampler.generateChain(initialState, goldResult, learner);
+				StateT finalState = generatedChain.get(generatedChain.size() - 1);
+				long stopTime = System.currentTimeMillis();
+
+				log.info("++++++++++++++++");
+				log.info("Gold Result:   %s", goldResult);
+				log.info("Final State:  %s", finalState);
+				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
+				log.info("++++++++++++++++");
+
+				/*
+				 * Store the final predicted state for the current document if
+				 * the current epoch is the final one.
+				 */
+				if (e == numberOfEpochs - 1) {
+					// finalState.getFactorGraph().clear();
+					// finalState.getFactorGraph().getFactorPool().clear();
+					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
 				for (InstanceCallback c : instanceCallbacks) {
@@ -204,8 +265,42 @@ public class Trainer {
 
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
-			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance,
-					goldResult, finalState));
+			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
+			log.info("++++++++++++++++");
+			log.info("Gold Result:   %s", goldResult);
+			log.info("Final State:  %s", finalState);
+			log.info("++++++++++++++++");
+			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onEndInstance(this, instance, i, finalState, instances.size(), 1, 1);
+			}
+		}
+		return finalStates;
+	}
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> test(
+			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> instances,
+			Function<InstanceT, ResultT> getResult) {
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
+		for (int i = 0; i < instances.size(); i++) {
+			InstanceT instance = instances.get(i);
+			ResultT goldResult = getResult.apply(instances.get(i));
+			log.info("===========TEST============");
+			log.info("Document: %s/%s", i + 1, instances.size());
+			log.info("Content   : %s", instance);
+			log.info("Gold Result: %s", goldResult);
+			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
+			}
+
+			StateT initialState = initializer.getInitialState(instance);
+			List<StateT> generatedChain = sampler.generateChain(initialState);
+			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
+			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
 			log.info("Gold Result:   %s", goldResult);
 			log.info("Final State:  %s", finalState);

@@ -36,6 +36,10 @@ public class Vector implements Serializable {
 		set(feature, flag ? 1.0 : 0.0);
 	}
 
+	public void set(String feature, int value) {
+		set(feature, (double) value);
+	}
+
 	public void remove(String feature) {
 		features.remove(feature);
 	}

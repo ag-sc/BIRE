@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import evaluation.TaggedTimer;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -301,11 +300,9 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	 * @param nextStates
 	 */
 	protected void scoreWithObjective(List<StateT> allStates, ResultT goldResult) {
-		long scID = TaggedTimer.start("OBJ-SCORE");
 		log.debug("Score %s states according to objective...", allStates.size() + 1);
 		Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
 		stream.forEach(s -> objective.score(s, goldResult));
-		TaggedTimer.stop(scID);
 	}
 
 	protected Model<?, StateT> getModel() {
