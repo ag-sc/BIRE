@@ -14,6 +14,10 @@ public class AcceptStrategies {
 		return (candidate, current) -> candidate.getModelScore() > current.getModelScore();
 	};
 
+	public static <StateT extends AbstractState<?>> AcceptStrategy<StateT> modelAccept() {
+		return (candidate, current) -> candidate.getModelScore() >= current.getModelScore();
+	};
+
 	/**
 	 * Returns an accept function that accepts the candidate state if its
 	 * objective score is GREATER THAN the objective score of the current state.

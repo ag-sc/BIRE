@@ -247,7 +247,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			/**
 			 * Choose to accept or reject selected state
 			 */
-			return trainAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState : currentState;
+			boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
+			return isAccepted ? candidateState : currentState;
 		}
 		return currentState;
 	}
@@ -282,9 +283,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			 * Decide to accept or reject the selected state
 			 */
 
-			currentState = predictionAcceptStrategy.isAccepted(candidateState, currentState) ? candidateState
-					: currentState;
-			return currentState;
+			boolean isAccepted = predictionAcceptStrategy.isAccepted(candidateState, currentState);
+			return isAccepted ? candidateState : currentState;
 		} else {
 			return currentState;
 		}
@@ -327,10 +327,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		this.stoppingCriterion = new StepLimitCriterion<>(samplingLimit);
 	}
 
-	public SamplingStrategy<StateT> getTrainingSamplingStrategy() {
-		return trainSamplingStrategy;
-	}
-
 	/**
 	 * Sets the sampling strategy for the training phase. The candidate state
 	 * that is used for training is selected from all possible successor states
@@ -338,12 +334,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	 * 
 	 * @param samplingStrategy
 	 */
-	public void setTrainingSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
+	public void setTrainSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.trainSamplingStrategy = samplingStrategy;
-	}
-
-	public AcceptStrategy<StateT> getTrainingAcceptStrategy() {
-		return trainAcceptStrategy;
 	}
 
 	/**
@@ -352,12 +344,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	 * 
 	 * @return
 	 */
-	public void setTrainingAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
+	public void setTrainAcceptStrategy(AcceptStrategy<StateT> acceptStrategy) {
 		this.trainAcceptStrategy = acceptStrategy;
-	}
-
-	public SamplingStrategy<StateT> getTestSamplingStrategy() {
-		return predictionSamplingStrategy;
 	}
 
 	/**
@@ -369,10 +357,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	 */
 	public void setTestSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.predictionSamplingStrategy = samplingStrategy;
-	}
-
-	public AcceptStrategy<StateT> getTestAcceptStrategy() {
-		return predictionAcceptStrategy;
 	}
 
 	/**

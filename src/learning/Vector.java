@@ -193,16 +193,21 @@ public class Vector implements Serializable {
 	}
 
 	public void normalize() {
-		double length = 0;
-		for (Entry<String, Double> feature : features.entrySet()) {
-			length += Math.pow(feature.getValue(), 2);
-		}
-		length = Math.sqrt(length);
+		double length = length();
 		if (length > 0) {
 			for (Entry<String, Double> feature : features.entrySet()) {
 				set(feature.getKey(), feature.getValue() / length);
 			}
 		}
+	}
+
+	public double length() {
+		double length = 0;
+		for (Entry<String, Double> feature : features.entrySet()) {
+			length += Math.pow(feature.getValue(), 2);
+		}
+		length = Math.sqrt(length);
+		return length;
 	}
 
 	@Override

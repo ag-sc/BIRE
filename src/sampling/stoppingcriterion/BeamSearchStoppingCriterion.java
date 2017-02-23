@@ -13,7 +13,7 @@ import variables.AbstractState;
  *
  * @param <StateT>
  */
-public interface StoppingCriterion<StateT extends AbstractState<?>> {
+public interface BeamSearchStoppingCriterion<StateT extends AbstractState<?>> {
 	/**
 	 * If true, the sampler will stop sampling and return the sampling chain
 	 * until that point. If false, the sampling proceeds.
@@ -22,5 +22,5 @@ public interface StoppingCriterion<StateT extends AbstractState<?>> {
 	 * @param step
 	 * @return
 	 */
-	public boolean checkCondition(List<StateT> chain, int step);
+	public boolean checkCondition(List<List<StateT>> chain, int step);
 }

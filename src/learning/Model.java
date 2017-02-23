@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -127,7 +128,7 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 	private AbstractTemplate<InstanceT, StateT, ?> loadTemplateWeights(File templateFile,
 			TemplateFactory<InstanceT, StateT> factory)
-					throws IOException, UnkownTemplateRequestedException, Exception {
+			throws IOException, UnkownTemplateRequestedException, Exception {
 		System.out.println(templateFile.getName());
 		System.out.println(Arrays.toString(templateFile.getName().split("\\.", 2)));
 		String templateName = templateFile.getName().split("\\.", 2)[0];
@@ -188,7 +189,9 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 		FileWriter fWriter = new FileWriter(templateFile);
 		BufferedWriter bWriter = new BufferedWriter(fWriter);
-		for (Entry<String, Double> feature : template.getWeights().getFeatures().entrySet()) {
+		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getFeatures().entrySet());
+		Collections.sort(sortedWeights, (o1, o2) -> -Double.compare(o1.getValue(), o2.getValue()));
+		for (Entry<String, Double> feature : sortedWeights) {
 			bWriter.write(feature.getKey() + "\t" + feature.getValue());
 			bWriter.newLine();
 		}
@@ -240,7 +243,8 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 			 */
 			Set<FactorScopeT> newFactorScopesForTemplate = sharedFactorPool
 					.extractNewFactorScopes(allGeneratedScopesForTemplate);
-			log.debug("%s new Factors for template %s", newFactorScopesForTemplate.size(), t.getClass().getSimpleName());
+			log.debug("%s new Factors for template %s", newFactorScopesForTemplate.size(),
+					t.getClass().getSimpleName());
 
 			scopesToCompute = newFactorScopesForTemplate;
 		}

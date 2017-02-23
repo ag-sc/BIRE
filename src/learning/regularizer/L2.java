@@ -19,4 +19,10 @@ public class L2 implements Regularizer {
 		return regularized;
 	}
 
+	@Override
+	public double penalize(Vector weights) {
+		double penalty = weights.length() * l2;
+		return penalty;
+	}
+
 }

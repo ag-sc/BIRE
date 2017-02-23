@@ -64,6 +64,34 @@ public class SamplingUtils {
 
 	}
 
+	public static <T> int drawFromDistribution(List<T> elements, Function<T, Double> toScore, boolean softmax) {
+		Function<Double, Double> toProbability = null;
+		if (softmax) {
+			toProbability = d -> Math.exp(d);
+		} else {
+			toProbability = d -> d;
+		}
+		// compute total sum of scores
+		double totalSum = 0;
+		double[] scores = new double[elements.size()];
+
+		int j = 0;
+		for (T s : elements) {
+			double prob = toProbability.apply(toScore.apply(s));
+			totalSum += prob;
+			scores[j] = prob;
+			j++;
+		}
+		double randomIndex = rand.nextDouble() * totalSum;
+		double sum = 0;
+		int i = 0;
+		while (sum < randomIndex) {
+			sum += scores[i++];
+		}
+		return Math.max(0, i - 1);
+
+	}
+
 	// TODO implement a "temperature" approach (simulated annealing)
 	/**
 	 * This function decides if the currentState should be replaced with the

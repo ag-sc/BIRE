@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,32 @@ import variables.AbstractState;
  * @param <StateT>
  */
 public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
+
+	public static class TrainingTriple<StateT> {
+		private StateT parentState;
+		private StateT candidateState;
+		private double sampleWeight;
+
+		public TrainingTriple(StateT parentState, StateT candidateState, double sampleWeight) {
+			super();
+			this.parentState = parentState;
+			this.candidateState = candidateState;
+			this.sampleWeight = sampleWeight;
+		}
+
+		public StateT getParentState() {
+			return parentState;
+		}
+
+		public StateT getCandidateState() {
+			return candidateState;
+		}
+
+		public double getSampleWeight() {
+			return sampleWeight;
+		}
+
+	}
 
 	private double margin = 0.1;
 
@@ -57,6 +84,7 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		this.optimizer = optimizer;
 		this.regularizer = regularizer;
 	}
+
 	public AdvancedLearner(Model<?, StateT> model, Optimizer optimizer, Regularizer regularizer, double margin) {
 		super();
 		this.model = model;
@@ -87,6 +115,12 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
+		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
+				.collect(Collectors.toList()));
+	}
+
+	@Override
+	public void update(List<TrainingTriple<StateT>> triples) {
 		Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			batchGradients.put(t, new Vector());
@@ -94,8 +128,7 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		/**
 		 * Rank each possible next state against the current state
 		 */
-		possibleNextStates.forEach(
-				possibleNextState -> collectMarginRankGradients(currentState, possibleNextState, batchGradients));
+		triples.forEach(t -> collectMarginRankGradients(t, batchGradients));
 
 		applyWeightUpdate(batchGradients);
 		updates++;
@@ -108,12 +141,14 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	 * @param possibleNextState
 	 * @param batchGradients
 	 */
-	private void collectMarginRankGradients(StateT currentState, StateT possibleNextState,
+	private void collectMarginRankGradients(TrainingTriple<StateT> triple,
 			Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients) {
+		StateT currentState = triple.getParentState();
+		StateT possibleNextState = triple.getCandidateState();
 		log.trace("Current:\t%s", currentState);
 		log.trace("Next:\t%s", possibleNextState);
 
-		double weightedDifferenceSum = 0;
+		double linearScore = 0;
 		/*
 		 * Collect differences of features for both states and remember
 		 * respective template
@@ -127,21 +162,22 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 			// currentState is NEG
 			posState = possibleNextState;
 			negState = currentState;
-
 		} else {
 			// currentState is POS
 			// possibleNextState is NEG
 			posState = currentState;
 			negState = possibleNextState;
-
 		}
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			Vector differences = VectorUtil.getFeatureDifferences(t, negState, posState);
 			featureDifferences.put(t, differences);
-			weightedDifferenceSum += differences.dotProduct(t.getWeights());
+			linearScore += differences.dotProduct(t.getWeights());
+			if (regularizer != null) {
+				linearScore -= regularizer.penalize(t.getWeights());
+			}
 		}
 
-		if (weightedDifferenceSum + margin >= 0) {
+		if (linearScore + margin >= 0) {
 			/*
 			 * gradient for weight w[i] is simply featureDifference[i].
 			 */
@@ -150,6 +186,11 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 				Vector weightGradient = featureDifferences.get(t);
 				if (regularizer != null) {
 					weightGradient = regularizer.regularize(weightGradient, t.getWeights());
+				}
+				if (triple.getSampleWeight() == 0) {
+					weightGradient = new Vector();
+				} else if (triple.getSampleWeight() != 1) {
+					weightGradient = weightGradient.mul(triple.getSampleWeight());
 				}
 				Vector templateBatchGradients = batchGradients.get(t);
 				templateBatchGradients.addToValue(weightGradient);

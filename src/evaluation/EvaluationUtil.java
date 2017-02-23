@@ -104,6 +104,7 @@ public class EvaluationUtil {
 		for (Entry<String, Double> e : features) {
 			log.info("%s: %s", featureWeightFormat.format(e.getValue()), e.getKey());
 		}
+		log.info("#Weights: %s", allWeights.size());
 	}
 
 	public static void printScores(List<Double> scores) {

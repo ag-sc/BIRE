@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import learning.AdvancedLearner.TrainingTriple;
 import templates.AbstractTemplate;
 import utility.VectorUtil;
 import variables.AbstractState;
@@ -66,6 +68,12 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 	 */
 	@Override
 	public void update(final StateT currentState, List<StateT> possibleNextStates) {
+		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
+				.collect(Collectors.toList()));
+	}
+
+	@Override
+	public void update(List<TrainingTriple<StateT>> triples) {
 		Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			weightGradients.put(t, new Vector());
@@ -73,11 +81,10 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		/**
 		 * Rank each possible next state against the current state
 		 */
-		possibleNextStates.forEach(
-				possibleNextState -> collectSampleRankGradients(currentState, possibleNextState, weightGradients));
+		triples.forEach(t -> collectSampleRankGradients(t.getParentState(), t.getCandidateState(), weightGradients));
 
 		if (normalize) {
-			applyWeightUpdate(weightGradients, possibleNextStates.size());
+			applyWeightUpdate(weightGradients, triples.size());
 		} else {
 			applyWeightUpdate(weightGradients, 1);
 		}

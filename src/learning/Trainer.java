@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.LabeledInstance;
 import corpus.SampledInstance;
+import sampling.IBeamSearchSampler;
 import sampling.Initializer;
 import sampling.Sampler;
 import variables.AbstractState;
@@ -149,8 +150,6 @@ public class Trainer {
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
-					// finalState.getFactorGraph().clear();
-					// finalState.getFactorGraph().getFactorPool().clear();
 					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
@@ -210,8 +209,72 @@ public class Trainer {
 				 * the current epoch is the final one.
 				 */
 				if (e == numberOfEpochs - 1) {
-					// finalState.getFactorGraph().clear();
-					// finalState.getFactorGraph().getFactorPool().clear();
+					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
+				}
+				log.info("===========================");
+				for (InstanceCallback c : instanceCallbacks) {
+					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
+				}
+				finalState.resetFactorGraph();
+			}
+			log.info("##############################");
+			for (EpochCallback c : epochCallbacks) {
+				c.onEndEpoch(this, e, numberOfEpochs, instances.size());
+			}
+		}
+		return finalStates;
+	}
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
+			IBeamSearchSampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer,
+			Learner<StateT> learner, List<InstanceT> instances, Function<InstanceT, ResultT> getResult,
+			int numberOfEpochs) {
+		Random random = new Random(100l);
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
+		long startTime = System.currentTimeMillis();
+		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
+		for (int e = 0; e < numberOfEpochs; e++) {
+			log.info("##############################");
+			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+			log.info("##############################");
+			for (EpochCallback c : epochCallbacks) {
+				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
+			}
+			Collections.shuffle(instances, random);
+			for (int i = 0; i < instances.size(); i++) {
+				InstanceT instance = instances.get(i);
+				ResultT goldResult = getResult.apply(instances.get(i));
+				log.info("===========TRAIN===========");
+				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
+				log.info("Gold Result: %s", goldResult);
+				log.info("Instance: %s", instance);
+				log.info("===========================");
+				for (InstanceCallback c : instanceCallbacks) {
+					c.onStartInstance(this, instance, i, instances.size(), e, numberOfEpochs);
+				}
+
+				StateT initialState = initializer.getInitialState(instance);
+				List<List<StateT>> generatedChain = sampler.generateChain(initialState, goldResult, learner);
+				List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
+				/*
+				 * Get the highest scoring state (by model score)
+				 */
+				StateT finalState = lastStepStates.stream()
+						.max((s1, s2) -> Double.compare(s1.getModelScore(), s2.getModelScore())).get();
+
+				long stopTime = System.currentTimeMillis();
+
+				log.info("++++++++++++++++");
+				log.info("Gold Result:   %s", goldResult);
+				log.info("Final State:  %s", finalState);
+				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
+				log.info("++++++++++++++++");
+
+				/*
+				 * Store the final predicted state for the current document if
+				 * the current epoch is the final one.
+				 */
+				if (e == numberOfEpochs - 1) {
 					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
@@ -297,6 +360,46 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(instance);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
+
+			finalState.getFactorGraph().clear();
+			finalState.getFactorGraph().getFactorPool().clear();
+			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
+			log.info("++++++++++++++++");
+			log.info("Gold Result:   %s", goldResult);
+			log.info("Final State:  %s", finalState);
+			log.info("++++++++++++++++");
+			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onEndInstance(this, instance, i, finalState, instances.size(), 1, 1);
+			}
+		}
+		return finalStates;
+	}
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> test(
+			IBeamSearchSampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer,
+			List<InstanceT> instances, Function<InstanceT, ResultT> getResult) {
+		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
+		for (int i = 0; i < instances.size(); i++) {
+			InstanceT instance = instances.get(i);
+			ResultT goldResult = getResult.apply(instances.get(i));
+			log.info("===========TEST============");
+			log.info("Document: %s/%s", i + 1, instances.size());
+			log.info("Content   : %s", instance);
+			log.info("Gold Result: %s", goldResult);
+			log.info("===========================");
+			for (InstanceCallback c : instanceCallbacks) {
+				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
+			}
+
+			StateT initialState = initializer.getInitialState(instance);
+			List<List<StateT>> generatedChain = sampler.generateChain(initialState);
+			List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
+			/*
+			 * Get the highest scoring state (by model score)
+			 */
+			StateT finalState = lastStepStates.stream()
+					.max((s1, s2) -> Double.compare(s1.getModelScore(), s2.getModelScore())).get();
 
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
