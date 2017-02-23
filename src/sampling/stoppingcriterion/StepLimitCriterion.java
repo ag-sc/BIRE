@@ -4,7 +4,7 @@ import java.util.List;
 
 import variables.AbstractState;
 
-public class StepLimitCriterion<StateT extends AbstractState> implements StoppingCriterion<StateT> {
+public class StepLimitCriterion<StateT extends AbstractState<?>> implements StoppingCriterion<StateT> {
 
 	private int maxSteps;
 

@@ -2,7 +2,7 @@ package sampling.samplingstrategies;
 
 import variables.AbstractState;
 
-public interface AcceptStrategy<StateT extends AbstractState> {
+public interface AcceptStrategy<StateT extends AbstractState<?>> {
 
 	/**
 	 * Returns true if the candidate state is accepted by this function and
