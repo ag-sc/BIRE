@@ -18,11 +18,11 @@ public class AlternatingSamplingStrategyCallback<StateT extends AbstractState<?>
 	@Override
 	public void onStartEpoch(Trainer caller, int epoch, int numberOfEpochs, int numberOfInstances) {
 		if (epoch % 2 == 0) {
-			sampler.setTrainSamplingStrategy(BeamSearchSamplingStrategies.greedyBeamSearchSamplingStrategy(beamSize,
-					s -> s.getObjectiveScore()));
+			sampler.setTrainSamplingStrategy(BeamSearchSamplingStrategies.greedyBeamSearchSamplingStrategyByModel(beamSize,
+					s -> s.getModelScore()));
 		} else {
 			sampler.setTrainSamplingStrategy(
-					BeamSearchSamplingStrategies.greedyBeamSearchSamplingStrategy(beamSize, s -> s.getModelScore()));
+					BeamSearchSamplingStrategies.greedyBeamSearchSamplingStrategyByObjective(beamSize, s -> s.getObjectiveScore()));
 		}
 	}
 
