@@ -16,7 +16,7 @@ public interface IBeamSearchSampler<StateT extends AbstractState<?>, ResultT> {
 	 * @param learner
 	 * @return
 	 */
-	public List<List<StateT>> generateChain(StateT initialState, ResultT goldResult, Learner<StateT> learner);
+	public List<List<StateT>> generateChain(List<StateT> initialStates, ResultT goldResult, Learner<StateT> learner);
 
 	/**
 	 * Generates a chain of states starting at the initial state.
@@ -24,6 +24,6 @@ public interface IBeamSearchSampler<StateT extends AbstractState<?>, ResultT> {
 	 * @param initialState
 	 * @return
 	 */
-	public List<List<StateT>> generateChain(StateT initialState);
+	public List<List<StateT>> generateChain(List<StateT> initialStates);
 
 }

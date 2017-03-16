@@ -254,7 +254,9 @@ public class Trainer {
 				}
 
 				StateT initialState = initializer.getInitialState(instance);
-				List<List<StateT>> generatedChain = sampler.generateChain(initialState, goldResult, learner);
+                                List<StateT> initialStates = new ArrayList<>();
+                                initialStates.add(initialState);
+				List<List<StateT>> generatedChain = sampler.generateChain(initialStates, goldResult, learner);
 				List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
 				/*
 				 * Get the highest scoring state (by model score)
@@ -393,7 +395,9 @@ public class Trainer {
 			}
 
 			StateT initialState = initializer.getInitialState(instance);
-			List<List<StateT>> generatedChain = sampler.generateChain(initialState);
+                        List<StateT> initialStates = new ArrayList<>();
+                        initialStates.add(initialState);
+			List<List<StateT>> generatedChain = sampler.generateChain(initialStates);
 			List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
 			/*
 			 * Get the highest scoring state (by model score)
