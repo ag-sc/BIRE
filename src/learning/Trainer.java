@@ -107,14 +107,21 @@ public class Trainer {
 	 * @return
 	 */
 
+	public boolean stopTraining = false;
+	public Random random = new Random(100l);
+
 	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
 			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, Learner<StateT> learner,
 			List<? extends LabeledInstance<InstanceT, ResultT>> instances, int numberOfEpochs) {
-		Random random = new Random(100l);
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
 		for (int e = 0; e < numberOfEpochs; e++) {
+			if (stopTraining) {
+				log.info("Stop training from outside call!");
+				break;
+			}
+
 			log.info("##############################");
 			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
 			log.info("##############################");
@@ -124,7 +131,7 @@ public class Trainer {
 			Collections.shuffle(instances, random);
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i).getInstance();
-				ResultT goldResult = instances.get(i).getResult();
+				ResultT goldResult = instances.get(i).getGoldAnnotation();
 				log.info("===========TRAIN===========");
 				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
@@ -140,7 +147,7 @@ public class Trainer {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold Result:   %s", goldResult);
+				// log.info("Gold Result: %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -254,8 +261,8 @@ public class Trainer {
 				}
 
 				StateT initialState = initializer.getInitialState(instance);
-                                List<StateT> initialStates = new ArrayList<>();
-                                initialStates.add(initialState);
+				List<StateT> initialStates = new ArrayList<>();
+				initialStates.add(initialState);
 				List<List<StateT>> generatedChain = sampler.generateChain(initialStates, goldResult, learner);
 				List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
 				/*
@@ -314,11 +321,11 @@ public class Trainer {
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		for (int i = 0; i < instances.size(); i++) {
 			InstanceT instance = instances.get(i).getInstance();
-			ResultT goldResult = instances.get(i).getResult();
+			ResultT goldResult = instances.get(i).getGoldAnnotation();
 			log.info("===========TEST============");
 			log.info("Document: %s/%s", i + 1, instances.size());
 			log.info("Content   : %s", instance);
-			log.info("Gold Result: %s", instances.get(i).getResult());
+			log.info("Gold Result: %s", instances.get(i).getGoldAnnotation());
 			log.info("===========================");
 			for (InstanceCallback c : instanceCallbacks) {
 				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
@@ -395,8 +402,8 @@ public class Trainer {
 			}
 
 			StateT initialState = initializer.getInitialState(instance);
-                        List<StateT> initialStates = new ArrayList<>();
-                        initialStates.add(initialState);
+			List<StateT> initialStates = new ArrayList<>();
+			initialStates.add(initialState);
 			List<List<StateT>> generatedChain = sampler.generateChain(initialStates);
 			List<StateT> lastStepStates = generatedChain.get(generatedChain.size() - 1);
 			/*

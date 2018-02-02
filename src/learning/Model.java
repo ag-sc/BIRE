@@ -283,6 +283,11 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 		Set<Factor<FactorScopeT>> factors = stream.map(p -> {
 			Factor<FactorScopeT> f = new Factor<>(p);
 			t.computeFactor(f);
+			/*
+			 * Comment out but still visible through call hierarchy
+			 */
+			if (false)
+				f.getFeatureVector().normalize();
 			return f;
 		}).collect(Collectors.toSet());
 

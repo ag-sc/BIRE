@@ -12,6 +12,6 @@ public interface LabeledInstance<InstanceT, ResultT> {
 
 	public InstanceT getInstance();
 
-	public ResultT getResult();
+	public ResultT getGoldAnnotation();
 
 }

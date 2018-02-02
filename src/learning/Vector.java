@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class Vector implements Serializable {
 
-	private static final double DEFAULT_VALUE = 0;
+	private static final Double DEFAULT_VALUE = 0.0;
 	private HashMap<String, Double> features;
 
 	/**
@@ -25,11 +25,12 @@ public class Vector implements Serializable {
 	}
 
 	public void set(String feature, Double value) {
-		if (value != 0) {
+		if (value != 0.0) {
 			features.put(feature, value);
 		} else {
 			features.remove(feature);
 		}
+
 	}
 
 	public void set(String feature, boolean flag) {
@@ -212,6 +213,7 @@ public class Vector implements Serializable {
 
 	@Override
 	public String toString() {
+
 		return features.toString();
 	}
 }

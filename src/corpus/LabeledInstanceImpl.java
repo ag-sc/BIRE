@@ -33,7 +33,7 @@ public class LabeledInstanceImpl<InstanceT, ResultT> implements LabeledInstance<
 		return instance;
 	}
 
-	public ResultT getResult() {
+	public ResultT getGoldAnnotation() {
 		return result;
 	}
 
