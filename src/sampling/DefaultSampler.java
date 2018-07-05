@@ -233,106 +233,110 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				 */
 				model.score(allStates, currentState.getInstance());
 			}
-			// /**
-			// * Sample one possible successor
-			// */
-			// StateT candidateState =
-			// trainSamplingStrategy.sampleCandidate(nextStates);
-			//
-			// /**
-			// * If states were not scored before score only selected candidate
-			// * and current state.
-			// */
-			// if (!trainSamplingStrategy.usesObjective()) {
-			// /**
-			// * Compute objective function scores
-			// */
-			// scoreWithObjective(Arrays.asList(currentState, candidateState),
-			// goldResult);
-			// }
-			// if (!trainSamplingStrategy.usesModel()) {
-			// /**
-			// * Apply templates to current and candidate state only
-			// */
-			// System.out.println("Apply Model score: ");
-			// System.out.println(currentState);
-			// System.out.println(candidateState);
-			// System.out.println("######");
-			// model.score(Arrays.asList(currentState, candidateState),
-			// currentState.getInstance());
-			// }
-			// /**
-			// * Update model with selected state
-			// */
-			// learner.update(currentState, candidateState);
-			// /**
-			// * Choose to accept or reject selected state
-			// */
-			// boolean isAccepted =
-			// trainAcceptStrategy.isAccepted(candidateState, currentState);
-			//
-			// return isAccepted ? candidateState : currentState;
+
+			return sampleRank(learner, goldResult, currentState, nextStates);
+
+			// return modifiedSampleRank(learner, goldResult, currentState,
+			// nextStates, allStates);
+		}
+
+		return currentState;
+	}
+
+	private StateT modifiedSampleRank(Learner<StateT> learner, ResultT goldResult, StateT currentState,
+			List<StateT> nextStates, List<StateT> allStates) {
+		/**
+		 * Sample one possible successor
+		 */
+		StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
+		/**
+		 * NEW UNTESTED!
+		 */
+
+		if (trainSamplingStrategy.usesModel()) {
 
 			/**
-			 * Sample one possible successor
+			 * If states were not scored before score only selected candidate
+			 * and current state.
 			 */
-			StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
 			/**
-			 * NEW UNTESTED!
+			 * Compute objective function scores
 			 */
-
-			if (trainSamplingStrategy.usesModel()) {
+			scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+			/**
+			 * Update model with selected state
+			 */
+			learner.update(currentState, candidateState);
+			/**
+			 * Choose to accept or reject selected state
+			 */
+			boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
+			for (SamplingCallback callBack : samplingCallbacks) {
+				callBack.onScoredProposalStates(allStates);
+			}
+			return isAccepted ? candidateState : currentState;
+		} else {
+			/**
+			 * Choose to accept or reject selected state
+			 */
+			boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
+			// System.out.println("isAccepted = " + isAccepted);
+			if (isAccepted) {
 
 				/**
-				 * If states were not scored before score only selected
-				 * candidate and current state.
+				 * Apply templates to current and candidate state only
 				 */
-				/**
-				 * Compute objective function scores
-				 */
-				scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+				// System.out.println("Apply Model score: ");
+				// System.out.println(currentState);
+				// System.out.println(candidateState);
+				// System.out.println("######");
+				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
+
 				/**
 				 * Update model with selected state
 				 */
 				learner.update(currentState, candidateState);
-				/**
-				 * Choose to accept or reject selected state
-				 */
-				boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
-				for (SamplingCallback callBack : samplingCallbacks) {
-					callBack.onScoredProposalStates(allStates);
-				}
-				return isAccepted ? candidateState : currentState;
-			} else {
-				/**
-				 * Choose to accept or reject selected state
-				 */
-				boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
-				// System.out.println("isAccepted = " + isAccepted);
-				if (isAccepted) {
-
-					/**
-					 * Apply templates to current and candidate state only
-					 */
-					// System.out.println("Apply Model score: ");
-					// System.out.println(currentState);
-					// System.out.println(candidateState);
-					// System.out.println("######");
-					model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
-
-					/**
-					 * Update model with selected state
-					 */
-					learner.update(currentState, candidateState);
-				}
-				for (SamplingCallback callBack : samplingCallbacks) {
-					callBack.onScoredProposalStates(allStates);
-				}
-				return isAccepted ? candidateState : currentState;
 			}
+			for (SamplingCallback callBack : samplingCallbacks) {
+				callBack.onScoredProposalStates(allStates);
+			}
+			return isAccepted ? candidateState : currentState;
 		}
+	}
 
-		return currentState;
+	private StateT sampleRank(Learner<StateT> learner, ResultT goldResult, StateT currentState,
+			List<StateT> nextStates) {
+		/**
+		 * Sample one possible successor
+		 */
+		StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
+
+		/**
+		 * If states were not scored before score only selected candidate and
+		 * current state.
+		 */
+		if (!trainSamplingStrategy.usesObjective()) {
+			/**
+			 * Compute objective function scores
+			 */
+			scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+		}
+		if (!trainSamplingStrategy.usesModel()) {
+			/**
+			 * Apply templates to current and candidate state only
+			 */
+			model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
+		}
+		/**
+		 * Update model with selected state
+		 */
+		learner.update(currentState, candidateState);
+		/**
+		 * Choose to accept or reject selected state
+		 */
+		boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
+
+		return isAccepted ? candidateState : currentState;
 	}
 
 	/**
@@ -357,8 +361,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			 */
 
 			model.score(allStates, currentState.getInstance());
-			
-			
+
 			/**
 			 * Select a candidate state from the list of possible successors.
 			 */
@@ -387,8 +390,10 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		log.debug("Score %s states according to objective...", allStates.size() + 1);
 		Stream<StateT> stream = Utils.getStream(allStates, multiThreaded);
 		// long t = System.currentTimeMillis();
-		// System.out.println("Score: states: " + allStates.size());
 		stream.forEach(s -> objective.score(s, goldResult));
+		// System.out.println("Score: states: ");
+		// allStates.forEach(System.out::println);
+		// System.out.println("#######");
 		// System.out.println("Time: " + (System.currentTimeMillis() - t));
 
 	}
@@ -424,6 +429,26 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	 */
 	public void setTrainSamplingStrategy(SamplingStrategy<StateT> samplingStrategy) {
 		this.trainSamplingStrategy = samplingStrategy;
+	}
+
+	public SamplingStrategy<StateT> getPredictionSamplingStrategy() {
+		return predictionSamplingStrategy;
+	}
+
+	public void setPredictionSamplingStrategy(SamplingStrategy<StateT> predictionSamplingStrategy) {
+		this.predictionSamplingStrategy = predictionSamplingStrategy;
+	}
+
+	public AcceptStrategy<StateT> getPredictionAcceptStrategy() {
+		return predictionAcceptStrategy;
+	}
+
+	public void setPredictionAcceptStrategy(AcceptStrategy<StateT> predictionAcceptStrategy) {
+		this.predictionAcceptStrategy = predictionAcceptStrategy;
+	}
+
+	public SamplingStrategy<StateT> getTrainSamplingStrategy() {
+		return trainSamplingStrategy;
 	}
 
 	/**
