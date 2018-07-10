@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.LabeledInstance;
 import corpus.SampledInstance;
+import sampling.DefaultSampler;
 import sampling.IBeamSearchSampler;
 import sampling.Initializer;
 import sampling.Sampler;
@@ -151,7 +152,6 @@ public class Trainer {
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
-
 				/*
 				 * Store the final predicted state for the current document if
 				 * the current epoch is the final one.
@@ -176,7 +176,6 @@ public class Trainer {
 	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
 			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, Learner<StateT> learner,
 			List<InstanceT> instances, Function<InstanceT, ResultT> getResult, int numberOfEpochs) {
-		Random random = new Random(100l);
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
@@ -236,7 +235,6 @@ public class Trainer {
 			IBeamSearchSampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer,
 			Learner<StateT> learner, List<InstanceT> instances, Function<InstanceT, ResultT> getResult,
 			int numberOfEpochs) {
-		Random random = new Random(100l);
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());

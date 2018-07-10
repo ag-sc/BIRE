@@ -4,6 +4,20 @@ import learning.Vector;
 
 public class SGD implements Optimizer {
 
+	public static void main(String[] args) {
+
+		double a = 0.001;
+		double d = 0.0001;
+		double end = -1;
+		for (int i = 0; i < 20000; i++) {
+			end = (a * (1.0 / (1.0 + d * i)));
+		
+			if(i%1000==0)
+				System.out.println(end);
+		}
+		System.out.println(end);
+	}
+
 	private double alpha = 0.001;
 	private double momentum = 0.0;
 	private double decay = 0.0;
@@ -27,8 +41,7 @@ public class SGD implements Optimizer {
 	@Override
 	public Vector getUpdates(Vector theta, Vector gradient) {
 		t++;
-		double alpha_t = alpha * (1.0 / 1.0 + decay * t);
-		System.out.println("## "+alpha_t+" ##");
+		double alpha_t = alpha * (1.0 / (1.0 + decay * t));
 		if (momentum == 0 && decay == 0 && !nesterov) {
 			// perform sparse updates
 			theta.subtractFromValue(gradient.mul(alpha_t));
@@ -45,28 +58,28 @@ public class SGD implements Optimizer {
 		return theta;
 	}
 
-	public static void main(String[] args) {
-		Vector theta = new Vector();
-		theta.set("x1", 1.0);
-		theta.set("x2", 1.0);
-
-		SGD adam = new SGD(0.001, 0.9, 0, false);
-		for (int t = 0; t < 200; t++) {
-			double x1 = theta.getValueOfFeature("x1");
-			double x2 = theta.getValueOfFeature("x2");
-			double loss = 1.0 / 2.0 * Math.pow(x1 * 2 + x2 * 4, 2);
-
-			System.out.println();
-			System.out.println("Time:     " + t);
-			System.out.println("Theta:    " + theta);
-			Vector g = new Vector();
-			g.set("x1", 4 * (x1 + 2 * x2));
-			g.set("x2", 8 * (x1 + 2 * x2));
-			System.out.println("Loss:     " + loss);
-			System.out.println("Gradient: " + g);
-			theta = adam.getUpdates(theta, g);
-			System.out.println("Theta:    " + theta);
-		}
-	}
+	// public static void main(String[] args) {
+	// Vector theta = new Vector();
+	// theta.set("x1", 1.0);
+	// theta.set("x2", 1.0);
+	//
+	// SGD adam = new SGD(0.001, 0.9, 0, false);
+	// for (int t = 0; t < 200; t++) {
+	// double x1 = theta.getValueOfFeature("x1");
+	// double x2 = theta.getValueOfFeature("x2");
+	// double loss = 1.0 / 2.0 * Math.pow(x1 * 2 + x2 * 4, 2);
+	//
+	// System.out.println();
+	// System.out.println("Time: " + t);
+	// System.out.println("Theta: " + theta);
+	// Vector g = new Vector();
+	// g.set("x1", 4 * (x1 + 2 * x2));
+	// g.set("x2", 8 * (x1 + 2 * x2));
+	// System.out.println("Loss: " + loss);
+	// System.out.println("Gradient: " + g);
+	// theta = adam.getUpdates(theta, g);
+	// System.out.println("Theta: " + theta);
+	// }
+	// }
 
 }
