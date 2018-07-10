@@ -28,6 +28,7 @@ public class SGD implements Optimizer {
 	public Vector getUpdates(Vector theta, Vector gradient) {
 		t++;
 		double alpha_t = alpha * (1.0 / 1.0 + decay * t);
+		System.out.println("## "+alpha_t+" ##");
 		if (momentum == 0 && decay == 0 && !nesterov) {
 			// perform sparse updates
 			theta.subtractFromValue(gradient.mul(alpha_t));
