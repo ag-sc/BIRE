@@ -45,6 +45,11 @@ public class SGD implements Optimizer {
 		return theta;
 	}
 
+	@Override
+	public double getCurrentAlphaValue() {
+		return alpha;
+	}
+
 	// public static void main(String[] args) {
 	// Vector theta = new Vector();
 	// theta.set("x1", 1.0);

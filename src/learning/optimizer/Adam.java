@@ -43,7 +43,7 @@ public class Adam implements Optimizer {
 		Vector denom = v_t.sqrt().add(epsilon);
 		Vector diff = nom.div(denom);
 		theta = theta.sub(diff);
-		
+
 //		System.out.println("Grad: " + gradient);
 //		System.out.println("m:    " + m);
 //		System.out.println("m_t:  " + m_t);
@@ -82,6 +82,11 @@ public class Adam implements Optimizer {
 			theta = adam.getUpdates(theta, g);
 			System.out.println("Theta:    " + theta);
 		}
+	}
+
+	@Override
+	public double getCurrentAlphaValue() {
+		return alpha;
 	}
 
 }
