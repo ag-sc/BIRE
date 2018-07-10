@@ -4,20 +4,6 @@ import learning.Vector;
 
 public class SGD implements Optimizer {
 
-	public static void main(String[] args) {
-
-		double a = 0.001;
-		double d = 0.0001;
-		double end = -1;
-		for (int i = 0; i < 20000; i++) {
-			end = (a * (1.0 / (1.0 + d * i)));
-		
-			if(i%1000==0)
-				System.out.println(end);
-		}
-		System.out.println(end);
-	}
-
 	private double alpha = 0.001;
 	private double momentum = 0.0;
 	private double decay = 0.0;
@@ -42,6 +28,7 @@ public class SGD implements Optimizer {
 	public Vector getUpdates(Vector theta, Vector gradient) {
 		t++;
 		double alpha_t = alpha * (1.0 / (1.0 + decay * t));
+
 		if (momentum == 0 && decay == 0 && !nesterov) {
 			// perform sparse updates
 			theta.subtractFromValue(gradient.mul(alpha_t));
