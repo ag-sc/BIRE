@@ -45,10 +45,9 @@ public class Trainer {
 
 	/**
 	 * This object is a basically a helper that iterates over data instances and
-	 * triggers the generation of sampling chains for the provided documents.
-	 * </br>
-	 * The <b>train</b> function should be used for training while <b>test</b>
-	 * and <b>predict</b> can be used to evaluate the trained model.
+	 * triggers the generation of sampling chains for the provided documents. </br>
+	 * The <b>train</b> function should be used for training while <b>test</b> and
+	 * <b>predict</b> can be used to evaluate the trained model.
 	 */
 	public Trainer() {
 		super();
@@ -90,14 +89,13 @@ public class Trainer {
 	}
 
 	/**
-	 * This method iterates over the provided training instances and generates
-	 * for each such instance a sampling chain using the <i>sampler</i> object.
-	 * The chain is initialized by the <i>initializer</i> which creates an
-	 * initial state based on the training instance. After each step in the
-	 * sampling chain, the sampler notifies the <i>learner</i> to update the
-	 * model w.r.t. the generated next states. The overall training iterates
-	 * <i>numberOfEpochs</i> times over the training data. The final sampling
-	 * state for each document is returned.
+	 * This method iterates over the provided training instances and generates for
+	 * each such instance a sampling chain using the <i>sampler</i> object. The
+	 * chain is initialized by the <i>initializer</i> which creates an initial state
+	 * based on the training instance. After each step in the sampling chain, the
+	 * sampler notifies the <i>learner</i> to update the model w.r.t. the generated
+	 * next states. The overall training iterates <i>numberOfEpochs</i> times over
+	 * the training data. The final sampling state for each document is returned.
 	 * 
 	 * @param sampler
 	 * @param initializer
@@ -117,7 +115,7 @@ public class Trainer {
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
-		for (int e = 0; e < numberOfEpochs; e++) {
+		for (int e = 1; e <= numberOfEpochs; e++) {
 			if (stopTraining) {
 				log.info("Stop training from outside call!");
 				break;
@@ -153,10 +151,10 @@ public class Trainer {
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
 				/*
-				 * Store the final predicted state for the current document if
-				 * the current epoch is the final one.
+				 * Store the final predicted state for the current document if the current epoch
+				 * is the final one.
 				 */
-				if (e == numberOfEpochs - 1) {
+				if (e == numberOfEpochs) {
 					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
@@ -179,9 +177,9 @@ public class Trainer {
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
-		for (int e = 0; e < numberOfEpochs; e++) {
+		for (int e = 1; e <= numberOfEpochs; e++) {
 			log.info("##############################");
-			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+			log.info("Epoch: %s/%s", e, numberOfEpochs);
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
@@ -191,7 +189,7 @@ public class Trainer {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = getResult.apply(instances.get(i));
 				log.info("===========TRAIN===========");
-				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
+				log.info("Epoch: %s/%s; Instance: %s/%s", e, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
 				log.info("Instance: %s", instance);
 				log.info("===========================");
@@ -211,10 +209,10 @@ public class Trainer {
 				log.info("++++++++++++++++");
 
 				/*
-				 * Store the final predicted state for the current document if
-				 * the current epoch is the final one.
+				 * Store the final predicted state for the current document if the current epoch
+				 * is the final one.
 				 */
-				if (e == numberOfEpochs - 1) {
+				if (e == numberOfEpochs) {
 					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
@@ -238,7 +236,7 @@ public class Trainer {
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
-		for (int e = 0; e < numberOfEpochs; e++) {
+		for (int e = 1; e < numberOfEpochs; e++) {
 			log.info("##############################");
 			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
 			log.info("##############################");
@@ -250,7 +248,7 @@ public class Trainer {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = getResult.apply(instances.get(i));
 				log.info("===========TRAIN===========");
-				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
+				log.info("Epoch: %s/%s; Instance: %s/%s", e, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
 				log.info("Instance: %s", instance);
 				log.info("===========================");
@@ -278,10 +276,10 @@ public class Trainer {
 				log.info("++++++++++++++++");
 
 				/*
-				 * Store the final predicted state for the current document if
-				 * the current epoch is the final one.
+				 * Store the final predicted state for the current document if the current epoch
+				 * is the final one.
 				 */
-				if (e == numberOfEpochs - 1) {
+				if (e == numberOfEpochs) {
 					finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 				}
 				log.info("===========================");
@@ -299,13 +297,12 @@ public class Trainer {
 	}
 
 	/**
-	 * This method iterates over the provided training instances and generates
-	 * for each such instance a sampling chain using the <i>sampler</i> object.
-	 * The chain is initialized by the <i>initializer</i> which creates an
-	 * initial state based on the training instance. The final sampling state
-	 * for each document is returned. This method differs from the
-	 * <b>predict</b> only by a more detailed logging, since it has knowledge
-	 * about the expected result for each document.
+	 * This method iterates over the provided training instances and generates for
+	 * each such instance a sampling chain using the <i>sampler</i> object. The
+	 * chain is initialized by the <i>initializer</i> which creates an initial state
+	 * based on the training instance. The final sampling state for each document is
+	 * returned. This method differs from the <b>predict</b> only by a more detailed
+	 * logging, since it has knowledge about the expected result for each document.
 	 * 
 	 * @param sampler
 	 * @param initializer
@@ -426,11 +423,11 @@ public class Trainer {
 	}
 
 	/**
-	 * This method iterates over the provided instances and generates for each
-	 * such instance a sampling chain using the <i>sampler</i> object. The chain
-	 * is initialized by the <i>initializer</i> which creates an initial state
-	 * based on the training instance. The final sampling state for each
-	 * document is returned.
+	 * This method iterates over the provided instances and generates for each such
+	 * instance a sampling chain using the <i>sampler</i> object. The chain is
+	 * initialized by the <i>initializer</i> which creates an initial state based on
+	 * the training instance. The final sampling state for each document is
+	 * returned.
 	 * 
 	 * @param sampler
 	 * @param initializer
