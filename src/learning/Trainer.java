@@ -122,7 +122,7 @@ public class Trainer {
 			}
 
 			log.info("##############################");
-			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+			log.info("Epoch: %s/%s", e, numberOfEpochs);
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
@@ -132,7 +132,7 @@ public class Trainer {
 				InstanceT instance = instances.get(i).getInstance();
 				ResultT goldResult = instances.get(i).getGoldAnnotation();
 				log.info("===========TRAIN===========");
-				log.info("Epoch: %s/%s; Instance: %s/%s", e + 1, numberOfEpochs, i + 1, instances.size());
+				log.info("Epoch: %s/%s; Instance: %s/%s", e, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
 				log.info("Instance: %s", instance);
 				log.info("===========================");
@@ -238,7 +238,7 @@ public class Trainer {
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
 		for (int e = 1; e < numberOfEpochs; e++) {
 			log.info("##############################");
-			log.info("Epoch: %s/%s", e + 1, numberOfEpochs);
+			log.info("Epoch: %s/%s", e, numberOfEpochs);
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
