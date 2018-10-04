@@ -51,9 +51,9 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 	protected Scorer scorer;
 
 	/**
-	 * The model contains a collection of templates that can generate factors
-	 * (and features) for a given state. The model's weights are stored in the
-	 * templates and shared across all their respective factors.
+	 * The model contains a collection of templates that can generate factors (and
+	 * features) for a given state. The model's weights are stored in the templates
+	 * and shared across all their respective factors.
 	 *
 	 * @param templates
 	 */
@@ -71,9 +71,9 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 	}
 
 	/**
-	 * If set to true, all possible factors that can be created for a given
-	 * state are always recomputed when the model is applied to a state. This
-	 * means that there is no efficient handling of already computed factors.
+	 * If set to true, all possible factors that can be created for a given state
+	 * are always recomputed when the model is applied to a state. This means that
+	 * there is no efficient handling of already computed factors.
 	 *
 	 * @param forceFactorComputation
 	 */
@@ -129,8 +129,6 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 	private AbstractTemplate<InstanceT, StateT, ?> loadTemplateWeights(File templateFile,
 			TemplateFactory<InstanceT, StateT> factory)
 			throws IOException, UnkownTemplateRequestedException, Exception {
-		System.out.println(templateFile.getName());
-		System.out.println(Arrays.toString(templateFile.getName().split("\\.", 2)));
 		String templateName = templateFile.getName().split("\\.", 2)[0];
 
 		log.info("Load Template %s from file %s ...", templateName, templateFile);
@@ -221,8 +219,8 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, List<StateT> states) {
 		log.debug("Apply template \"%s\" to %s states.", t.getClass().getSimpleName(), states.size());
 		/*
-		 * Collect all Factor scopes of all states to which this template can be
-		 * applied (in parallel).
+		 * Collect all Factor scopes of all states to which this template can be applied
+		 * (in parallel).
 		 */
 		Set<FactorScopeT> allGeneratedScopesForTemplate = generateScopesAndAddToStates(t, states);
 
@@ -238,8 +236,7 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 			scopesToCompute = allGeneratedScopesForTemplate;
 		} else {
 			/*
-			 * Extract only the ones which are not already associate with a
-			 * factor.
+			 * Extract only the ones which are not already associate with a factor.
 			 */
 			Set<FactorScopeT> newFactorScopesForTemplate = sharedFactorPool
 					.extractNewFactorScopes(allGeneratedScopesForTemplate);

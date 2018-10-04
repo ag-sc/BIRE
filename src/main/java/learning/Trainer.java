@@ -146,7 +146,8 @@ public class Trainer {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				// log.info("Gold Result: %s", goldResult);
+				if (log.isDebugEnabled())
+					log.info("Gold Result: %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -203,7 +204,8 @@ public class Trainer {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold Result:   %s", goldResult);
+				if (log.isDebugEnabled())
+					log.info("Gold Result:   %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -270,7 +272,8 @@ public class Trainer {
 				long stopTime = System.currentTimeMillis();
 
 				log.info("++++++++++++++++");
-				log.info("Gold Result:   %s", goldResult);
+				if (log.isDebugEnabled())
+					log.info("Gold Result:   %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
@@ -334,7 +337,8 @@ public class Trainer {
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
-			log.info("Gold Result:   %s", goldResult);
+			if (log.isDebugEnabled())
+				log.info("Gold Result:   %s", goldResult);
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 			log.info("===========================");
@@ -369,7 +373,8 @@ public class Trainer {
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
-			log.info("Gold Result:   %s", goldResult);
+			if (log.isDebugEnabled())
+				log.info("Gold Result:   %s", goldResult);
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 			log.info("===========================");
@@ -411,7 +416,8 @@ public class Trainer {
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
-			log.info("Gold Result:   %s", goldResult);
+			if (log.isDebugEnabled())
+				log.info("Gold Result:   %s", goldResult);
 			log.info("Final State:  %s", finalState);
 			log.info("++++++++++++++++");
 			log.info("===========================");
