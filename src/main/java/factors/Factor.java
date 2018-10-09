@@ -61,8 +61,8 @@ public class Factor<FactorScopeT extends FactorScope> implements Serializable {
 		return factorScope.getTemplate();
 	}
 
-	@Override
-	public String toString() {
-		return "Factor [factorID=" + factorID + ", factorScope=" + factorScope + ", features=" + features + "]";
-	}
+//	@Override
+//	public String toString() {
+//		return "Factor [factorID=" + factorID + ", factorScope=" + factorScope + ", features=" + features + "]";
+//	}
 }

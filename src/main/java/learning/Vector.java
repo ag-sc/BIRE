@@ -12,15 +12,15 @@ public class Vector implements Serializable {
 	private HashMap<String, Double> features;
 
 	/**
-	 * This class basically wraps a Map of feature names and values.
-	 * Additionally, it provides convenience functions for some of the
-	 * computations during the learning process.
+	 * This class basically wraps a Map of feature names and values. Additionally,
+	 * it provides convenience functions for some of the computations during the
+	 * learning process.
 	 */
 	public Vector() {
 		features = new HashMap<String, Double>();
 	}
 
-	public Vector(Vector v) {
+	private Vector(Vector v) {
 		features = new HashMap<String, Double>(v.features);
 	}
 
@@ -28,7 +28,7 @@ public class Vector implements Serializable {
 		if (value != 0.0) {
 			features.put(feature, value);
 		} else {
-			features.remove(feature);
+			remove(feature);
 		}
 
 	}
@@ -70,9 +70,9 @@ public class Vector implements Serializable {
 		set(feature, featureValue);
 	}
 
-	public boolean hasValueForFeature(String feature) {
-		return features.containsKey(feature);
-	}
+//	public boolean hasValueForFeature(String feature) {
+//		return features.containsKey(feature);
+//	}
 
 	/*
 	 * *********************
@@ -100,6 +100,14 @@ public class Vector implements Serializable {
 	}
 
 	public Vector mul(double f) {
+		Vector result = new Vector();
+		for (Entry<String, Double> feature : features.entrySet()) {
+			result.set(feature.getKey(), feature.getValue() * f);
+		}
+		return result;
+	}
+
+	public Vector mul_FAST(double f) {
 		Vector result = new Vector();
 		for (Entry<String, Double> feature : features.entrySet()) {
 			result.set(feature.getKey(), feature.getValue() * f);
@@ -165,6 +173,12 @@ public class Vector implements Serializable {
 		return result;
 	}
 
+	public void addFAST(Vector v) {
+		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
+			addToValue(feature.getKey(), feature.getValue());
+		}
+	}
+
 	public Vector add(double c) {
 		Vector result = new Vector();
 		for (Entry<String, Double> feature : features.entrySet()) {
@@ -179,6 +193,12 @@ public class Vector implements Serializable {
 			result.addToValue(feature.getKey(), -feature.getValue());
 		}
 		return result;
+	}
+
+	public void subFAST(Vector v) {
+		for (Entry<String, Double> feature : v.getFeatures().entrySet()) {
+			addToValue(feature.getKey(), -feature.getValue());
+		}
 	}
 
 	public void addToValue(Vector v) {

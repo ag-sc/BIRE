@@ -33,14 +33,19 @@ public class SGD implements Optimizer {
 			// perform sparse updates
 			theta.subtractFromValue(gradient.mul(alpha_t));
 		} else {
-			v = m.mul(momentum).sub(gradient.mul(alpha_t));
-
-			if (nesterov) {
-				theta = theta.add(v.mul(momentum).sub(gradient.mul(alpha_t)));
-			} else {
-				theta = theta.add(v);
+			if(momentum ==0) {
+				theta.subtractFromValue(gradient.mul(alpha_t));
+			}else{
+				
+				v = m.mul(momentum).sub(gradient.mul(alpha_t));
+				
+				if (nesterov) {
+					theta = theta.add(v.mul(momentum).sub(gradient.mul(alpha_t)));
+				} else {
+					theta = theta.add(v);
+				}
+				m = v;
 			}
-			m = v;
 		}
 		return theta;
 	}

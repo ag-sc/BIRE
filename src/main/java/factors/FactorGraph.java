@@ -10,9 +10,9 @@ import exceptions.MissingFactorException;
 public class FactorGraph implements Serializable {
 
 	/**
-	 * The factor pool stores computed factors w.r.t their variables. This object
-	 * is shared across several factor graphs so that individual states do not
-	 * need to recompute existing, previously computed factors.
+	 * The factor pool stores computed factors w.r.t their variables. This object is
+	 * shared across several factor graphs so that individual states do not need to
+	 * recompute existing, previously computed factors.
 	 */
 	private FactorPool factorPool;
 	private Collection<FactorScope> factorScope;
@@ -21,7 +21,6 @@ public class FactorGraph implements Serializable {
 		this.factorPool = FactorPool.getInstance();
 		this.factorScope = new ConcurrentLinkedQueue<>();
 	}
-
 
 	public void addFactorScopes(List<? extends FactorScope> generatedFactorScopes) {
 		this.factorScope.addAll(generatedFactorScopes);

@@ -9,9 +9,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -25,8 +25,8 @@ import org.apache.logging.log4j.Logger;
 import exceptions.UnkownTemplateRequestedException;
 import factors.Factor;
 import factors.FactorGraph;
-import factors.FactorScope;
 import factors.FactorPool;
+import factors.FactorScope;
 import learning.scorer.Scorer;
 import templates.AbstractTemplate;
 import templates.TemplateFactory;
@@ -204,14 +204,21 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 	public void score(List<StateT> states, InstanceT instance) {
 		log.debug("Apply %s templates to %s states.", templates.size(), states.size());
+
 		for (StateT state : states) {
 			state.getFactorGraph().clear();
 		}
 
-		Stream<AbstractTemplate<InstanceT, StateT, ?>> stream = Utils.getStream(templates, multiThreaded);
-		stream.forEach(t -> {
-			applyTemplatesShared(t, states);
-		});
+		if (multiThreaded) {
+			templates.parallelStream().forEach(t -> {
+				applyTemplatesShared(t, states);
+			});
+		} else {
+			for (AbstractTemplate<InstanceT, StateT, ?> template : templates) {
+				applyTemplatesShared(template, states);
+			}
+		}
+
 		scorer.score(states, multiThreaded);
 	}
 
@@ -257,6 +264,7 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 	private <FactorScopeT extends FactorScope> Set<FactorScopeT> generateScopesAndAddToStates(
 			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, List<StateT> states) {
+
 		Stream<StateT> stream = Utils.getStream(states, multiThreaded);
 		Set<FactorScopeT> allGeneratedScopesForTemplate = ConcurrentHashMap.newKeySet();
 

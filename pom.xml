@@ -16,15 +16,29 @@
 			<artifactId>guava</artifactId>
 			<version>23.6-jre</version>
 		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.logging.log4j</groupId> -->
+		<!-- <artifactId>log4j-api</artifactId> -->
+		<!-- <version>2.4.1</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.logging.log4j</groupId> -->
+		<!-- <artifactId>log4j-core</artifactId> -->
+		<!-- <version>2.4.1</version> -->
+		<!-- </dependency> -->
+
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>2.4.1</version>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>apache-jena-libs</artifactId>
+			<version>3.8.0</version>
+			<type>pom</type>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.4.1</version>
+			<version>2.11.1</version>
 		</dependency>
 	</dependencies>
 

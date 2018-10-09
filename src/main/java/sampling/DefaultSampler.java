@@ -2,7 +2,6 @@ package sampling;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -44,7 +43,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 
 	}
 
-	private static Logger log = LogManager.getFormatterLogger();
+	private static Logger log = LogManager.getFormatterLogger(DefaultSampler.class);
+
 	protected Model<InstanceT, StateT> model;
 	protected ObjectiveFunction<StateT, ResultT> objective;
 	private List<Explorer<StateT>> explorers;
@@ -89,11 +89,10 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * The DefaultSampler implements the Sampler interface. This sampler divides
-	 * the sampling procedure in the exploration of the search space (using
-	 * Explorers) and the actual sampling that happens in this class. It is
-	 * designed to be flexible in the actual sampling strategy and the stopping
-	 * criterion.
+	 * The DefaultSampler implements the Sampler interface. This sampler divides the
+	 * sampling procedure in the exploration of the search space (using Explorers)
+	 * and the actual sampling that happens in this class. It is designed to be
+	 * flexible in the actual sampling strategy and the stopping criterion.
 	 * 
 	 * @param model
 	 * @param scorer
@@ -104,6 +103,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	public DefaultSampler(Model<InstanceT, StateT> model, ObjectiveFunction<StateT, ResultT> objective,
 			List<Explorer<StateT>> explorers, StoppingCriterion<StateT> stoppingCriterion) {
 		super();
+
 		this.model = model;
 		this.objective = objective;
 		this.explorers = explorers;
@@ -111,12 +111,11 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * The DefaultSampler implements the Sampler interface. This sampler divides
-	 * the sampling procedure in the exploration of the search space (using
-	 * Explorers) and the actual sampling that happens in this class. It is
-	 * designed to be flexible in the actual sampling strategy and the stopping
-	 * criterion. This constructor uses a simple step limit as the stopping
-	 * criterion.
+	 * The DefaultSampler implements the Sampler interface. This sampler divides the
+	 * sampling procedure in the exploration of the search space (using Explorers)
+	 * and the actual sampling that happens in this class. It is designed to be
+	 * flexible in the actual sampling strategy and the stopping criterion. This
+	 * constructor uses a simple step limit as the stopping criterion.
 	 * 
 	 * @param model
 	 * @param scorer
@@ -195,8 +194,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Generates states, computes features, scores states, and updates the
-	 * model. After that a successor state is selected.
+	 * Generates states, computes features, scores states, and updates the model.
+	 * After that a successor state is selected.
 	 * 
 	 * @param learner
 	 * @param explorer
@@ -217,8 +216,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		if (nextStates.size() > 0) {
 			allStates.add(currentState);
 			/**
-			 * Score all states with Objective/Model only if sampling strategy
-			 * needs that. If not, score only selected candidate and current.
+			 * Score all states with Objective/Model only if sampling strategy needs that.
+			 * If not, score only selected candidate and current.
 			 */
 			if (trainSamplingStrategy.usesObjective()) {
 				/**
@@ -228,14 +227,12 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			}
 			if (trainSamplingStrategy.usesModel()) {
 				/**
-				 * Apply templates to states and, thus generate factors and
-				 * features
+				 * Apply templates to states and, thus generate factors and features
 				 */
 				model.score(allStates, currentState.getInstance());
 			}
 
 			return sampleRank(learner, goldResult, currentState, nextStates);
-
 			// return modifiedSampleRank(learner, goldResult, currentState,
 			// nextStates, allStates);
 		}
@@ -256,8 +253,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		if (trainSamplingStrategy.usesModel()) {
 
 			/**
-			 * If states were not scored before score only selected candidate
-			 * and current state.
+			 * If states were not scored before score only selected candidate and current
+			 * state.
 			 */
 			/**
 			 * Compute objective function scores
@@ -312,8 +309,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
 
 		/**
-		 * If states were not scored before score only selected candidate and
-		 * current state.
+		 * If states were not scored before score only selected candidate and current
+		 * state.
 		 */
 		if (!trainSamplingStrategy.usesObjective()) {
 			/**
@@ -340,8 +337,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Generates states, computes features and scores states. After that a
-	 * successor state is selected.
+	 * Generates states, computes features and scores states. After that a successor
+	 * state is selected.
 	 * 
 	 * @param explorer
 	 * @param currentState
@@ -407,8 +404,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Set the stopping criterion for the sampling chain. This function can be
-	 * used to change the stopping criterion for the test phase.
+	 * Set the stopping criterion for the sampling chain. This function can be used
+	 * to change the stopping criterion for the test phase.
 	 * 
 	 * @param stoppingCriterion
 	 */
@@ -421,9 +418,9 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Sets the sampling strategy for the training phase. The candidate state
-	 * that is used for training is selected from all possible successor states
-	 * using this strategy.
+	 * Sets the sampling strategy for the training phase. The candidate state that
+	 * is used for training is selected from all possible successor states using
+	 * this strategy.
 	 * 
 	 * @param samplingStrategy
 	 */
@@ -452,8 +449,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Sets the strategy for accepting a sampled candidate state as the next
-	 * state in the training phase.
+	 * Sets the strategy for accepting a sampled candidate state as the next state
+	 * in the training phase.
 	 * 
 	 * @return
 	 */
@@ -462,9 +459,9 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Sets the sampling strategy for the training phase. The candidate state
-	 * that is used for training is selected from all possible successor states
-	 * using this strategy.
+	 * Sets the sampling strategy for the training phase. The candidate state that
+	 * is used for training is selected from all possible successor states using
+	 * this strategy.
 	 * 
 	 * @param samplingStrategy
 	 */
@@ -473,8 +470,8 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 	}
 
 	/**
-	 * Sets the strategy for accepting a sampled candidate state as the next
-	 * state in the training phase.
+	 * Sets the strategy for accepting a sampled candidate state as the next state
+	 * in the training phase.
 	 * 
 	 * @return
 	 */

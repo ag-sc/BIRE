@@ -34,13 +34,13 @@ public class VectorUtil {
 		for (Factor<?> factor : factors1) {
 			if (factor.getTemplate() == template) {
 				Vector featureVector = factor.getFeatureVector();
-				diff = diff.add(featureVector);
+				diff.addFAST(featureVector);
 			}
 		}
 		for (Factor<?> factor : factors2) {
 			if (factor.getTemplate() == template) {
 				Vector featureVector = factor.getFeatureVector();
-				diff = diff.sub(featureVector);
+				diff.subFAST(featureVector);
 			}
 		}
 		return diff;

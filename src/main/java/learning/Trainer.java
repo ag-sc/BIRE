@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.LabeledInstance;
 import corpus.SampledInstance;
-import sampling.DefaultSampler;
 import sampling.IBeamSearchSampler;
 import sampling.Initializer;
 import sampling.Sampler;
@@ -41,7 +40,7 @@ public class Trainer {
 		}
 	}
 
-	private static Logger log = LogManager.getFormatterLogger();
+	private static Logger log = LogManager.getFormatterLogger(Trainer.class.getName());
 
 	/**
 	 * This object is a basically a helper that iterates over data instances and
@@ -120,7 +119,6 @@ public class Trainer {
 				log.info("Stop training from outside call!");
 				break;
 			}
-
 			log.info("##############################");
 			log.info("Epoch: %s/%s", e, numberOfEpochs);
 			log.info("##############################");
@@ -163,6 +161,7 @@ public class Trainer {
 					c.onEndInstance(this, instance, i, finalState, instances.size(), e, numberOfEpochs);
 				}
 				finalState.resetFactorGraph();
+
 			}
 			log.info("##############################");
 			for (EpochCallback c : epochCallbacks) {
@@ -453,7 +452,6 @@ public class Trainer {
 			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
-
 			finalState.getFactorGraph().clear();
 			finalState.getFactorGraph().getFactorPool().clear();
 			finalStates.add(finalState);

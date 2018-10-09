@@ -73,6 +73,10 @@ public class FactorPool {
 		return factorVariables2Factor.values();
 	}
 
+	public Set<FactorScope> getAllFactorScopes() {
+		return factorVariables2Factor.keySet();
+	}
+
 	public void clear() {
 		factorVariables2Factor.clear();
 		factorVariables2Factor = new ConcurrentHashMap<>();
