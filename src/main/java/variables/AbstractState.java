@@ -59,7 +59,7 @@ public abstract class AbstractState<InstanceT> implements Serializable {
 		this(state.instance);
 		this.modelScore = state.modelScore;
 		this.objectiveScore = state.objectiveScore;
-		this.factorGraph = new FactorGraph();
+//		this.factorGraph = new FactorGraph();
 //		this.factorGraph = new FactorGraph(state.factorGraph);
 	}
 
