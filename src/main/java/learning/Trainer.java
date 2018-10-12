@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import corpus.LabeledInstance;
 import corpus.SampledInstance;
+import factors.FactorPool;
 import sampling.IBeamSearchSampler;
 import sampling.Initializer;
 import sampling.Sampler;
@@ -111,6 +112,9 @@ public class Trainer {
 	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> train(
 			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, Learner<StateT> learner,
 			List<? extends LabeledInstance<InstanceT, ResultT>> instances, int numberOfEpochs) {
+
+		FactorPool.getInstance().clear();
+
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		long startTime = System.currentTimeMillis();
 		log.info("#Epochs=%s, #Instances=%s", numberOfEpochs, instances.size());
@@ -125,7 +129,7 @@ public class Trainer {
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
-			Collections.shuffle(instances, random);
+			Collections.shuffle(instances, new Random(random.nextLong()));
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i).getInstance();
 				ResultT goldResult = instances.get(i).getGoldAnnotation();
@@ -184,7 +188,7 @@ public class Trainer {
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
-			Collections.shuffle(instances, random);
+			Collections.shuffle(instances, new Random(random.nextLong()));
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = getResult.apply(instances.get(i));
@@ -244,7 +248,7 @@ public class Trainer {
 			for (EpochCallback c : epochCallbacks) {
 				c.onStartEpoch(this, e, numberOfEpochs, instances.size());
 			}
-			Collections.shuffle(instances, random);
+			Collections.shuffle(instances, new Random(random.nextLong()));
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i);
 				ResultT goldResult = getResult.apply(instances.get(i));
@@ -351,6 +355,9 @@ public class Trainer {
 	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> List<SampledInstance<InstanceT, ResultT, StateT>> test(
 			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer, List<InstanceT> instances,
 			Function<InstanceT, ResultT> getResult) {
+
+		FactorPool.getInstance().clear();
+
 		List<SampledInstance<InstanceT, ResultT, StateT>> finalStates = new ArrayList<>();
 		for (int i = 0; i < instances.size(); i++) {
 			InstanceT instance = instances.get(i);
@@ -442,6 +449,9 @@ public class Trainer {
 	 */
 	public <InstanceT, StateT extends AbstractState<InstanceT>> List<StateT> predict(Sampler<StateT, ?> sampler,
 			Initializer<InstanceT, StateT> initializer, List<InstanceT> documents) {
+
+		FactorPool.getInstance().clear();
+
 		List<StateT> finalStates = new ArrayList<>();
 		for (int d = 0; d < documents.size(); d++) {
 			InstanceT document = documents.get(d);
