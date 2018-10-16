@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.jena.tdb.setup.BuilderStdDB.ObjectFileBuilderStd;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -141,10 +143,11 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 
 		do {
 			log.info("---------------------------");
-			int e = 0;
+			int e = 1;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("TRAINING Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
+
 				for (StepCallback c : stepCallbacks) {
 					c.onStartStep(this, step, e, explorers.size(), initialState);
 				}
@@ -155,6 +158,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				for (StepCallback c : stepCallbacks) {
 					c.onEndStep(this, step, e, explorers.size(), initialState, currentState);
 				}
+
 				e++;
 			}
 			step++;
@@ -172,7 +176,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		int step = 0;
 		do {
 			log.info("---------------------------");
-			int e = 0;
+			int e = 1;
 			for (Explorer<StateT> explorer : explorers) {
 				log.info("...............");
 				log.info("PREDICTION Step: %s; Explorer: %s", step + 1, explorer.getClass().getSimpleName());
@@ -206,15 +210,19 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 
 	protected StateT performTrainingStep(Learner<StateT> learner, Explorer<StateT> explorer, ResultT goldResult,
 			StateT currentState) {
-		log.debug("TRAINING Step:");
-		log.debug("Current State:\n%s", currentState);
+		if (log.getLevel().equals(Level.DEBUG)) {
+			log.debug("TRAINING Step:");
+			log.debug("Current State:\n%s", currentState);
+		}
 		/**
 		 * Generate possible successor states.
 		 */
 		List<StateT> nextStates = explorer.getNextStates(currentState);
-		List<StateT> allStates = new ArrayList<>(nextStates);
+
+//		List<StateT> allStates = new ArrayList<>(nextStates);
+
 		if (nextStates.size() > 0) {
-			allStates.add(currentState);
+//			allStates.add(currentState);
 			/**
 			 * Score all states with Objective/Model only if sampling strategy needs that.
 			 * If not, score only selected candidate and current.
@@ -223,13 +231,26 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				/**
 				 * Compute objective function scores
 				 */
-				scoreWithObjective(allStates, goldResult);
+//				scoreWithObjective(allStates, goldResult);
+
+				{
+					scoreWithObjective(nextStates, goldResult);
+//					objective.score(currentState, goldResult);
+				}
 			}
 			if (trainSamplingStrategy.usesModel()) {
 				/**
 				 * Apply templates to states and, thus generate factors and features
 				 */
-				model.score(allStates, currentState.getInstance());
+				/**
+				 * TODO: Test
+				 * 
+				 */
+				{
+//					model.score(Arrays.asList(currentState), currentState.getInstance());
+					model.score(nextStates);
+				}
+//				model.score(allStates, currentState.getInstance());
 			}
 
 			return sampleRank(learner, goldResult, currentState, nextStates);
@@ -287,7 +308,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				// System.out.println(currentState);
 				// System.out.println(candidateState);
 				// System.out.println("######");
-				model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
+				model.score(Arrays.asList(currentState, candidateState));
 
 				/**
 				 * Update model with selected state
@@ -303,6 +324,7 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 
 	private StateT sampleRank(Learner<StateT> learner, ResultT goldResult, StateT currentState,
 			List<StateT> nextStates) {
+
 		/**
 		 * Sample one possible successor
 		 */
@@ -316,13 +338,16 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			/**
 			 * Compute objective function scores
 			 */
-			scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+//			scoreWithObjective(Arrays.asList(currentState, candidateState), goldResult);
+//			scoreWithObjective(Arrays.asList(candidateState), goldResult);
+			objective.score(candidateState, goldResult);
 		}
 		if (!trainSamplingStrategy.usesModel()) {
 			/**
 			 * Apply templates to current and candidate state only
 			 */
-			model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
+//			model.score(Arrays.asList(currentState, candidateState), currentState.getInstance());
+			model.score(Arrays.asList(candidateState));
 		}
 		/**
 		 * Update model with selected state
@@ -351,13 +376,13 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		 */
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 		if (nextStates.size() > 0) {
-			List<StateT> allStates = new ArrayList<>(nextStates);
-			allStates.add(currentState);
+//			List<StateT> allStates = new ArrayList<>(nextStates);
+//			allStates.add(currentState);
 			/**
 			 * Apply templates to states and thus generate factors and features
 			 */
 
-			model.score(allStates, currentState.getInstance());
+			model.score(nextStates);
 
 			/**
 			 * Select a candidate state from the list of possible successors.

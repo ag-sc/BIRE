@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import evaluation.TaggedTimer;
-import learning.AdvancedLearner.TrainingTriple;
 import learning.Learner;
 import learning.Model;
 import learning.ObjectiveFunction;
@@ -88,11 +87,10 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * The DefaultSampler implements the Sampler interface. This sampler divides
-	 * the sampling procedure in the exploration of the search space (using
-	 * Explorers) and the actual sampling that happens in this class. It is
-	 * designed to be flexible in the actual sampling strategy and the stopping
-	 * criterion.
+	 * The DefaultSampler implements the Sampler interface. This sampler divides the
+	 * sampling procedure in the exploration of the search space (using Explorers)
+	 * and the actual sampling that happens in this class. It is designed to be
+	 * flexible in the actual sampling strategy and the stopping criterion.
 	 *
 	 * @param model
 	 * @param scorer
@@ -184,8 +182,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * Generates states, computes features, scores states, and updates the
-	 * model. After that a successor state is selected.
+	 * Generates states, computes features, scores states, and updates the model.
+	 * After that a successor state is selected.
 	 *
 	 * @param learner
 	 * @param explorer
@@ -215,8 +213,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 		}
 
 		/**
-		 * Score all states with Objective/Model only if sampling strategy needs
-		 * that. If not, score only selected candidate and current.
+		 * Score all states with Objective/Model only if sampling strategy needs that.
+		 * If not, score only selected candidate and current.
 		 */
 
 		if (trainSamplingStrategy.usesObjective()) {
@@ -230,7 +228,7 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 			/**
 			 * Apply templates to states and, thus generate factors and features
 			 */
-			model.score(allStates, currentStates.get(0).getInstance());
+			model.score(allStates);
 		}
 		/**
 		 * Sample one possible successor
@@ -242,8 +240,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 				.collect(Collectors.toList());
 
 		/**
-		 * If states were not scored before score only selected candidate and
-		 * current state.
+		 * If states were not scored before score only selected candidate and current
+		 * state.
 		 */
 		if (!trainSamplingStrategy.usesObjective()) {
 			/**
@@ -258,7 +256,7 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 			List<StateT> scoredStates = new ArrayList<>();
 			scoredStates.addAll(currentStates);
 			scoredStates.addAll(candidateStates);
-			model.score(scoredStates, scoredStates.get(0).getInstance());
+			model.score(scoredStates);
 		}
 		/**
 		 * Update model with selected state
@@ -269,14 +267,16 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 		// s2.getCandidateState().getModelScore())).get();
 		// learner.update(best.getParentState(), best.getCandidateState());
 
-		List<TrainingTriple<StateT>> trainingTriples = candidateStatePairs.stream()
-				.map(p -> new TrainingTriple<>(p.getParentState(), p.getCandidateState(), 1.0))
-				.collect(Collectors.toList());
-		// for (StatePair<StateT> candidateStatePair : candidateStatePairs) {
-		// StateT candidateState = candidateStatePair.getCandidateState();
-		// StateT currentState = candidateStatePair.getParentState();
-		learner.update(trainingTriples);
-		// }
+//		List<TrainingTriple<StateT>> trainingTriples = candidateStatePairs.stream()
+//				.map(p -> new TrainingTriple<>(p.getParentState(), p.getCandidateState(), 1.0))
+//				.collect(Collectors.toList());
+
+		for (StatePair<StateT> candidateStatePair : candidateStatePairs) {
+			StateT candidateState = candidateStatePair.getCandidateState();
+			StateT currentState = candidateStatePair.getParentState();
+			learner.update(currentState, candidateState);
+		}
+//		 learner.update(trainingTriples);
 
 		Set<StateT> acceptedStates = new HashSet<>();
 		for (StatePair<StateT> candidateStatePair : candidateStatePairs) {
@@ -292,8 +292,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * Generates states, computes features and scores states. After that a
-	 * successor state is selected.
+	 * Generates states, computes features and scores states. After that a successor
+	 * state is selected.
 	 *
 	 * @param explorer
 	 * @param currentState
@@ -319,15 +319,15 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 		}
 
 		/**
-		 * Score all states with Objective/Model only if sampling strategy needs
-		 * that. If not, score only selected candidate and current.
+		 * Score all states with Objective/Model only if sampling strategy needs that.
+		 * If not, score only selected candidate and current.
 		 */
 
 		/**
 		 * Apply templates to states and, thus generate factors and features
 		 */
 
-		model.score(allStates, currentStates.get(0).getInstance());
+		model.score(allStates);
 
 		/**
 		 * Sample one possible successor
@@ -381,8 +381,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * Set the stopping criterion for the sampling chain. This function can be
-	 * used to change the stopping criterion for the test phase.
+	 * Set the stopping criterion for the sampling chain. This function can be used
+	 * to change the stopping criterion for the test phase.
 	 *
 	 * @param stoppingCriterion
 	 */
@@ -391,9 +391,9 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * Sets the sampling strategy for the training phase. The candidate state
-	 * that is used for training is selected from all possible successor states
-	 * using this strategy.
+	 * Sets the sampling strategy for the training phase. The candidate state that
+	 * is used for training is selected from all possible successor states using
+	 * this strategy.
 	 *
 	 * @param samplingStrategy
 	 */
@@ -406,8 +406,8 @@ public class BeamSearchSampler<InstanceT, StateT extends AbstractState<InstanceT
 	}
 
 	/**
-	 * Sets the strategy for accepting a sampled candidate state as the next
-	 * state in the training phase.
+	 * Sets the strategy for accepting a sampled candidate state as the next state
+	 * in the training phase.
 	 *
 	 * @return
 	 */

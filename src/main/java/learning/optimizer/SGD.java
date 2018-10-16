@@ -55,6 +55,12 @@ public class SGD implements Optimizer {
 		return alpha;
 	}
 
+	@Override
+	public String toString() {
+		return "SGD [alpha=" + alpha + ", momentum=" + momentum + ", decay=" + decay + ", nesterov=" + nesterov + ", m="
+				+ m + ", v=" + v + ", t=" + t + "]";
+	}
+
 	// public static void main(String[] args) {
 	// Vector theta = new Vector();
 	// theta.set("x1", 1.0);

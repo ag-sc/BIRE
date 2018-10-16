@@ -2,12 +2,12 @@ package factors;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,13 +17,14 @@ import exceptions.MissingFactorException;
 public class FactorPool {
 
 	private static Logger log = LogManager.getFormatterLogger();
-	private Map<FactorScope, Factor<? extends FactorScope>> factorVariables2Factor;
+	final private Map<FactorScope, Factor<? extends FactorScope>> factorVariables2Factor = new HashMap<>();
 
 	private static FactorPool sharedInstance = null;
 	public String name = "";
 
 	private FactorPool() {
-		factorVariables2Factor = new ConcurrentHashMap<>();
+//		factorVariables2Factor = new HashMap<>();
+//		factorVariables2Factor = new ConcurrentHashMap<>();
 	}
 
 	public static FactorPool getInstance() {
@@ -33,14 +34,15 @@ public class FactorPool {
 		return sharedInstance;
 	}
 
-	public <FactorVariablesT extends FactorScope> Set<FactorVariablesT> extractNewFactorScopes(
+//	public  Set<FactorVariablesT> extractNewFactorScopes(
+	public <FactorVariablesT extends FactorScope> void filterNewFactorScopes(
 			Set<FactorVariablesT> generatedFactors) {
 
 		Set<FactorScope> variablesFromMap = this.factorVariables2Factor.keySet();
-		Set<FactorVariablesT> newFactors = new HashSet<>(generatedFactors);
-		newFactors.removeAll(variablesFromMap);
+//		Set<FactorVariablesT> newFactors = new HashSet<>(generatedFactors);
+		generatedFactors.removeAll(variablesFromMap);
 
-		return newFactors;
+//		return generatedFactors;
 	}
 
 	public List<Factor<? extends FactorScope>> getFactors(Collection<? extends FactorScope> factorVariablesList)
@@ -49,9 +51,11 @@ public class FactorPool {
 		// repeating elements) but to return a list of tuples (count, factor).
 		// This avoids processing of several identical factors.
 		List<Factor<? extends FactorScope>> factors = new ArrayList<>();
+
 		for (FactorScope factorVariables : factorVariablesList) {
-			if (factorVariables2Factor.containsKey(factorVariables)) {
-				Factor<? extends FactorScope> factor = factorVariables2Factor.get(factorVariables);
+
+			Factor<? extends FactorScope> factor;
+			if ((factor = factorVariables2Factor.get(factorVariables)) != null) {
 				factors.add(factor);
 			} else {
 				log.error("Could not retrieve factor for requested factor variables: %s", factorVariables);
@@ -79,7 +83,8 @@ public class FactorPool {
 
 	public void clear() {
 		factorVariables2Factor.clear();
-		factorVariables2Factor = new ConcurrentHashMap<>();
+//		factorVariables2Factor = new ConcurrentHashMap<>();
+//		factorVariables2Factor = new HashMap<>();
 	}
 
 	@Override

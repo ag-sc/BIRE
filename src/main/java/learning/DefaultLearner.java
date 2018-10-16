@@ -1,16 +1,12 @@
 package learning;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import learning.AdvancedLearner.TrainingTriple;
 import templates.AbstractTemplate;
 import utility.VectorUtil;
 import variables.AbstractState;
@@ -30,11 +26,11 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 	protected double l2 = 0.01;
 
 	/**
-	 * This implementation of the learner implements the SampleRank learning
-	 * scheme. Very generally speaking, given a pair of states, the learner
-	 * changes the weights of the model such that the scores of the model are
-	 * aligned with the preference of the objective function. As a slight
-	 * modification, this implementation allows mini-batch updates.
+	 * This implementation of the learner implements the SampleRank learning scheme.
+	 * Very generally speaking, given a pair of states, the learner changes the
+	 * weights of the model such that the scores of the model are aligned with the
+	 * preference of the objective function. As a slight modification, this
+	 * implementation allows mini-batch updates.
 	 * 
 	 * @param model
 	 * @param alpha
@@ -46,34 +42,34 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		this.currentAlpha = this.alpha;
 	}
 
-	/**
-	 * Performs a model update according to a learning scheme (currently
-	 * SampleRank). The update step is scaled with the provided alpha value.
-	 * 
-	 * @param currentState
-	 * @param possibleNextState
-	 */
+//	/**
+//	 * Performs a model update according to a learning scheme (currently
+//	 * SampleRank). The update step is scaled with the provided alpha value.
+//	 * 
+//	 * @param currentState
+//	 * @param possibleNextState
+//	 */
 	@Override
 	public void update(StateT currentState, StateT possibleNextState) {
-		update(currentState, Arrays.asList(possibleNextState));
-	}
-
-	/**
-	 * Performs a model update according to a learning scheme (currently
-	 * SampleRank). The update step is scaled with the provided alpha value and
-	 * normalized with the number of states in this batch.
-	 * 
-	 * @param currentState
-	 * @param possibleNextStates
-	 */
-	@Override
-	public void update(final StateT currentState, List<StateT> possibleNextStates) {
-		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
-				.collect(Collectors.toList()));
-	}
-
-	@Override
-	public void update(List<TrainingTriple<StateT>> triples) {
+//		update(currentState, Arrays.asList(possibleNextState));
+//	}
+//
+//	/**
+//	 * Performs a model update according to a learning scheme (currently
+//	 * SampleRank). The update step is scaled with the provided alpha value and
+//	 * normalized with the number of states in this batch.
+//	 * 
+//	 * @param currentState
+//	 * @param possibleNextStates
+//	 */
+//	@Override
+//	public void update(final StateT currentState, List<StateT> possibleNextStates) {
+//		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
+//				.collect(Collectors.toList()));
+//	}
+//
+//	@Override
+//	public void update(List<TrainingTriple<StateT>> triples) {
 		Map<AbstractTemplate<?, StateT, ?>, Vector> weightGradients = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			weightGradients.put(t, new Vector());
@@ -81,13 +77,13 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 		/**
 		 * Rank each possible next state against the current state
 		 */
-		triples.forEach(t -> collectSampleRankGradients(t.getParentState(), t.getCandidateState(), weightGradients));
-
-		if (normalize) {
-			applyWeightUpdate(weightGradients, triples.size());
-		} else {
+//		triples.forEach(t -> collectSampleRankGradients(t.getParentState(), t.getCandidateState(), weightGradients));
+		collectSampleRankGradients(currentState, possibleNextState, weightGradients);
+//		if (normalize) {
+//			applyWeightUpdate(weightGradients, triples.size());
+//		} else {
 			applyWeightUpdate(weightGradients, 1);
-		}
+//		}
 		updates++;
 	}
 
@@ -105,8 +101,8 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 
 		double weightedDifferenceSum = 0;
 		/*
-		 * Collect differences of features for both states and remember
-		 * respective template
+		 * Collect differences of features for both states and remember respective
+		 * template
 		 */
 		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
@@ -124,11 +120,10 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 	}
 
 	/**
-	 * The features present in the vectors in the featureDifferences map are
-	 * update according to their respective difference and the given direction.
-	 * Since the feature difference (times the direction) is used as the update
-	 * step, differences of 0 are not applied since they do not change the
-	 * weight anyway.
+	 * The features present in the vectors in the featureDifferences map are update
+	 * according to their respective difference and the given direction. Since the
+	 * feature difference (times the direction) is used as the update step,
+	 * differences of 0 are not applied since they do not change the weight anyway.
 	 * 
 	 * @param featureDifferences
 	 * @param learningDirection
@@ -172,10 +167,10 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 	}
 
 	/**
-	 * Compares the objective scores of the state1 and state2 using the
-	 * precomputed objective scores to decide if state1 is preferred over
-	 * state2. Note: The objective scores are merely accessed but not
-	 * recomputed. This step needs to be done before.
+	 * Compares the objective scores of the state1 and state2 using the precomputed
+	 * objective scores to decide if state1 is preferred over state2. Note: The
+	 * objective scores are merely accessed but not recomputed. This step needs to
+	 * be done before.
 	 * 
 	 * @param state1
 	 * @param state2

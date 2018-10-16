@@ -25,31 +25,31 @@ import variables.AbstractState;
  */
 public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner<StateT> {
 
-	public static class TrainingTriple<StateT> {
-		private StateT parentState;
-		private StateT candidateState;
-		private double sampleWeight;
-
-		public TrainingTriple(StateT parentState, StateT candidateState, double sampleWeight) {
-			super();
-			this.parentState = parentState;
-			this.candidateState = candidateState;
-			this.sampleWeight = sampleWeight;
-		}
-
-		public StateT getParentState() {
-			return parentState;
-		}
-
-		public StateT getCandidateState() {
-			return candidateState;
-		}
-
-		public double getSampleWeight() {
-			return sampleWeight;
-		}
-
-	}
+//	public static class TrainingTriple<StateT> {
+//		private StateT parentState;
+//		private StateT candidateState;
+//		private double sampleWeight;
+//
+//		public TrainingTriple(StateT parentState, StateT candidateState, double sampleWeight) {
+//			super();
+//			this.parentState = parentState;
+//			this.candidateState = candidateState;
+//			this.sampleWeight = sampleWeight;
+//		}
+//
+//		public StateT getParentState() {
+//			return parentState;
+//		}
+//
+//		public StateT getCandidateState() {
+//			return candidateState;
+//		}
+//
+//		public double getSampleWeight() {
+//			return sampleWeight;
+//		}
+//
+//	}
 
 	private double margin = 0.1;
 
@@ -63,11 +63,11 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	private Regularizer regularizer;
 
 	/**
-	 * This implementation of the learner implements the SampleRank learning
-	 * scheme. Very generally speaking, given a pair of states, the learner
-	 * changes the weights of the model such that the scores of the model are
-	 * aligned with the preference of the objective function. As a slight
-	 * modification, this implementation allows mini-batch updates.
+	 * This implementation of the learner implements the SampleRank learning scheme.
+	 * Very generally speaking, given a pair of states, the learner changes the
+	 * weights of the model such that the scores of the model are aligned with the
+	 * preference of the objective function. As a slight modification, this
+	 * implementation allows mini-batch updates.
 	 * 
 	 * @param model
 	 * @param alpha
@@ -102,25 +102,28 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	 */
 	@Override
 	public void update(StateT currentState, StateT possibleNextState) {
-		update(currentState, Arrays.asList(possibleNextState));
-	}
+//		update(currentState, Arrays.asList(possibleNextState));
+//	}
+//
+//	/**
+//	 * Performs a model update according to a learning scheme (currently
+//	 * SampleRank). The update step is scaled with the provided alpha value and
+//	 * normalized with the number of states in this batch.
+//	 * 
+//	 * @param currentState
+//	 * @param possibleNextStates
+//	 */
+//	@Override
+//	public void update(final StateT currentState, List<StateT> possibleNextStates) {
 
-	/**
-	 * Performs a model update according to a learning scheme (currently
-	 * SampleRank). The update step is scaled with the provided alpha value and
-	 * normalized with the number of states in this batch.
-	 * 
-	 * @param currentState
-	 * @param possibleNextStates
-	 */
-	@Override
-	public void update(final StateT currentState, List<StateT> possibleNextStates) {
-		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
-				.collect(Collectors.toList()));
-	}
+//		update(possibleNextStates.stream().map(s -> new TrainingTriple<>(currentState, s, 1))
+//				.collect(Collectors.toList()));
+//	}
+//
+//	
+//	@Override
+//	public void update(List<TrainingTriple<StateT>> triples) {
 
-	@Override
-	public void update(List<TrainingTriple<StateT>> triples) {
 		Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients = new HashMap<>();
 		for (AbstractTemplate<?, StateT, ?> t : model.getTemplates()) {
 			batchGradients.put(t, new Vector());
@@ -128,7 +131,11 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 		/**
 		 * Rank each possible next state against the current state
 		 */
-		triples.forEach(t -> collectMarginRankGradients(t, batchGradients));
+//		triples.forEach(t -> collectMarginRankGradients(t, batchGradients));
+
+//		for (StateT t : possibleNextStates) {
+//		}
+		collectMarginRankGradients(currentState, possibleNextState, batchGradients, 1);
 
 		applyWeightUpdate(batchGradients);
 		updates++;
@@ -137,21 +144,29 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	/**
 	 * Updates the weights of each template according to the Margin Rank scheme.
 	 * 
+	 * @param t2
+	 * @param currentState
+	 * 
 	 * @param currentState
 	 * @param possibleNextState
 	 * @param batchGradients
+	 * @param i
 	 */
-	private void collectMarginRankGradients(TrainingTriple<StateT> triple,
-			Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients) {
-		StateT currentState = triple.getParentState();
-		StateT possibleNextState = triple.getCandidateState();
+	private void collectMarginRankGradients(
+//			TrainingTriple<StateT> triple,
+
+			final StateT currentState, final StateT possibleNextState,
+			Map<AbstractTemplate<?, StateT, ?>, Vector> batchGradients, int sampleWeight) {
+//		final StateT currentState = triple.getParentState();
+//	final 	StateT possibleNextState = triple.getCandidateState();
+//final double sampleWeight = triple.getSampleWeight();
 		log.trace("Current:\t%s", currentState);
 		log.trace("Next:\t%s", possibleNextState);
 
 		double linearScore = 0;
 		/*
-		 * Collect differences of features for both states and remember
-		 * respective template
+		 * Collect differences of features for both states and remember respective
+		 * template
 		 */
 		Map<AbstractTemplate<?, StateT, ?>, Vector> featureDifferences = new HashMap<>();
 		StateT posState = null;
@@ -187,10 +202,10 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 				if (regularizer != null) {
 					weightGradient = regularizer.regularize(weightGradient, t.getWeights());
 				}
-				if (triple.getSampleWeight() == 0) {
+				if (sampleWeight == 0) {
 					weightGradient = new Vector();
-				} else if (triple.getSampleWeight() != 1) {
-					weightGradient = weightGradient.mul(triple.getSampleWeight());
+				} else if (sampleWeight != 1) {
+					weightGradient = weightGradient.mul(sampleWeight);
 				}
 				Vector templateBatchGradients = batchGradients.get(t);
 				templateBatchGradients.addToValue(weightGradient);
@@ -215,10 +230,10 @@ public class AdvancedLearner<StateT extends AbstractState<?>> implements Learner
 	}
 
 	/**
-	 * Compares the objective scores of the state1 and state2 using the
-	 * precomputed objective scores to decide if state1 is preferred over
-	 * state2. Note: The objective scores are merely accessed but not
-	 * recomputed. This step needs to be done before.
+	 * Compares the objective scores of the state1 and state2 using the precomputed
+	 * objective scores to decide if state1 is preferred over state2. Note: The
+	 * objective scores are merely accessed but not recomputed. This step needs to
+	 * be done before.
 	 * 
 	 * @param state1
 	 * @param state2

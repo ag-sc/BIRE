@@ -1,8 +1,5 @@
 package learning;
 
-import java.util.List;
-
-import learning.AdvancedLearner.TrainingTriple;
 import variables.AbstractState;
 
 /**
@@ -16,7 +13,7 @@ public interface Learner<StateT extends AbstractState<?>> {
 
 	public void update(StateT currentState, StateT possibleNextState);
 
-	public void update(StateT currentState, List<StateT> possibleNextStates);
+//	public void update(StateT currentState, List<StateT> possibleNextStates);
 
-	public void update(List<TrainingTriple<StateT>> triples) ;
+//	public void update(List<TrainingTriple<StateT>> triples) ;
 }
