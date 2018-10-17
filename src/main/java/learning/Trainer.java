@@ -152,7 +152,7 @@ public class Trainer {
 
 				log.info("++++++++++++++++");
 				if (log.getLevel().equals(Level.DEBUG))
-				log.debug("Gold Result: %s", goldResult);
+					log.debug("Gold Result: %s", goldResult);
 				log.info("Final State:  %s", finalState);
 				log.info("TrainingTime: %s (%s seconds)", (stopTime - startTime), (stopTime - startTime) / 1000);
 				log.info("++++++++++++++++");
