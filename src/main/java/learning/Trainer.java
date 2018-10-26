@@ -2,8 +2,9 @@ package learning;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
 
@@ -487,6 +488,38 @@ public class Trainer {
 			}
 		}
 		return finalStates;
+	}
+
+	public <InstanceT, ResultT, StateT extends AbstractState<InstanceT>> Map<InstanceT, List<StateT>> collectBestNStates(
+			Sampler<StateT, ResultT> sampler, Initializer<InstanceT, StateT> initializer,
+			List<? extends LabeledInstance<InstanceT, ResultT>> instances, final int N) {
+
+		Map<InstanceT, List<StateT>> bestNStates = new HashMap<>();
+
+		for (int i = 0; i < instances.size(); i++) {
+
+			InstanceT instance = instances.get(i).getInstance();
+
+			log.info("===========COLLECT BEST N STATES============");
+			log.info("Document: %s/%s", i + 1, instances.size());
+			log.info("Content   : %s", instance);
+			log.info("Gold Result: %s", instances.get(i).getGoldAnnotation());
+			log.info("===========================");
+
+			StateT initialState = initializer.getInitialState(instance);
+			List<StateT> collectedStates = sampler.collectBestNStates(initialState, N);
+
+			bestNStates.put(instance, collectedStates);
+
+			/**
+			 * TODO: call??
+			 */
+//			finalState.getFactorGraph().clear();
+			FactorPool.getInstance().clear();
+
+			log.info("===========================");
+		}
+		return bestNStates;
 	}
 
 }

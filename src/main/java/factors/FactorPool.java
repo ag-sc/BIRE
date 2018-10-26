@@ -35,8 +35,7 @@ public class FactorPool {
 	}
 
 //	public  Set<FactorVariablesT> extractNewFactorScopes(
-	public <FactorVariablesT extends FactorScope> void filterNewFactorScopes(
-			Set<FactorVariablesT> generatedFactors) {
+	public <FactorVariablesT extends FactorScope> void filterNewFactorScopes(Set<FactorVariablesT> generatedFactors) {
 
 		Set<FactorScope> variablesFromMap = this.factorVariables2Factor.keySet();
 //		Set<FactorVariablesT> newFactors = new HashSet<>(generatedFactors);
@@ -47,9 +46,7 @@ public class FactorPool {
 
 	public List<Factor<? extends FactorScope>> getFactors(Collection<? extends FactorScope> factorVariablesList)
 			throws MissingFactorException {
-		// TODO consider not returning a list with plain factors (with
-		// repeating elements) but to return a list of tuples (count, factor).
-		// This avoids processing of several identical factors.
+
 		List<Factor<? extends FactorScope>> factors = new ArrayList<>();
 
 		for (FactorScope factorVariables : factorVariablesList) {
@@ -71,6 +68,7 @@ public class FactorPool {
 		for (Factor<FactorVariablesT> factor : newFactors) {
 			this.factorVariables2Factor.put(factor.getFactorScope(), factor);
 		}
+
 	}
 
 	public Collection<Factor<? extends FactorScope>> getAllFactors() {

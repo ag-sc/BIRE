@@ -2,10 +2,12 @@ package sampling;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.jena.tdb.setup.BuilderStdDB.ObjectFileBuilderStd;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -378,10 +380,10 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		if (nextStates.size() > 0) {
 //			List<StateT> allStates = new ArrayList<>(nextStates);
 //			allStates.add(currentState);
+
 			/**
 			 * Apply templates to states and thus generate factors and features
 			 */
-
 			model.score(nextStates);
 
 			/**
@@ -510,6 +512,94 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 
 	public void setExplorers(List<Explorer<StateT>> explorers) {
 		this.explorers = explorers;
+	}
+
+	@Override
+	public List<StateT> collectBestNStates(StateT initialState, int N) {
+		List<StateT> generatedChain = new ArrayList<>();
+		List<StateT> collectedStates = new ArrayList<>();
+		StateT currentState = initialState;
+
+		int step = 0;
+		do {
+			log.info("---------------------------");
+			for (Explorer<StateT> explorer : explorers) {
+				currentState = performPredictionStep(explorer, currentState);
+
+				/**
+				 * Generate possible successor states.
+				 */
+				List<StateT> nextStates = explorer.getNextStates(currentState);
+				if (nextStates.size() > 0) {
+
+					/**
+					 * Apply templates to states and thus generate factors and features
+					 */
+					model.score(nextStates);
+
+					/**
+					 * Select a candidate state from the list of possible successors.
+					 */
+					StateT candidateState = predictionSamplingStrategy.sampleCandidate(nextStates);
+
+					collectedStates = selectBestNStates(collectedStates, nextStates, N);
+
+					/**
+					 * Decide to accept or reject the selected state
+					 */
+
+					boolean isAccepted = predictionAcceptStrategy.isAccepted(candidateState, currentState);
+					currentState = isAccepted ? candidateState : currentState;
+				}
+
+				generatedChain.add(currentState);
+				log.info("Sampled State:  %s", currentState);
+			}
+			step++;
+		} while (!stoppingCriterion.checkCondition(generatedChain, step));
+		log.info("Stop collecting after step %s", step);
+		return collectedStates;
+	}
+
+	private List<StateT> selectBestNStates(List<StateT> collectedStates, List<StateT> nextStates, int N) {
+
+		/**
+		 * TODO: Quite naive way of getting best states. Maybe there is a faster way.
+		 */
+		final boolean isEmpty = collectedStates.isEmpty();
+
+		int i = 1;
+		double smallestScore = isEmpty ? 0 : collectedStates.get(collectedStates.size() - i).getModelScore();
+		Set<StateT> merged = new HashSet<>(collectedStates);
+
+		for (StateT stateT : nextStates) {
+
+			/*
+			 * if smaller N add anyway otherwise just if score is bigger than smallest
+			 * score.
+			 */
+			if (merged.size() < N || stateT.getModelScore() >= smallestScore) {
+				merged.add(stateT);
+				i++;
+
+				final double nextSmallest;
+
+				if (isEmpty) {
+					nextSmallest = 0;
+				} else {
+					nextSmallest = collectedStates.get(Math.max(0, collectedStates.size() - i)).getModelScore();
+				}
+
+				smallestScore = Math.min(nextSmallest, stateT.getModelScore());
+			}
+		}
+
+		collectedStates = new ArrayList<>(merged);
+
+		Collections.sort(collectedStates, AbstractState.modelScoreComparator);
+
+		return collectedStates.subList(0, Math.min(N, collectedStates.size()));
+
 	}
 
 }

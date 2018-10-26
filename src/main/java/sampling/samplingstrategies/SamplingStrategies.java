@@ -151,4 +151,24 @@ public class SamplingStrategies {
 		};
 	}
 
+	public static <StateT extends AbstractState<?>> SamplingStrategy<StateT> softmaxObjectiveSamplingStrategy() {
+		return new SamplingStrategy<StateT>() {
+
+			@Override
+			public StateT sampleCandidate(List<StateT> candidates) {
+				return SamplingUtils.drawFromDistribution(candidates, false, true);
+			}
+
+			@Override
+			public boolean usesModel() {
+				return true;
+			}
+
+			@Override
+			public boolean usesObjective() {
+				return false;
+			}
+		};
+	}
+
 }
