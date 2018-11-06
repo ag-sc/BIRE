@@ -542,7 +542,11 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 					 */
 					StateT candidateState = predictionSamplingStrategy.sampleCandidate(nextStates);
 
-					collectedStates = selectBestNStates(collectedStates, nextStates, N);
+					if (N <= 0) {
+						collectedStates.addAll(nextStates);
+					} else {
+						collectedStates = selectBestNStates(collectedStates, nextStates, N);
+					}
 
 					/**
 					 * Decide to accept or reject the selected state
@@ -572,14 +576,20 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		double smallestScore = isEmpty ? 0 : collectedStates.get(collectedStates.size() - i).getModelScore();
 		Set<StateT> merged = new HashSet<>(collectedStates);
 
+		Set<Double> modelScores = new HashSet<>();
+
 		for (StateT stateT : nextStates) {
 
 			/*
 			 * if smaller N add anyway otherwise just if score is bigger than smallest
 			 * score.
 			 */
+			if (modelScores.contains(stateT.getModelScore()))
+				continue;
+
 			if (merged.size() < N || stateT.getModelScore() >= smallestScore) {
 				merged.add(stateT);
+				modelScores.add(stateT.getModelScore());
 				i++;
 
 				final double nextSmallest;
@@ -601,5 +611,45 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		return collectedStates.subList(0, Math.min(N, collectedStates.size()));
 
 	}
+//	private List<StateT> selectBestNStatesFAST(List<StateT> collectedStates, List<StateT> nextStates, int N) {
+//		
+//		/**
+//		 * TODO: Quite naive way of getting best states. Maybe there is a faster way.
+//		 */
+//		final boolean isEmpty = collectedStates.isEmpty();
+//		
+//		int i = 1;
+//		double smallestScore = isEmpty ? 0 : collectedStates.get(collectedStates.size() - i).getModelScore();
+//		Set<StateT> merged = new HashSet<>(collectedStates);
+//		
+//		for (StateT stateT : nextStates) {
+//			
+//			/*
+//			 * if smaller N add anyway otherwise just if score is bigger than smallest
+//			 * score.
+//			 */
+//			if (merged.size() < N || stateT.getModelScore() >= smallestScore) {
+//				merged.add(stateT);
+//				i++;
+//				
+//				final double nextSmallest;
+//				
+//				if (isEmpty) {
+//					nextSmallest = 0;
+//				} else {
+//					nextSmallest = collectedStates.get(Math.max(0, collectedStates.size() - i)).getModelScore();
+//				}
+//				
+//				smallestScore = Math.min(nextSmallest, stateT.getModelScore());
+//			}
+//		}
+//		
+//		collectedStates = new ArrayList<>(merged);
+//		
+//		Collections.sort(collectedStates, AbstractState.modelScoreComparator);
+//		
+//		return collectedStates.subList(0, Math.min(N, collectedStates.size()));
+//		
+//	}
 
 }
