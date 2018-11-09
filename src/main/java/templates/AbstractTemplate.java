@@ -29,7 +29,7 @@ public abstract class AbstractTemplate<InstanceT, StateT extends AbstractState<I
 	 * @param gradient
 	 * @param currentAlpha
 	 */
-	public void update(String feature, double update) {
+	public void update(Integer feature, double update) {
 		weights.addToValue(feature, update);
 	}
 

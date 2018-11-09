@@ -48,8 +48,8 @@ public class VectorUtil {
 
 	public static Vector crossProduct(Vector v1, Vector v2) {
 		Vector cross = new Vector();
-		for (Entry<String, Double> feature1 : v1.getFeatures().entrySet()) {
-			for (Entry<String, Double> feature2 : v2.getFeatures().entrySet()) {
+		for (Entry<String, Double> feature1 : v1.getNamedFeatures().entrySet()) {
+			for (Entry<String, Double> feature2 : v2.getNamedFeatures().entrySet()) {
 				cross.set(feature1.getKey() + "_AND_" + feature2.getKey(), feature1.getValue() * feature2.getValue());
 			}
 

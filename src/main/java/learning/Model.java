@@ -147,7 +147,7 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 		});
 		bReader.close();
 
-		log.info("%s feature weights restored.", weights.getFeatureNames().size());
+		log.info("%s feature weights restored.", weights.getFeatures().size());
 		log.info("Template successfully loaded!");
 		return template;
 	}
@@ -186,7 +186,7 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 		FileWriter fWriter = new FileWriter(templateFile);
 		BufferedWriter bWriter = new BufferedWriter(fWriter);
-		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getFeatures().entrySet());
+		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getNamedFeatures().entrySet());
 		Collections.sort(sortedWeights, (o1, o2) -> -Double.compare(o1.getValue(), o2.getValue()));
 		for (Entry<String, Double> feature : sortedWeights) {
 			bWriter.write(feature.getKey() + "\t" + feature.getValue());
@@ -226,10 +226,11 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 		if (log.getLevel().equals(Level.DEBUG))
 			log.debug("Apply template \"%s\" to %s states.", template.getClass().getSimpleName(), states.size());
 		/*
-		 * Collect all Factor scopes of all states to which this template can be applied
+		 * Collect all Factor scopes of all states to that this template can be applied
 		 * (in parallel).
 		 */
 		Set<FactorScopeT> scopesToCompute = generateScopesAndAddToStates(template, states);
+	
 		if (log.getLevel().equals(Level.DEBUG)) {
 			log.debug("%s possible Factors for template %s", scopesToCompute.size(),
 					template.getClass().getSimpleName());
