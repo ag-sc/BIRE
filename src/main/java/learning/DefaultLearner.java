@@ -23,7 +23,7 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 	/**
 	 * A regularization parameter to punish big feature weights.
 	 */
-	protected double l2 = 0.01;
+	protected double l2 = 0.01F;
 
 	/**
 	 * This implementation of the learner implements the SampleRank learning scheme.
@@ -137,10 +137,10 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 			Vector features = featureDifferences.get(t);
 			Vector gradients = weightUpdates.get(t);
 
-			for (Entry<Integer, Double> featureDifference : features.getFeatures().entrySet()) {
+			for (Entry<String, Double> featureDifference : features.getFeatures().entrySet()) {
 				double weightGradient = learningDirection * featureDifference.getValue();
-				log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient,
-						Vector.getName(featureDifference.getKey()));
+				log.trace("\t%s -> %s:\t%s", featureDifference.getValue(), weightGradient, featureDifference.getKey());
+//				Vector.getName(featureDifference.getKey()));
 				gradients.addToValue(featureDifference.getKey(), weightGradient);
 			}
 		}
@@ -157,11 +157,12 @@ public class DefaultLearner<StateT extends AbstractState<?>> implements Learner<
 			log.trace("Template: %s", t.getClass().getSimpleName());
 			Vector weightUpdatesForTemplate = weightGradients.get(t);
 			Vector weights = t.getWeights();
-			for (Entry<Integer, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {
+			for (Entry<String, Double> weightGradient : weightUpdatesForTemplate.getFeatures().entrySet()) {
 				double gradient = weightGradient.getValue() / numberOfUpdates
 						- l2 * weights.getValueOfFeature(weightGradient.getKey());
 				log.trace("\t%s -> %s:\t%s", weightGradient.getValue(), gradient, currentAlpha,
-						Vector.getName(weightGradient.getKey()));
+						weightGradient.getKey());
+//				Vector.getName(weightGradient.getKey()));
 				t.update(weightGradient.getKey(), -gradient * currentAlpha);
 			}
 		}

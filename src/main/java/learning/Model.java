@@ -186,7 +186,8 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 
 		FileWriter fWriter = new FileWriter(templateFile);
 		BufferedWriter bWriter = new BufferedWriter(fWriter);
-		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getNamedFeatures().entrySet());
+//		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getNamedFeatures().entrySet());
+		List<Entry<String, Double>> sortedWeights = new ArrayList<>(template.getWeights().getFeatures().entrySet());
 		Collections.sort(sortedWeights, (o1, o2) -> -Double.compare(o1.getValue(), o2.getValue()));
 		for (Entry<String, Double> feature : sortedWeights) {
 			bWriter.write(feature.getKey() + "\t" + feature.getValue());
@@ -230,9 +231,9 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 		 * (in parallel).
 		 */
 		Set<FactorScopeT> scopesToCompute = generateScopesAndAddToStates(template, states);
-	
+
 		if (log.getLevel().equals(Level.DEBUG)) {
-			log.debug("%s possible Factors for template %s", scopesToCompute.size(),
+			log.debug("%s possible factors for template %s", scopesToCompute.size(),
 					template.getClass().getSimpleName());
 
 			/*
@@ -350,12 +351,12 @@ public class Model<InstanceT, StateT extends AbstractState<InstanceT>> implement
 	}
 
 	private <FactorScopeT extends FactorScope> Set<Factor<FactorScopeT>> computeNewFactors(
-			AbstractTemplate<InstanceT, StateT, FactorScopeT> t, Set<FactorScopeT> scopes) {
+			AbstractTemplate<InstanceT, StateT, FactorScopeT> templates, Set<FactorScopeT> scopes) {
 
 		Stream<FactorScopeT> stream = Utils.getStream(scopes, multiThreaded);
 		Set<Factor<FactorScopeT>> factors = stream.map(p -> {
 			Factor<FactorScopeT> f = new Factor<>(p);
-			t.computeFactor(f);
+			templates.computeFactor(f);
 			/*
 			 * Comment out but still visible through call hierarchy
 			 */

@@ -52,6 +52,9 @@ public class EvaluationUtil {
 	}
 
 	public static void printPredictionPerformance(List<? extends AbstractState<?>> predictedStates) {
+		
+		
+		
 		double meanModelScore = 0;
 		double meanObjectiveScore = 0;
 		int count = 0;

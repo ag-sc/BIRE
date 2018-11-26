@@ -4,9 +4,9 @@ import learning.Vector;
 
 public class SGD implements Optimizer {
 
-	private double alpha = 0.001;
-	private double momentum = 0.0;
-	private double decay = 0.0;
+	private float alpha = 0.001F;
+	private float momentum = 0.0F;
+	private float decay = 0.0F;
 	private boolean nesterov = false;
 
 	private Vector m = new Vector();
@@ -15,9 +15,9 @@ public class SGD implements Optimizer {
 
 	public SGD(double alpha, double momentum, double decay, boolean nesterov) {
 		super();
-		this.alpha = alpha;
-		this.momentum = momentum;
-		this.decay = decay;
+		this.alpha = (float)alpha;
+		this.momentum = (float)momentum;
+		this.decay = (float)decay;
 		this.nesterov = nesterov;
 	}
 
@@ -27,22 +27,36 @@ public class SGD implements Optimizer {
 	@Override
 	public Vector getUpdates(Vector theta, Vector gradient) {
 		t++;
-		double alpha_t = alpha * (1.0 / (1.0 + decay * t));
+		float alpha_t = alpha * (1.0F / (1.0F + decay * t));
 
 		if (momentum == 0 && decay == 0 && !nesterov) {
 			// perform sparse updates
 			theta.subtractFromValue(gradient.mul(alpha_t));
 		} else {
-			if(momentum ==0) {
+			if (momentum == 0) {
 				theta.subtractFromValue(gradient.mul(alpha_t));
-			}else{
-				
+			} else {
+
 				v = m.mul(momentum).sub(gradient.mul(alpha_t));
-				
+
 				if (nesterov) {
 					theta = theta.add(v.mul(momentum).sub(gradient.mul(alpha_t)));
 				} else {
-					theta = theta.add(v);
+//					theta = 
+					theta.addFAST(v);
+//					addFAST()
+//							p: 0.7283303194695598	r: 0.645539481615431	f1: 0.6844403691002963
+//							--------------randomRun-232724325---------------
+//							Total training time: 219808 ms.
+//							Total test time: 4674 ms.
+//							Total time: PT3M44.482S
+
+//					add()
+//							p: 0.7283303194695598	r: 0.645539481615431	f1: 0.6844403691002963
+// 							--------------randomRun-1012976934---------------
+//							Total training time: 221951 ms.
+//							Total test time: 4665 ms.
+//							Total time: PT3M46.616S
 				}
 				m = v;
 			}
