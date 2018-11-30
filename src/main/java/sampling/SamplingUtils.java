@@ -13,11 +13,11 @@ public class SamplingUtils {
 	private static Random rand = new Random(43921422342L);
 
 	/**
-	 * Selects a state from the given list according to the probability
-	 * distribution defined by the states' (model/objective) scores. Each score
-	 * is divided by the total sum of all scores, in order to create a
-	 * probability distribution across states. If "softmax" is true, the
-	 * probability distribution is computed using the softmax formula.
+	 * Selects a state from the given list according to the probability distribution
+	 * defined by the states' (model/objective) scores. Each score is divided by the
+	 * total sum of all scores, in order to create a probability distribution across
+	 * states. If "softmax" is true, the probability distribution is computed using
+	 * the softmax formula.
 	 * 
 	 * @param nextStates
 	 * @param useModelDistribution
@@ -64,40 +64,40 @@ public class SamplingUtils {
 
 	}
 
-	public static <T> int drawFromDistribution(List<T> elements, Function<T, Double> toScore, boolean softmax) {
-		Function<Double, Double> toProbability = null;
-		if (softmax) {
-			toProbability = d -> Math.exp(d);
-		} else {
-			toProbability = d -> d;
-		}
-		// compute total sum of scores
-		double totalSum = 0;
-		double[] scores = new double[elements.size()];
-
-		int j = 0;
-		for (T s : elements) {
-			double prob = toProbability.apply(toScore.apply(s));
-			totalSum += prob;
-			scores[j] = prob;
-			j++;
-		}
-		double randomIndex = rand.nextDouble() * totalSum;
-		double sum = 0;
-		int i = 0;
-		while (sum < randomIndex) {
-			sum += scores[i++];
-		}
-		return Math.max(0, i - 1);
-
-	}
+//	public static <T> int drawFromDistribution(List<T> elements, Function<T, Double> toScore, boolean softmax) {
+//		Function<Double, Double> toProbability = null;
+//		if (softmax) {
+//			toProbability = d -> Math.exp(d);
+//		} else {
+//			toProbability = d -> d;
+//		}
+//		// compute total sum of scores
+//		double totalSum = 0;
+//		double[] scores = new double[elements.size()];
+//
+//		int j = 0;
+//		for (T s : elements) {
+//			double prob = toProbability.apply(toScore.apply(s));
+//			totalSum += prob;
+//			scores[j] = prob;
+//			j++;
+//		}
+//		double randomIndex = rand.nextDouble() * totalSum;
+//		double sum = 0;
+//		int i = 0;
+//		while (sum < randomIndex) {
+//			sum += scores[i++];
+//		}
+//		return Math.max(0, i - 1);
+//
+//	}
 
 	// TODO implement a "temperature" approach (simulated annealing)
 	/**
 	 * This function decides if the currentState should be replaced with the
-	 * selectedNextState. The decision is based on the scores (model or
-	 * objective) of both states. Currently, it implements the accept function
-	 * from the Metropolis Hastings algorithm.
+	 * selectedNextState. The decision is based on the scores (model or objective)
+	 * of both states. Currently, it implements the accept function from the
+	 * Metropolis Hastings algorithm.
 	 * 
 	 * @param candidateState
 	 * @param currentState
@@ -134,8 +134,8 @@ public class SamplingUtils {
 	}
 
 	/**
-	 * Accepts the candidate State only when its score is greater than the score
-	 * of the current state.
+	 * Accepts the candidate State only when its score is greater than the score of
+	 * the current state.
 	 * 
 	 * @param candidateState
 	 * @param currentState
