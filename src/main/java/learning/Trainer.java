@@ -137,6 +137,9 @@ public class Trainer {
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i).getInstance();
 				ResultT goldResult = instances.get(i).getGoldAnnotation();
+			
+				StateT initialState = initializer.getInitialState(instance);
+
 				log.info("===========TRAIN===========");
 				log.info("Epoch: %s/%s; Instance: %s/%s", e, numberOfEpochs, i + 1, instances.size());
 				log.info("Gold Result: %s", goldResult);
@@ -146,7 +149,6 @@ public class Trainer {
 					c.onStartInstance(this, instance, i, instances.size(), e, numberOfEpochs);
 				}
 
-				StateT initialState = initializer.getInitialState(instance);
 				List<StateT> generatedChain = sampler.generateChain(initialState, goldResult, learner);
 				StateT finalState = generatedChain.get(generatedChain.size() - 1);
 				long stopTime = System.currentTimeMillis();
@@ -200,21 +202,25 @@ public class Trainer {
 		for (int i = 0; i < instances.size(); i++) {
 			InstanceT instance = instances.get(i).getInstance();
 			ResultT goldResult = instances.get(i).getGoldAnnotation();
+			
+			StateT initialState = initializer.getInitialState(instance);
+
 			log.info("===========TEST============");
 			log.info("Document: %s/%s", i + 1, instances.size());
 			log.info("Content   : %s", instance);
 			log.info("Gold Result: %s", instances.get(i).getGoldAnnotation());
 			log.info("===========================");
+			
 			for (InstanceCallback c : instanceCallbacks) {
 				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
 			}
 
-			StateT initialState = initializer.getInitialState(instance);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 
 			finalState.getFactorGraph().clear();
 			FactorPool.getInstance().clear();
+			
 			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
 			if (log.isDebugEnabled())
@@ -249,11 +255,11 @@ public class Trainer {
 		for (int instance = 0; instance < instances.size(); instance++) {
 			FactorPool.getInstance().clear();
 			InstanceT document = instances.get(instance);
+			StateT initialState = initializer.getInitialState(document);
 			log.info("===========================");
 			log.info("Instance: %s/%s", instance + 1, instances.size());
 			log.info("Content   : %s", document);
 			log.info("===========================");
-			StateT initialState = initializer.getInitialState(document);
 			List<StateT> generatedChain = sampler.generateChain(initialState);
 			StateT finalState = generatedChain.get(generatedChain.size() - 1);
 			finalState.getFactorGraph().clear();

@@ -102,7 +102,7 @@ public class Vector implements Serializable {
 		return result;
 	}
 
-	private double computeDot(double result, Vector smaller, Vector bigger) {
+	public static double computeDot(double result, Vector smaller, Vector bigger) {
 		for (Entry<String, Double> e : smaller.getFeatures().entrySet()) {
 			result += e.getValue() * bigger.getValueOfFeature(e.getKey());
 		}

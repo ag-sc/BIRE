@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.jena.base.Sys;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -222,45 +223,45 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		List<StateT> nextStates = explorer.getNextStates(currentState);
 
 //		List<StateT> allStates = new ArrayList<>(nextStates);
-
-		if (nextStates.size() > 0) {
-//			allStates.add(currentState);
-			/**
-			 * Score all states with Objective/Model only if sampling strategy needs that.
-			 * If not, score only selected candidate and current.
-			 */
-			if (trainSamplingStrategy.usesObjective()) {
-				/**
-				 * Compute objective function scores
-				 */
-//				scoreWithObjective(allStates, goldResult);
-
-				{
-					scoreWithObjective(nextStates, goldResult);
-//					objective.score(currentState, goldResult);
-				}
-			}
-			if (trainSamplingStrategy.usesModel()) {
-				/**
-				 * Apply templates to states and, thus generate factors and features
-				 */
-				/**
-				 * TODO: Test
-				 * 
-				 */
-				{
-//					model.score(Arrays.asList(currentState), currentState.getInstance());
-					model.score(nextStates);
-				}
-//				model.score(allStates, currentState.getInstance());
-			}
-
-			return sampleRank(learner, goldResult, currentState, nextStates);
-			// return modifiedSampleRank(learner, goldResult, currentState,
-			// nextStates, allStates);
+		if (nextStates.size() == 0) {
+			return currentState;
 		}
 
-		return currentState;
+//			allStates.add(currentState);
+		/**
+		 * Score all states with Objective/Model only if sampling strategy needs that.
+		 * If not, score only selected candidate and current.
+		 */
+		if (trainSamplingStrategy.usesObjective()) {
+			/**
+			 * Compute objective function scores
+			 */
+//				scoreWithObjective(allStates, goldResult);
+
+			{
+				scoreWithObjective(nextStates, goldResult);
+//					objective.score(currentState, goldResult);
+			}
+		}
+		else if (trainSamplingStrategy.usesModel()) {
+			/**
+			 * Apply templates to states and, thus generate factors and features
+			 */
+			/**
+			 * TODO: Test
+			 * 
+			 */
+			{
+//					model.score(Arrays.asList(currentState), currentState.getInstance());
+				model.score(nextStates);
+			}
+//				model.score(allStates, currentState.getInstance());
+		}
+
+		
+		return sampleRank(learner, goldResult, currentState, nextStates);
+		// return modifiedSampleRank(learner, goldResult, currentState,
+		// nextStates, allStates);
 	}
 
 	private StateT modifiedSampleRank(Learner<StateT> learner, ResultT goldResult, StateT currentState,
