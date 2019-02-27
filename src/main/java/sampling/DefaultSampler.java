@@ -247,10 +247,6 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			/**
 			 * Apply templates to states and, thus generate factors and features
 			 */
-			/**
-			 * TODO: Test
-			 * 
-			 */
 			{
 //					model.score(Arrays.asList(currentState), currentState.getInstance());
 				model.score(nextStates);
@@ -259,20 +255,17 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 		}
 
 		
-		return sampleRank(learner, goldResult, currentState, nextStates);
-		// return modifiedSampleRank(learner, goldResult, currentState,
-		// nextStates, allStates);
+//		return sampleRank(learner, goldResult, currentState, nextStates);
+		 return modifiedSampleRank(learner, goldResult, currentState,
+		 nextStates);
 	}
 
 	private StateT modifiedSampleRank(Learner<StateT> learner, ResultT goldResult, StateT currentState,
-			List<StateT> nextStates, List<StateT> allStates) {
+			List<StateT> nextStates) {
 		/**
 		 * Sample one possible successor
 		 */
 		StateT candidateState = trainSamplingStrategy.sampleCandidate(nextStates);
-		/**
-		 * NEW UNTESTED!
-		 */
 
 		if (trainSamplingStrategy.usesModel()) {
 
@@ -292,9 +285,9 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 			 * Choose to accept or reject selected state
 			 */
 			boolean isAccepted = trainAcceptStrategy.isAccepted(candidateState, currentState);
-			for (SamplingCallback callBack : samplingCallbacks) {
-				callBack.onScoredProposalStates(allStates);
-			}
+//			for (SamplingCallback callBack : samplingCallbacks) {
+//				callBack.onScoredProposalStates(allStates);
+//			}
 			return isAccepted ? candidateState : currentState;
 		} else {
 			/**
@@ -318,9 +311,9 @@ public class DefaultSampler<InstanceT, StateT extends AbstractState<InstanceT>, 
 				 */
 				learner.update(currentState, candidateState);
 			}
-			for (SamplingCallback callBack : samplingCallbacks) {
-				callBack.onScoredProposalStates(allStates);
-			}
+//			for (SamplingCallback callBack : samplingCallbacks) {
+//				callBack.onScoredProposalStates(allStates);
+//			}
 			return isAccepted ? candidateState : currentState;
 		}
 	}

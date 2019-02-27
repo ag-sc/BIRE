@@ -137,7 +137,7 @@ public class Trainer {
 			for (int i = 0; i < instances.size(); i++) {
 				InstanceT instance = instances.get(i).getInstance();
 				ResultT goldResult = instances.get(i).getGoldAnnotation();
-			
+
 				StateT initialState = initializer.getInitialState(instance);
 
 				log.info("===========TRAIN===========");
@@ -202,7 +202,7 @@ public class Trainer {
 		for (int i = 0; i < instances.size(); i++) {
 			InstanceT instance = instances.get(i).getInstance();
 			ResultT goldResult = instances.get(i).getGoldAnnotation();
-			
+
 			StateT initialState = initializer.getInitialState(instance);
 
 			log.info("===========TEST============");
@@ -210,7 +210,7 @@ public class Trainer {
 			log.info("Content   : %s", instance);
 			log.info("Gold Result: %s", instances.get(i).getGoldAnnotation());
 			log.info("===========================");
-			
+
 			for (InstanceCallback c : instanceCallbacks) {
 				c.onStartInstance(this, instance, i, instances.size(), 1, 1);
 			}
@@ -220,7 +220,7 @@ public class Trainer {
 
 			finalState.getFactorGraph().clear();
 			FactorPool.getInstance().clear();
-			
+
 			finalStates.add(new SampledInstance<InstanceT, ResultT, StateT>(instance, goldResult, finalState));
 			log.info("++++++++++++++++");
 			if (log.isDebugEnabled())
@@ -506,7 +506,7 @@ public class Trainer {
 
 			InstanceT instance = instances.get(i).getInstance();
 
-			log.info("===========COLLECT BEST N STATES============");
+			log.info("===========COLLECT BEST " + N + " STATES============");
 			log.info("Document: %s/%s", i + 1, instances.size());
 			log.info("Content   : %s", instance);
 			log.info("Gold Result: %s", instances.get(i).getGoldAnnotation());
@@ -520,7 +520,6 @@ public class Trainer {
 			/**
 			 * TODO: call??
 			 */
-//			finalState.getFactorGraph().clear();
 			FactorPool.getInstance().clear();
 
 			log.info("===========================");
